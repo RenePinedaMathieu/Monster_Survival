@@ -1,0 +1,26 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+.import/
+# export.cfg committed for CI
+# export_presets.cfg committed for CI
+*.translation
+
+# System / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+desktop.ini
+
+# Local secrets — never commit
+.env
+.env.local
+autoload/supabase_secrets.gd
+
+# Build artifacts
+build/
+dist/
+
+# Claude Code local settings
+.claude/

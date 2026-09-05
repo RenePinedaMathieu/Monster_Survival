@@ -1,0 +1,813 @@
+<title>Tile Painter</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg:        #f4f1e8;
+    --panel:     #ffffff;
+    --panel-2:   #fbf9f2;
+    --ink:       #1c202a;
+    --ink-2:     #5c6172;
+    --ink-3:     #8a8f9f;
+    --accent:    #a25d1d;
+    --border:    #dcd5c4;
+    --border-2:  #e7e2d4;
+    --grid-line: rgba(20, 24, 34, 0.10);
+    --grid-major: rgba(20, 24, 34, 0.22);
+    --grass:     #5c9c3c;
+    --water:     #4a94a0;
+    --void:      #cac4b5;
+    --danger:    #b04a3a;
+    --shadow:    0 1px 2px rgba(20, 24, 34, 0.05), 0 4px 12px rgba(20, 24, 34, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #12141c;
+      --panel:     #1c1f2b;
+      --panel-2:   #191c26;
+      --ink:       #f0ead9;
+      --ink-2:     #a5aabe;
+      --ink-3:     #6b7085;
+      --accent:    #e5b856;
+      --border:    #2a2f42;
+      --border-2:  #232735;
+      --grid-line: rgba(240, 234, 217, 0.08);
+      --grid-major: rgba(240, 234, 217, 0.18);
+      --void:      #2a2f42;
+      --shadow:    0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #12141c;
+    --panel:     #1c1f2b;
+    --panel-2:   #191c26;
+    --ink:       #f0ead9;
+    --ink-2:     #a5aabe;
+    --ink-3:     #6b7085;
+    --accent:    #e5b856;
+    --border:    #2a2f42;
+    --border-2:  #232735;
+    --grid-line: rgba(240, 234, 217, 0.08);
+    --grid-major: rgba(240, 234, 217, 0.18);
+    --void:      #2a2f42;
+    --shadow:    0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.35);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body { padding: 32px 24px 48px; }
+  .app {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  .subtitle {
+    margin: 4px 0 0;
+    color: var(--ink-2);
+    font-size: 14px;
+    max-width: 60ch;
+  }
+  .theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-2);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font: 500 12px "JetBrains Mono", monospace;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: color .15s, border-color .15s;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
+
+  .toolbar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-end;
+  }
+  .tool-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tool-group > label {
+    font: 600 11px "JetBrains Mono", monospace;
+    color: var(--ink-3);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+  .tool-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    transition: transform .12s, border-color .12s;
+  }
+  .swatch::after {
+    content: attr(data-key);
+    position: absolute;
+    top: 3px; right: 5px;
+    font: 600 9px "JetBrains Mono", monospace;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+  .swatch.grass { background: var(--grass); }
+  .swatch.water { background: var(--water); }
+  .swatch.void  { background: var(--void); }
+  .swatch.void::after { color: var(--ink); text-shadow: none; }
+  .swatch:hover { transform: translateY(-1px); }
+  .swatch.active { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent); }
+  .size-btn, .action-btn {
+    font: 500 13px "JetBrains Mono", monospace;
+    padding: 8px 12px;
+    background: var(--panel-2);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 40px;
+    transition: color .12s, border-color .12s, background .12s;
+  }
+  .action-btn { min-width: auto; }
+  .size-btn:hover, .action-btn:hover {
+    border-color: var(--ink-2);
+  }
+  .size-btn.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .action-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label {
+    font: 600 11px "JetBrains Mono", monospace;
+    color: var(--ink-3);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+  .num-input {
+    font: 500 13px "JetBrains Mono", monospace;
+    width: 60px;
+    padding: 7px 8px;
+    background: var(--panel-2);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .canvas-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    cursor: crosshair;
+    border-radius: 4px;
+    background: var(--void);
+  }
+
+  .bottom {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) {
+    .bottom { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-2);
+  }
+  .stat:last-child { border-bottom: none; }
+  .stat .key { color: var(--ink-2); font: 500 12px "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat .val { color: var(--ink); font: 600 15px "JetBrains Mono", monospace; }
+
+  .io-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .primary {
+    font: 600 13px Inter, sans-serif;
+    padding: 9px 16px;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: filter .12s;
+  }
+  .primary:hover { filter: brightness(1.08); }
+  textarea {
+    width: 100%;
+    min-height: 90px;
+    font: 400 12px "JetBrains Mono", monospace;
+    background: var(--panel-2);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    resize: vertical;
+    line-height: 1.4;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+
+  .hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    top: 24px;
+    transform: translateX(-50%) translateY(-16px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font: 500 13px Inter, sans-serif;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transition: opacity .18s, transform .18s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink-2);
+    font-size: 12px;
+    padding-top: 8px;
+  }
+  kbd {
+    font: 500 11px "JetBrains Mono", monospace;
+    background: var(--panel-2);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 var(--border);
+    margin: 0 2px 0 6px;
+  }
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>Tile Painter</h1>
+      <p class="subtitle">Sketch a map layout for Echora — paint grass and water on the top-down grid; the iso composite gets baked from this by the python script.</p>
+    </div>
+    <button class="theme-toggle" id="theme-toggle">THEME</button>
+  </header>
+
+  <section class="toolbar">
+    <div class="tool-group">
+      <label>Brush</label>
+      <div class="tool-row">
+        <button class="swatch grass active" data-brush="1" data-key="1" title="Grass — key 1"></button>
+        <button class="swatch water" data-brush="2" data-key="2" title="Water — key 2"></button>
+        <button class="swatch void"  data-brush="0" data-key="3" title="Void — key 3"></button>
+      </div>
+    </div>
+    <div class="tool-group">
+      <label>Size</label>
+      <div class="tool-row">
+        <button class="size-btn active" data-size="1">1</button>
+        <button class="size-btn" data-size="3">3</button>
+        <button class="size-btn" data-size="5">5</button>
+        <button class="size-btn" data-size="9">9</button>
+      </div>
+    </div>
+    <div class="tool-group">
+      <label>Actions</label>
+      <div class="tool-row">
+        <button class="action-btn" id="btn-fill-grass">Fill grass</button>
+        <button class="action-btn" id="btn-clear">Clear</button>
+        <button class="action-btn" id="btn-undo">Undo</button>
+      </div>
+    </div>
+    <div class="tool-group">
+      <label>Grid</label>
+      <div class="tool-row">
+        <div class="field"><label>W</label><input class="num-input" id="in-cols" type="number" min="10" max="200" value="80"></div>
+        <div class="field"><label>H</label><input class="num-input" id="in-rows" type="number" min="10" max="200" value="60"></div>
+        <button class="action-btn" id="btn-resize">Resize</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="canvas-wrap">
+    <canvas id="grid" width="800" height="600"></canvas>
+  </section>
+
+  <section class="bottom">
+    <div class="card">
+      <h2>Stats</h2>
+      <div class="stats">
+        <div class="stat"><span class="key">Grid</span><span class="val" id="stat-dims">80×60</span></div>
+        <div class="stat"><span class="key">Cells</span><span class="val" id="stat-total">4800</span></div>
+        <div class="stat"><span class="key">Grass</span><span class="val" id="stat-grass">0</span></div>
+        <div class="stat"><span class="key">Water</span><span class="val" id="stat-water">0</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Export / Import</h2>
+      <div class="io-actions">
+        <button class="primary" id="btn-copy">Copy JSON</button>
+        <button class="action-btn" id="btn-load">Load pasted</button>
+        <button class="action-btn danger" id="btn-wipe">Wipe local</button>
+      </div>
+      <textarea id="json-box" placeholder="Paste layout JSON here to load, or use Copy JSON to grab your work."></textarea>
+      <p class="hint">Work auto-saves to this browser. Copy the JSON into <code>assets/layouts/current.json</code> in the repo, then run <code>python scripts/build_from_layout.py</code>.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Shortcuts:</span>
+    <span><kbd>1</kbd> grass</span>
+    <span><kbd>2</kbd> water</span>
+    <span><kbd>3</kbd> void</span>
+    <span><kbd>[</kbd><kbd>]</kbd> brush size</span>
+    <span><kbd>Ctrl+Z</kbd> undo</span>
+    <span><kbd>Right-click</kbd> paint void</span>
+    <span><kbd>Shift+click</kbd> line from last spot</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+(() => {
+  // ── State ───────────────────────────────────────────────
+  const LS_KEY = 'echora_painter_layout_v1';
+  const LS_THEME = 'echora_painter_theme';
+
+  const CELL_PX = 10;               // painter cell size on screen
+  const MAX_UNDO = 40;
+
+  let cols = 80, rows = 60;
+  let cells = new Uint8Array(cols * rows);   // 0 void, 1 grass, 2 water
+  let brush = 1;
+  let brushSize = 1;
+  let painting = false;
+  let lastCell = null;              // for shift-line + drag continuity
+  const undoStack = [];
+
+  const canvas = document.getElementById('grid');
+  const ctx = canvas.getContext('2d');
+  const toast = document.getElementById('toast');
+  const jsonBox = document.getElementById('json-box');
+  const inCols = document.getElementById('in-cols');
+  const inRows = document.getElementById('in-rows');
+
+  const COLOR = {
+    0: getComputedStyle(document.documentElement).getPropertyValue('--void').trim(),
+    1: getComputedStyle(document.documentElement).getPropertyValue('--grass').trim(),
+    2: getComputedStyle(document.documentElement).getPropertyValue('--water').trim(),
+  };
+  const gridLine  = getComputedStyle(document.documentElement).getPropertyValue('--grid-line').trim();
+  const gridMajor = getComputedStyle(document.documentElement).getPropertyValue('--grid-major').trim();
+
+  // ── Init ────────────────────────────────────────────────
+  restoreTheme();
+  loadFromStorage();
+  applySize();
+  render();
+  bindEvents();
+
+  // ── Persistence ─────────────────────────────────────────
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (!obj || !obj.cols || !obj.rows || !obj.cells) return;
+      cols = obj.cols; rows = obj.rows;
+      cells = decode(obj.cells, cols * rows);
+      inCols.value = cols;
+      inRows.value = rows;
+    } catch {}
+  }
+  function saveToStorage() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(snapshot()));
+    } catch {}
+  }
+  function snapshot() {
+    return { cols, rows, cells: encode(cells) };
+  }
+  function encode(arr) {
+    let s = '';
+    for (let i = 0; i < arr.length; i++) s += arr[i];
+    return s;
+  }
+  function decode(s, n) {
+    const out = new Uint8Array(n);
+    const len = Math.min(s.length, n);
+    for (let i = 0; i < len; i++) out[i] = (s.charCodeAt(i) - 48) | 0;
+    return out;
+  }
+  function restoreTheme() {
+    const t = localStorage.getItem(LS_THEME);
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  }
+
+  // ── Sizing ──────────────────────────────────────────────
+  function applySize() {
+    canvas.width  = cols * CELL_PX;
+    canvas.height = rows * CELL_PX;
+  }
+  function resize(newCols, newRows) {
+    newCols = Math.max(10, Math.min(200, newCols | 0));
+    newRows = Math.max(10, Math.min(200, newRows | 0));
+    const next = new Uint8Array(newCols * newRows);
+    const cc = Math.min(cols, newCols);
+    const rr = Math.min(rows, newRows);
+    for (let r = 0; r < rr; r++) {
+      for (let c = 0; c < cc; c++) next[r * newCols + c] = cells[r * cols + c];
+    }
+    pushUndo();
+    cols = newCols; rows = newRows; cells = next;
+    applySize();
+    render();
+    saveToStorage();
+    updateStats();
+  }
+
+  // ── Undo ────────────────────────────────────────────────
+  function pushUndo() {
+    undoStack.push({ cols, rows, data: new Uint8Array(cells) });
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+  }
+  function undo() {
+    const s = undoStack.pop();
+    if (!s) return;
+    cols = s.cols; rows = s.rows; cells = s.data;
+    applySize();
+    render();
+    saveToStorage();
+    updateStats();
+    showToast('Undone');
+  }
+
+  // ── Render ──────────────────────────────────────────────
+  function render() {
+    // Fill background as void so any unset cell shows.
+    ctx.fillStyle = COLOR[0];
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Fill painted cells (skip 0 since bg is already void).
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const v = cells[r * cols + c];
+        if (v === 0) continue;
+        ctx.fillStyle = COLOR[v];
+        ctx.fillRect(c * CELL_PX, r * CELL_PX, CELL_PX, CELL_PX);
+      }
+    }
+    // Grid overlay — light every cell line, stronger every 10.
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = gridLine;
+    ctx.beginPath();
+    for (let c = 0; c <= cols; c++) {
+      const x = Math.round(c * CELL_PX) + 0.5;
+      ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+    }
+    for (let r = 0; r <= rows; r++) {
+      const y = Math.round(r * CELL_PX) + 0.5;
+      ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = gridMajor;
+    ctx.beginPath();
+    for (let c = 0; c <= cols; c += 10) {
+      const x = Math.round(c * CELL_PX) + 0.5;
+      ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+    }
+    for (let r = 0; r <= rows; r += 10) {
+      const y = Math.round(r * CELL_PX) + 0.5;
+      ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+    }
+    ctx.stroke();
+  }
+
+  // ── Painting ────────────────────────────────────────────
+  function cellAt(evt) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width / rect.width;
+    const sy = canvas.height / rect.height;
+    const x = (evt.clientX - rect.left) * sx;
+    const y = (evt.clientY - rect.top)  * sy;
+    return {
+      c: Math.floor(x / CELL_PX),
+      r: Math.floor(y / CELL_PX),
+    };
+  }
+  function paintCell(c, r, v) {
+    const half = (brushSize - 1) / 2;
+    let changed = false;
+    for (let dr = -Math.floor(half); dr <= Math.ceil(half); dr++) {
+      const rr = r + dr;
+      if (rr < 0 || rr >= rows) continue;
+      for (let dc = -Math.floor(half); dc <= Math.ceil(half); dc++) {
+        const cc = c + dc;
+        if (cc < 0 || cc >= cols) continue;
+        const idx = rr * cols + cc;
+        if (cells[idx] !== v) { cells[idx] = v; changed = true; }
+      }
+    }
+    return changed;
+  }
+  function paintLine(c0, r0, c1, r1, v) {
+    // Bresenham
+    let dx = Math.abs(c1 - c0), dy = Math.abs(r1 - r0);
+    let sx = c0 < c1 ? 1 : -1, sy = r0 < r1 ? 1 : -1;
+    let err = dx - dy;
+    let x = c0, y = r0;
+    let changed = false;
+    while (true) {
+      if (paintCell(x, y, v)) changed = true;
+      if (x === c1 && y === r1) break;
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x += sx; }
+      if (e2 <  dx) { err += dx; y += sy; }
+    }
+    return changed;
+  }
+  function beginStroke(evt) {
+    const { c, r } = cellAt(evt);
+    const v = evt.button === 2 ? 0 : brush;
+    pushUndo();
+    let changed;
+    if (evt.shiftKey && lastCell) {
+      changed = paintLine(lastCell.c, lastCell.r, c, r, v);
+    } else {
+      changed = paintCell(c, r, v);
+    }
+    if (changed) { render(); updateStats(); saveToStorage(); }
+    lastCell = { c, r };
+    painting = { v };
+  }
+  function continueStroke(evt) {
+    if (!painting) return;
+    const { c, r } = cellAt(evt);
+    if (lastCell && (c !== lastCell.c || r !== lastCell.r)) {
+      const changed = paintLine(lastCell.c, lastCell.r, c, r, painting.v);
+      if (changed) { render(); updateStats(); saveToStorage(); }
+      lastCell = { c, r };
+    }
+  }
+  function endStroke() { painting = false; }
+
+  // ── Fill / clear ────────────────────────────────────────
+  function fillAll(v) {
+    pushUndo();
+    cells.fill(v);
+    render(); updateStats(); saveToStorage();
+  }
+
+  // ── Stats + IO ──────────────────────────────────────────
+  function updateStats() {
+    let g = 0, w = 0;
+    for (let i = 0; i < cells.length; i++) {
+      if (cells[i] === 1) g++;
+      else if (cells[i] === 2) w++;
+    }
+    document.getElementById('stat-dims').textContent = `${cols}×${rows}`;
+    document.getElementById('stat-total').textContent = String(cells.length);
+    document.getElementById('stat-grass').textContent = String(g);
+    document.getElementById('stat-water').textContent = String(w);
+  }
+  updateStats();
+
+  async function copyJson() {
+    const s = JSON.stringify(snapshot());
+    try {
+      await navigator.clipboard.writeText(s);
+      showToast('Copied to clipboard');
+    } catch {
+      jsonBox.value = s;
+      jsonBox.select();
+      showToast('Select + copy from the box below');
+    }
+  }
+  function loadPasted() {
+    const raw = jsonBox.value.trim();
+    if (!raw) { showToast('Paste JSON first'); return; }
+    try {
+      const obj = JSON.parse(raw);
+      if (!obj.cols || !obj.rows || !obj.cells) throw new Error('bad shape');
+      pushUndo();
+      cols = obj.cols; rows = obj.rows;
+      cells = decode(obj.cells, cols * rows);
+      inCols.value = cols; inRows.value = rows;
+      applySize();
+      render();
+      updateStats();
+      saveToStorage();
+      showToast('Layout loaded');
+    } catch (e) {
+      showToast('Invalid JSON');
+    }
+  }
+  function wipeLocal() {
+    if (!confirm('Wipe painted work and clear local save?')) return;
+    try { localStorage.removeItem(LS_KEY); } catch {}
+    cells.fill(0);
+    render(); updateStats();
+    showToast('Wiped');
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1400);
+  }
+
+  // ── Events ──────────────────────────────────────────────
+  function bindEvents() {
+    // Swatches
+    document.querySelectorAll('.swatch').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        brush = parseInt(el.dataset.brush, 10);
+      });
+    });
+    // Size buttons
+    document.querySelectorAll('.size-btn').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.size-btn').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        brushSize = parseInt(el.dataset.size, 10);
+      });
+    });
+    // Actions
+    document.getElementById('btn-fill-grass').addEventListener('click', () => fillAll(1));
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      if (confirm('Clear the whole canvas to void?')) fillAll(0);
+    });
+    document.getElementById('btn-undo').addEventListener('click', undo);
+    document.getElementById('btn-resize').addEventListener('click', () => {
+      resize(parseInt(inCols.value, 10), parseInt(inRows.value, 10));
+    });
+    document.getElementById('btn-copy').addEventListener('click', copyJson);
+    document.getElementById('btn-load').addEventListener('click', loadPasted);
+    document.getElementById('btn-wipe').addEventListener('click', wipeLocal);
+
+    // Theme toggle — cycles system / light / dark
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      if (!cur) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem(LS_THEME, 'dark');
+      } else if (cur === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem(LS_THEME, 'light');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        try { localStorage.removeItem(LS_THEME); } catch {}
+      }
+      refreshColors();
+      render();
+    });
+
+    // Canvas painting
+    canvas.addEventListener('mousedown', (e) => { e.preventDefault(); beginStroke(e); });
+    canvas.addEventListener('mousemove', continueStroke);
+    window.addEventListener('mouseup',   endStroke);
+    canvas.addEventListener('mouseleave', endStroke);
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Touch: single-finger paints
+    canvas.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      beginStroke({ clientX: t.clientX, clientY: t.clientY, button: 0, shiftKey: false });
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      continueStroke({ clientX: t.clientX, clientY: t.clientY });
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchend', endStroke);
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === '1') { pickBrush(1); pickSwatch(1); }
+      else if (e.key === '2') { pickBrush(2); pickSwatch(2); }
+      else if (e.key === '3') { pickBrush(0); pickSwatch(0); }
+      else if (e.key === '[') { stepSize(-1); }
+      else if (e.key === ']') { stepSize( 1); }
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && e.shiftKey) { e.preventDefault(); copyJson(); }
+    });
+  }
+
+  function pickBrush(v) { brush = v; }
+  function pickSwatch(v) {
+    document.querySelectorAll('.swatch').forEach(s => {
+      s.classList.toggle('active', parseInt(s.dataset.brush, 10) === v);
+    });
+  }
+  function stepSize(dir) {
+    const sizes = [1, 3, 5, 9];
+    let idx = sizes.indexOf(brushSize);
+    idx = Math.max(0, Math.min(sizes.length - 1, idx + dir));
+    brushSize = sizes[idx];
+    document.querySelectorAll('.size-btn').forEach(s => {
+      s.classList.toggle('active', parseInt(s.dataset.size, 10) === brushSize);
+    });
+  }
+  function refreshColors() {
+    const s = getComputedStyle(document.documentElement);
+    COLOR[0] = s.getPropertyValue('--void').trim();
+    COLOR[1] = s.getPropertyValue('--grass').trim();
+    COLOR[2] = s.getPropertyValue('--water').trim();
+  }
+})();
+</script>

@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://11kub0tbd1er"]
+
+[ext_resource type="Script" uid="uid://cg5kp5yvw70l2" path="res://scenes/player.gd" id="1_g2els"]
+[ext_resource type="Texture2D" uid="uid://b0lpaiuoj4rqq" path="res://assets/sprites/Man/rotations/south.png" id="2_qhqgy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lu13d"]
+
+[node name="CharacterBody2D" type="CharacterBody2D" unique_id=217411053]
+script = ExtResource("1_g2els")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1997016212]
+shape = SubResource("RectangleShape2D_lu13d")
+
+[node name="Sprite2D" type="Sprite2D" parent="CollisionShape2D" unique_id=960809071]
+texture = ExtResource("2_qhqgy")
