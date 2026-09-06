@@ -63,20 +63,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      # Instead of `vercel pull` (which needs team-scoped token
-      # perms), write the link file manually — the CLI treats a
-      # pre-existing .vercel/project.json as an already-linked
-      # project and skips the pull.
-      - name: Link Vercel project manually
-        run: |
-          mkdir -p build/.vercel
-          cat > build/.vercel/project.json <<EOF
-          {
-            "projectId": "${{ secrets.VERCEL_PROJECT_ID }}",
-            "orgId":     "${{ secrets.VERCEL_ORG_ID }}"
-          }
-          EOF
-
+      # `vercel deploy` con --scope apunta explícitamente al team
+      # y --cwd al build. No dependemos de vercel link ni pull —
+      # el token identifica al usuario, --scope identifica al team,
+      # y en el team elegimos el proyecto por su nombre (--name).
       - name: Deploy to production
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: build
+        run: |
+          vercel deploy build \
+            --prod \
+            --yes \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=renepinedamathieus-projects \
+            --name=i-hear-you
