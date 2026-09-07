@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://d4hud01c8kj2m"]
+[gd_scene load_steps=3 format=3 uid="uid://d4hud01c8kj2m"]
 
 [ext_resource type="Script" path="res://scenes/hud.gd" id="1_hud01"]
+[ext_resource type="PackedScene" path="res://scenes/minimap.tscn" id="2_mmap"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud01")
@@ -102,6 +103,14 @@ text = "WAVE 0"
 [node name="MonstersLabel" type="Label" parent="WavePanel/Margin4/VBox3"]
 layout_mode = 2
 text = "Monsters 0"
+
+[node name="Minimap" parent="." instance=ExtResource("2_mmap")]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -162.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 162.0
 
 [node name="BreakBanner" type="Label" parent="."]
 anchor_left = 0.5

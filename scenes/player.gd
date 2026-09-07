@@ -75,6 +75,7 @@ var _run_textures: Array = []
 func _ready() -> void:
 	add_to_group("player")
 	hp = max_hp
+	_apply_camera_zoom_for_device()
 	for dir_name in DIR_NAMES:
 		_idle_textures.append(load("res://assets/sprites/Man/rotations/" + dir_name + ".png"))
 		var frames: Array[Texture2D] = []
@@ -87,6 +88,19 @@ func _ready() -> void:
 
 func set_touch_input(v: Vector2) -> void:
 	_touch_input = v
+
+## En móvil la pantalla es chica y queremos ver menos mundo pero
+## más detalle — subimos el zoom. En desktop mantenemos 1.5 así
+## se sigue viendo bastante alrededor.
+func _apply_camera_zoom_for_device() -> void:
+	var cam: Camera2D = $Camera2D
+	var vp := get_viewport().get_visible_rect().size
+	var is_touch := DisplayServer.is_touchscreen_available()
+	var is_small := vp.x < 900.0 or vp.y < 700.0
+	if is_touch or is_small:
+		cam.zoom = Vector2(2.4, 2.4)
+	else:
+		cam.zoom = Vector2(1.5, 1.5)
 
 func _physics_process(delta: float) -> void:
 	# Movement — teclado tiene prioridad; si no hay tecla, usamos touch.

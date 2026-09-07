@@ -20,6 +20,7 @@ var _textures: Array[Texture2D] = []
 @onready var _label: Label = $Label
 
 func _ready() -> void:
+	add_to_group("remote_player")
 	for dir_name in DIR_NAMES:
 		var t: Texture2D = load("res://assets/sprites/Man/rotations/" + dir_name + ".png")
 		_textures.append(t)
