@@ -1,0 +1,42 @@
+[gd_scene load_steps=4 format=3 uid="uid://cttouch01d0a8"]
+
+[ext_resource type="Script" path="res://scenes/touch_controls.gd" id="1_tc01"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_base"]
+bg_color = Color(1, 1, 1, 0.18)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 0.55)
+corner_radius_top_left = 90
+corner_radius_top_right = 90
+corner_radius_bottom_right = 90
+corner_radius_bottom_left = 90
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_knob"]
+bg_color = Color(1, 1, 1, 0.78)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[node name="TouchControls" type="CanvasLayer"]
+layer = 5
+script = ExtResource("1_tc01")
+
+[node name="Base" type="Panel" parent="."]
+custom_minimum_size = Vector2(180, 180)
+offset_right = 180.0
+offset_bottom = 180.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_base")
+
+[node name="Knob" type="Panel" parent="Base"]
+custom_minimum_size = Vector2(80, 80)
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 130.0
+offset_bottom = 130.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_knob")

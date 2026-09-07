@@ -64,6 +64,8 @@ var _fire_cd: float = 0.0
 var _regen_accum: float = 0.0
 var _run_time: float = 0.0
 var _run_frame: int = 0
+# Input táctil normalizado a -1..1. Lo setea TouchControls vía signal.
+var _touch_input: Vector2 = Vector2.ZERO
 
 var _idle_textures: Array[Texture2D] = []
 var _run_textures: Array = []
@@ -83,12 +85,16 @@ func _ready() -> void:
 	emit_signal("hp_changed", hp, max_hp)
 	emit_signal("xp_changed", xp, xp_to_next, level)
 
+func set_touch_input(v: Vector2) -> void:
+	_touch_input = v
+
 func _physics_process(delta: float) -> void:
-	# Movement
-	var input := Vector2(
+	# Movement — teclado tiene prioridad; si no hay tecla, usamos touch.
+	var kb := Vector2(
 		Input.get_axis("ui_left", "ui_right"),
 		Input.get_axis("ui_up", "ui_down"),
 	)
+	var input: Vector2 = kb if kb != Vector2.ZERO else _touch_input
 	var moving := input != Vector2.ZERO
 	if moving:
 		input = input.normalized()

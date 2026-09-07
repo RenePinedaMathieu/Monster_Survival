@@ -14,6 +14,7 @@ extends Node2D
 const REMOTE_PLAYER_SCENE := preload("res://scenes/remote_player.tscn")
 const MONSTER_SCENE := preload("res://scenes/monster.tscn")
 const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
+const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 
 const MONSTER_TEXTURES: Array[String] = [
 	"res://assets/sprites/monsters/pipo-enemy001.png",
@@ -53,6 +54,12 @@ func _ready() -> void:
 	_player.leveled_up.connect(_on_player_leveled_up)
 	_player.died.connect(_on_player_died)
 	_hud.set_wave(0, 0)
+	# Joystick táctil — vive siempre; en desktop no molesta porque
+	# no recibe eventos de touch. En web/mobile permite jugar sin
+	# teclado.
+	var tc = TOUCH_CONTROLS_SCENE.instantiate()
+	add_child(tc)
+	tc.move_input.connect(_player.set_touch_input)
 	# Primer wave con un delay corto para que veas el mundo un
 	# segundo antes de que caiga la fiesta
 	get_tree().create_timer(1.5).timeout.connect(_start_next_wave)
