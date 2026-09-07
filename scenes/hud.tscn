@@ -5,33 +5,69 @@
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud01")
 
-[node name="Panel" type="PanelContainer" parent="."]
-anchors_preset = -1
-anchor_left = 0.02
-anchor_top = 0.02
-anchor_right = 0.02
-anchor_bottom = 0.02
-offset_right = 260.0
-offset_bottom = 40.0
-grow_horizontal = 1
+[node name="HPPanel" type="PanelContainer" parent="."]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 272.0
+offset_bottom = 60.0
 
-[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+[node name="Margin" type="MarginContainer" parent="HPPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer"]
+[node name="VBox" type="VBoxContainer" parent="HPPanel/Margin"]
 layout_mode = 2
 
-[node name="HPLabel" type="Label" parent="Panel/MarginContainer/VBox"]
+[node name="HPLabel" type="Label" parent="HPPanel/Margin/VBox"]
 layout_mode = 2
 text = "HP  100 / 100"
 
-[node name="HPBar" type="ProgressBar" parent="Panel/MarginContainer/VBox"]
+[node name="HPBar" type="ProgressBar" parent="HPPanel/Margin/VBox"]
 custom_minimum_size = Vector2(230, 8)
 layout_mode = 2
 max_value = 100.0
 value = 100.0
 show_percentage = false
+
+[node name="WavePanel" type="PanelContainer" parent="."]
+offset_left = 12.0
+offset_top = 76.0
+offset_right = 272.0
+offset_bottom = 128.0
+
+[node name="Margin2" type="MarginContainer" parent="WavePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox2" type="VBoxContainer" parent="WavePanel/Margin2"]
+layout_mode = 2
+
+[node name="WaveLabel" type="Label" parent="WavePanel/Margin2/VBox2"]
+layout_mode = 2
+text = "WAVE  0"
+
+[node name="MonstersLabel" type="Label" parent="WavePanel/Margin2/VBox2"]
+layout_mode = 2
+text = "Monsters  0"
+
+[node name="BreakBanner" type="Label" parent="."]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.35
+anchor_right = 0.5
+anchor_bottom = 0.35
+offset_left = -200.0
+offset_top = -30.0
+offset_right = 200.0
+offset_bottom = 30.0
+theme_override_font_sizes/font_size = 42
+text = "WAVE CLEARED"
+horizontal_alignment = 1
+vertical_alignment = 1
+modulate = Color(1, 1, 1, 0)

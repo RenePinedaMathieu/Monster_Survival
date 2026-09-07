@@ -1,30 +1,37 @@
 extends CharacterBody2D
 
-## Monstruo simple con IA de wander + chase. Sin sprite pre-asignado:
-## main.gd le hace `set_sprite(<texture>)` al spawnear para poder
-## reusar la misma escena con distintos monstruos.
+## Monstruo con state machine de ataque telegráfico:
+##   idle_wander → chase → windup → strike → cooldown → chase
 ##
-## Estados:
-##   idle_wander  → deambula sin rumbo por ~2s
-##   chase        → persigue al player si está dentro del radio de
-##                  detección (Area2D hija)
-##
-## En contacto con el player: le drena 1 HP/s vía la señal `hit_player`
-## que main.gd escucha para actualizar la barra.
+## El windup es de 400ms con tint rojo — el player tiene tiempo de
+## esquivarlo. En strike (200ms) chequeamos si el player está en
+## rango — si sí, le pega damage limpio. Cooldown 600ms antes de
+## que pueda intentar otro ataque.
 
 signal hit_player(damage: float)
+signal died
+
+enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN }
 
 const WANDER_SPEED := 30.0
-const CHASE_SPEED  := 80.0
+const CHASE_SPEED  := 90.0
 const WANDER_CHANGE_MS := 2000
-const DAMAGE_PER_SEC := 10.0
+const ATTACK_RANGE := 40.0   # a esta distancia empieza el windup
+const DETECT_RANGE := 260.0
+const WINDUP_TIME := 0.40
+const STRIKE_TIME := 0.20
+const COOLDOWN_TIME := 0.60
+const HIT_DAMAGE := 12.0
 
 @export var max_hp: float = 3.0
 var hp: float
+var state: int = State.IDLE_WANDER
+
 var _target_player: Node2D = null
 var _wander_dir := Vector2.ZERO
 var _last_wander_change := 0
-var _damage_accum := 0.0
+var _state_timer := 0.0
+var _did_hit_this_strike := false
 
 @onready var _sprite: Sprite2D = $Sprite2D
 @onready var _detection: Area2D = $DetectionArea
@@ -39,27 +46,100 @@ func set_sprite(tex: Texture2D) -> void:
 	_sprite.texture = tex
 
 func _physics_process(delta: float) -> void:
-	if _target_player != null and is_instance_valid(_target_player):
-		# Chase
-		var to_player := _target_player.global_position - global_position
-		var dir := to_player.normalized() if to_player.length() > 1.0 else Vector2.ZERO
-		velocity = dir * CHASE_SPEED
-		# Flip sprite horizontal según hacia dónde miramos
-		if abs(dir.x) > 0.1:
-			_sprite.flip_h = dir.x < 0
-		# Damage on close contact
-		if to_player.length() < 32.0:
-			_damage_accum += delta
-			if _damage_accum >= 1.0 / DAMAGE_PER_SEC:
-				emit_signal("hit_player", DAMAGE_PER_SEC * _damage_accum)
-				_damage_accum = 0.0
-	else:
-		# Wander idle
-		var now := Time.get_ticks_msec()
-		if now - _last_wander_change > WANDER_CHANGE_MS:
-			_pick_new_wander()
-		velocity = _wander_dir * WANDER_SPEED
+	if not is_instance_valid(_target_player):
+		_target_player = null
+
+	match state:
+		State.IDLE_WANDER: _tick_wander(delta)
+		State.CHASE:       _tick_chase(delta)
+		State.WINDUP:      _tick_windup(delta)
+		State.STRIKE:      _tick_strike(delta)
+		State.COOLDOWN:    _tick_cooldown(delta)
+
 	move_and_slide()
+
+func _tick_wander(_delta: float) -> void:
+	var now := Time.get_ticks_msec()
+	if now - _last_wander_change > WANDER_CHANGE_MS:
+		_pick_new_wander()
+	velocity = _wander_dir * WANDER_SPEED
+	if _target_player and global_position.distance_to(_target_player.global_position) < DETECT_RANGE:
+		_enter_chase()
+
+func _tick_chase(_delta: float) -> void:
+	if _target_player == null:
+		_enter_wander()
+		return
+	var to_player: Vector2 = _target_player.global_position - global_position
+	var d := to_player.length()
+	if d < ATTACK_RANGE:
+		_enter_windup()
+		return
+	if d > DETECT_RANGE * 1.4:
+		_enter_wander()
+		return
+	var dir := to_player.normalized()
+	velocity = dir * CHASE_SPEED
+	if abs(dir.x) > 0.1:
+		_sprite.flip_h = dir.x < 0
+
+func _tick_windup(delta: float) -> void:
+	velocity = Vector2.ZERO
+	_state_timer += delta
+	if _state_timer >= WINDUP_TIME:
+		_enter_strike()
+
+func _tick_strike(delta: float) -> void:
+	velocity = Vector2.ZERO
+	_state_timer += delta
+	# Frame de golpe — un solo hit por strike
+	if not _did_hit_this_strike and _target_player \
+			and global_position.distance_to(_target_player.global_position) < ATTACK_RANGE + 12.0:
+		_did_hit_this_strike = true
+		emit_signal("hit_player", HIT_DAMAGE)
+	if _state_timer >= STRIKE_TIME:
+		_enter_cooldown()
+
+func _tick_cooldown(delta: float) -> void:
+	velocity = Vector2.ZERO
+	_state_timer += delta
+	if _state_timer >= COOLDOWN_TIME:
+		if _target_player:
+			_enter_chase()
+		else:
+			_enter_wander()
+
+# ── State transitions ────────────────────────────────────────────
+
+func _enter_wander() -> void:
+	state = State.IDLE_WANDER
+	_sprite.modulate = Color.WHITE
+	_pick_new_wander()
+
+func _enter_chase() -> void:
+	state = State.CHASE
+	_sprite.modulate = Color.WHITE
+
+func _enter_windup() -> void:
+	state = State.WINDUP
+	_state_timer = 0.0
+	_did_hit_this_strike = false
+	# Tint rojo para telegrafiar el golpe
+	_sprite.modulate = Color(1.4, 0.6, 0.6)
+
+func _enter_strike() -> void:
+	state = State.STRIKE
+	_state_timer = 0.0
+	# Pulso visual
+	_sprite.scale = Vector2(0.28 * 1.25, 0.28 * 1.25)
+	create_tween().tween_property(_sprite, "scale", Vector2(0.28, 0.28), 0.15)
+
+func _enter_cooldown() -> void:
+	state = State.COOLDOWN
+	_state_timer = 0.0
+	_sprite.modulate = Color.WHITE
+
+# ── Utils ────────────────────────────────────────────────────────
 
 func _pick_new_wander() -> void:
 	var ang := randf() * TAU
@@ -76,5 +156,9 @@ func _on_body_exited(body: Node) -> void:
 
 func take_damage(amount: float) -> void:
 	hp -= amount
+	# Flash blanco brevísimo para hitfeedback
+	_sprite.modulate = Color(2.0, 2.0, 2.0)
+	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)
 	if hp <= 0.0:
+		emit_signal("died")
 		queue_free()

@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://cmst01d0a8k2g"]
+[gd_scene format=3 uid="uid://cmst01d0a8k2g"]
 
 [ext_resource type="Script" path="res://scenes/monster.gd" id="1_mst01"]
 
@@ -7,7 +7,7 @@ radius = 24.0
 
 [node name="Monster" type="CharacterBody2D"]
 collision_layer = 2
-collision_mask = 1
+collision_mask = 4
 script = ExtResource("1_mst01")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://cdvel8ryd6hgs"]
+[gd_scene format=3 uid="uid://cdvel8ryd6hgs"]
 
 [ext_resource type="Script" path="res://scenes/remote_player.gd" id="1_rmt01"]
 [ext_resource type="Texture2D" uid="uid://b0lpaiuoj4rqq" path="res://assets/sprites/Man/rotations/south.png" id="2_rmt02"]
