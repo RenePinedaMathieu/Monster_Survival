@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3 uid="uid://d4hud01c8kj2m"]
+
+[ext_resource type="Script" path="res://scenes/hud.gd" id="1_hud01"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud01")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = -1
+anchor_left = 0.02
+anchor_top = 0.02
+anchor_right = 0.02
+anchor_bottom = 0.02
+offset_right = 260.0
+offset_bottom = 40.0
+grow_horizontal = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Panel/MarginContainer"]
+layout_mode = 2
+
+[node name="HPLabel" type="Label" parent="Panel/MarginContainer/VBox"]
+layout_mode = 2
+text = "HP  100 / 100"
+
+[node name="HPBar" type="ProgressBar" parent="Panel/MarginContainer/VBox"]
+custom_minimum_size = Vector2(230, 8)
+layout_mode = 2
+max_value = 100.0
+value = 100.0
+show_percentage = false

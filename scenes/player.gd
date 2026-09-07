@@ -2,13 +2,17 @@ extends CharacterBody2D
 
 ## Local player. WASD/flechas para moverse. El sprite cambia entre
 ## 8 direcciones (clockwise desde south) según hacia dónde vas. La
-## cámara sigue al personaje (agregada como hija en player.tscn), y
-## la posición se broadcasta al canal `world` para el multiplayer.
+## cámara sigue al personaje, y la posición se broadcasta al canal
+## `world` para el multiplayer.
+##
+## Emite `hp_changed(current, max)` cada vez que le pegan o cura —
+## la UI del HUD escucha para actualizar la barra.
+
+signal hp_changed(current: float, max_hp: float)
+signal died
 
 const SPEED := 200.0
 
-# Nombres de las carpetas de sprites, en orden 0..7 clockwise
-# desde south. Match con assets/sprites/Man/rotations/<name>.png.
 const DIR_NAMES: Array[String] = [
 	"south",       # 0
 	"south-east",  # 1
@@ -20,18 +24,23 @@ const DIR_NAMES: Array[String] = [
 	"south-west",  # 7
 ]
 
-var _textures: Array[Texture2D] = []
+@export var max_hp: float = 100.0
+var hp: float
 var current_dir: int = 0
+
+var _textures: Array[Texture2D] = []
 
 @onready var _sprite: Sprite2D = $Sprite2D
 
 func _ready() -> void:
-	# Precargamos las 8 direcciones a memoria — así el cambio de
-	# textura en cada frame de movimiento no gatilla un disk read.
+	add_to_group("player")   # los monsters detectan por este grupo
+	hp = max_hp
 	for dir_name in DIR_NAMES:
 		var t: Texture2D = load("res://assets/sprites/Man/rotations/" + dir_name + ".png")
 		_textures.append(t)
 	_apply_direction()
+	# Aviso inicial para que el HUD se pinte al arranque
+	emit_signal("hp_changed", hp, max_hp)
 
 func _physics_process(_delta: float) -> void:
 	var input := Vector2(
@@ -46,20 +55,26 @@ func _physics_process(_delta: float) -> void:
 			_apply_direction()
 	velocity = input * SPEED
 	move_and_slide()
-	# Broadcast solo si estás moviéndote — el Realtime lo throttlea
-	# igual a 130ms, pero enviar frames "quieto" es puro ruido.
 	if input != Vector2.ZERO:
 		Realtime.send_move(position.x, position.y, 1, current_dir)
+
+func take_damage(amount: float) -> void:
+	if hp <= 0.0: return
+	hp = max(0.0, hp - amount)
+	emit_signal("hp_changed", hp, max_hp)
+	if hp <= 0.0:
+		emit_signal("died")
+
+func heal(amount: float) -> void:
+	hp = min(max_hp, hp + amount)
+	emit_signal("hp_changed", hp, max_hp)
 
 func _apply_direction() -> void:
 	if current_dir < _textures.size():
 		_sprite.texture = _textures[current_dir]
 
-## Convierte un vector normalizado a índice 0..7 clockwise desde south.
-## Godot 2D: +x = este, +y = sur (screen y-down). angle() da 0=+x,
-## PI/2=+y. Rotamos la referencia para que south=0 y clockwise crezca.
 func _vec_to_dir(v: Vector2) -> int:
-	var angle := v.angle()               # -PI..PI, 0=+x
-	var shifted := -angle + PI / 2.0     # ahora south=0, clockwise
-	var normalized := fmod(shifted + TAU, TAU)  # 0..TAU
+	var angle := v.angle()
+	var shifted := -angle + PI / 2.0
+	var normalized := fmod(shifted + TAU, TAU)
 	return int(round(normalized / (PI / 4.0))) % 8
