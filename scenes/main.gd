@@ -13,6 +13,7 @@ extends Node2D
 
 const REMOTE_PLAYER_SCENE := preload("res://scenes/remote_player.tscn")
 const MONSTER_SCENE := preload("res://scenes/monster.tscn")
+const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 
 const MONSTER_TEXTURES: Array[String] = [
 	"res://assets/sprites/monsters/pipo-enemy001.png",
@@ -25,9 +26,10 @@ const BOSS_TEXTURE := "res://assets/sprites/monsters/pipo-boss001.png"
 
 const SPAWN_INNER := 500.0
 const SPAWN_OUTER := 800.0
-const WAVE_BREAK_SEC := 3.0
-const BASE_MONSTERS := 3
-const MONSTERS_PER_WAVE := 2
+const WAVE_BREAK_SEC := 2.5
+# Densidad VS: mucho más volumen. Waves cortas y agresivas.
+const BASE_MONSTERS := 8
+const MONSTERS_PER_WAVE := 4
 
 @onready var _remote_players_container: Node2D = $RemotePlayers
 @onready var _monsters_container: Node2D = $Monsters
@@ -47,6 +49,8 @@ func _ready() -> void:
 	Realtime.remote_move.connect(_on_remote_move)
 	Supabase.sign_in_anonymous("player_" + str(randi() % 9999))
 	_player.hp_changed.connect(_hud.on_hp_changed)
+	_player.xp_changed.connect(_hud.on_xp_changed)
+	_player.leveled_up.connect(_on_player_leveled_up)
 	_player.died.connect(_on_player_died)
 	_hud.set_wave(0, 0)
 	# Primer wave con un delay corto para que veas el mundo un
@@ -125,5 +129,13 @@ func _on_monster_died() -> void:
 		_hud.show_wave_break(WAVE_BREAK_SEC)
 		get_tree().create_timer(WAVE_BREAK_SEC).timeout.connect(_start_next_wave)
 
+func _on_player_leveled_up(_new_level: int) -> void:
+	# Instanciamos el modal, que se auto-pause y auto-destruye al elegir.
+	var menu = LEVEL_UP_MENU_SCENE.instantiate()
+	add_child(menu)
+	menu.show_for(_player)
+
 func _on_player_died() -> void:
-	get_tree().reload_current_scene()
+	_hud.stop_timer()
+	# Pequeño delay para que el player vea que murió
+	get_tree().create_timer(1.2).timeout.connect(func(): get_tree().reload_current_scene())

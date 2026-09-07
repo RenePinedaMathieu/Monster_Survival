@@ -13,6 +13,8 @@ signal died
 
 enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN }
 
+const XP_ORB_SCENE := preload("res://scenes/xp_orb.tscn")
+
 const WANDER_SPEED := 30.0
 const CHASE_SPEED  := 90.0
 const WANDER_CHANGE_MS := 2000
@@ -25,6 +27,7 @@ const HIT_DAMAGE := 12.0
 const BASE_SCALE := 0.18   # match monster.tscn Sprite2D.scale
 
 @export var max_hp: float = 3.0
+@export var xp_reward: int = 1
 var hp: float
 var state: int = State.IDLE_WANDER
 
@@ -43,11 +46,11 @@ var _did_hit_this_strike := false
 @onready var _detection: Area2D = $DetectionArea
 
 func _ready() -> void:
+	add_to_group("monster")
 	hp = max_hp
 	_detection.body_entered.connect(_on_body_entered)
 	_detection.body_exited.connect(_on_body_exited)
 	_pick_new_wander()
-	# Si ya nos pasaron un target antes del _ready, arrancamos chase
 	if target and is_instance_valid(target):
 		_enter_chase()
 
@@ -169,9 +172,16 @@ func _on_body_exited(_body: Node) -> void:
 
 func take_damage(amount: float) -> void:
 	hp -= amount
-	# Flash blanco brevísimo para hitfeedback
 	_sprite.modulate = Color(2.0, 2.0, 2.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)
 	if hp <= 0.0:
+		_drop_xp_orb()
 		emit_signal("died")
 		queue_free()
+
+func _drop_xp_orb() -> void:
+	var orb = XP_ORB_SCENE.instantiate()
+	orb.add_to_group("xp_orb")
+	get_tree().current_scene.add_child(orb)
+	orb.global_position = global_position
+	orb.set_xp(xp_reward)

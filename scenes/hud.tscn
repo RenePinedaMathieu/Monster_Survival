@@ -8,8 +8,8 @@ script = ExtResource("1_hud01")
 [node name="HPPanel" type="PanelContainer" parent="."]
 offset_left = 12.0
 offset_top = 12.0
-offset_right = 272.0
-offset_bottom = 60.0
+offset_right = 302.0
+offset_bottom = 62.0
 
 [node name="Margin" type="MarginContainer" parent="HPPanel"]
 layout_mode = 2
@@ -26,47 +26,93 @@ layout_mode = 2
 text = "HP  100 / 100"
 
 [node name="HPBar" type="ProgressBar" parent="HPPanel/Margin/VBox"]
-custom_minimum_size = Vector2(230, 8)
+custom_minimum_size = Vector2(260, 10)
 layout_mode = 2
 max_value = 100.0
 value = 100.0
 show_percentage = false
 
-[node name="WavePanel" type="PanelContainer" parent="."]
+[node name="TimerPanel" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_top = 12.0
+offset_right = 80.0
+offset_bottom = 60.0
+
+[node name="Margin3" type="MarginContainer" parent="TimerPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="TimerLabel" type="Label" parent="TimerPanel/Margin3"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "00:00"
+horizontal_alignment = 1
+
+[node name="LevelPanel" type="PanelContainer" parent="."]
 offset_left = 12.0
 offset_top = 76.0
-offset_right = 272.0
-offset_bottom = 128.0
+offset_right = 302.0
+offset_bottom = 132.0
 
-[node name="Margin2" type="MarginContainer" parent="WavePanel"]
+[node name="Margin2" type="MarginContainer" parent="LevelPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="VBox2" type="VBoxContainer" parent="WavePanel/Margin2"]
+[node name="VBox2" type="VBoxContainer" parent="LevelPanel/Margin2"]
 layout_mode = 2
 
-[node name="WaveLabel" type="Label" parent="WavePanel/Margin2/VBox2"]
+[node name="LevelLabel" type="Label" parent="LevelPanel/Margin2/VBox2"]
 layout_mode = 2
-text = "WAVE  0"
+text = "LVL 1"
 
-[node name="MonstersLabel" type="Label" parent="WavePanel/Margin2/VBox2"]
+[node name="XPBar" type="ProgressBar" parent="LevelPanel/Margin2/VBox2"]
+custom_minimum_size = Vector2(260, 10)
 layout_mode = 2
-text = "Monsters  0"
+max_value = 4.0
+show_percentage = false
+
+[node name="WavePanel" type="PanelContainer" parent="."]
+offset_left = 12.0
+offset_top = 148.0
+offset_right = 302.0
+offset_bottom = 200.0
+
+[node name="Margin4" type="MarginContainer" parent="WavePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox3" type="VBoxContainer" parent="WavePanel/Margin4"]
+layout_mode = 2
+
+[node name="WaveLabel" type="Label" parent="WavePanel/Margin4/VBox3"]
+layout_mode = 2
+text = "WAVE 0"
+
+[node name="MonstersLabel" type="Label" parent="WavePanel/Margin4/VBox3"]
+layout_mode = 2
+text = "Monsters 0"
 
 [node name="BreakBanner" type="Label" parent="."]
-anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.35
 anchor_right = 0.5
 anchor_bottom = 0.35
-offset_left = -200.0
-offset_top = -30.0
-offset_right = 200.0
-offset_bottom = 30.0
-theme_override_font_sizes/font_size = 42
+offset_left = -220.0
+offset_top = -34.0
+offset_right = 220.0
+offset_bottom = 34.0
+theme_override_font_sizes/font_size = 48
 text = "WAVE CLEARED"
 horizontal_alignment = 1
 vertical_alignment = 1

@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://cluv01d0a8kj2m"]
+
+[ext_resource type="Script" path="res://scenes/level_up_menu.gd" id="1_lvl01"]
+
+[node name="LevelUpMenu" type="CanvasLayer"]
+process_mode = 3
+layer = 10
+script = ExtResource("1_lvl01")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.62)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="Center/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "LEVEL UP"
+horizontal_alignment = 1
+
+[node name="HBox" type="HBoxContainer" parent="Center/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Card1" type="Button" parent="Center/VBox/HBox"]
+custom_minimum_size = Vector2(240, 180)
+layout_mode = 2
+text = "Card 1"
+
+[node name="Card2" type="Button" parent="Center/VBox/HBox"]
+custom_minimum_size = Vector2(240, 180)
+layout_mode = 2
+text = "Card 2"
+
+[node name="Card3" type="Button" parent="Center/VBox/HBox"]
+custom_minimum_size = Vector2(240, 180)
+layout_mode = 2
+text = "Card 3"
