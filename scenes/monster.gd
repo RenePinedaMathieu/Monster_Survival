@@ -16,12 +16,13 @@ enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN }
 const WANDER_SPEED := 30.0
 const CHASE_SPEED  := 90.0
 const WANDER_CHANGE_MS := 2000
-const ATTACK_RANGE := 40.0   # a esta distancia empieza el windup
-const DETECT_RANGE := 260.0
+const ATTACK_RANGE := 30.0   # a esta distancia empieza el windup
+const DETECT_RANGE := 240.0
 const WINDUP_TIME := 0.40
 const STRIKE_TIME := 0.20
 const COOLDOWN_TIME := 0.60
 const HIT_DAMAGE := 12.0
+const BASE_SCALE := 0.18   # match monster.tscn Sprite2D.scale
 
 @export var max_hp: float = 3.0
 var hp: float
@@ -131,8 +132,8 @@ func _enter_strike() -> void:
 	state = State.STRIKE
 	_state_timer = 0.0
 	# Pulso visual
-	_sprite.scale = Vector2(0.28 * 1.25, 0.28 * 1.25)
-	create_tween().tween_property(_sprite, "scale", Vector2(0.28, 0.28), 0.15)
+	_sprite.scale = Vector2.ONE * BASE_SCALE * 1.25
+	create_tween().tween_property(_sprite, "scale", Vector2.ONE * BASE_SCALE, 0.15)
 
 func _enter_cooldown() -> void:
 	state = State.COOLDOWN

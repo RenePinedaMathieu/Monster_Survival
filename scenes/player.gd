@@ -17,6 +17,7 @@ const ATTACK_COOLDOWN := 0.35
 const ATTACK_DAMAGE := 2.0
 const SHOOT_COOLDOWN := 0.20
 const RUN_FPS := 12.0
+const BASE_SCALE := 0.5   # sprite scale — match player.tscn Sprite2D.scale
 
 const COIN_SCENE := preload("res://scenes/coin_projectile.tscn")
 
@@ -115,8 +116,8 @@ func _apply_idle() -> void:
 
 func _do_attack() -> void:
 	_attack_cd = ATTACK_COOLDOWN
-	_sprite.scale = Vector2(1.15, 1.15)
-	create_tween().tween_property(_sprite, "scale", Vector2.ONE, 0.15)
+	_sprite.scale = Vector2.ONE * BASE_SCALE * 1.15
+	create_tween().tween_property(_sprite, "scale", Vector2.ONE * BASE_SCALE, 0.15)
 	for body in _attack_area.get_overlapping_bodies():
 		if body == self: continue
 		if body.has_method("take_damage"):

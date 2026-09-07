@@ -102,7 +102,7 @@ func _spawn_monster(is_boss: bool) -> void:
 	if is_boss:
 		tex_path = BOSS_TEXTURE
 		m.max_hp = 20.0
-		m.scale = Vector2(1.35, 1.35)
+		m.scale = Vector2(1.8, 1.8)
 	else:
 		tex_path = MONSTER_TEXTURES[randi() % MONSTER_TEXTURES.size()]
 	_monsters_container.add_child(m)

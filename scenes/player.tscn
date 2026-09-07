@@ -4,10 +4,10 @@
 [ext_resource type="Texture2D" uid="uid://b0lpaiuoj4rqq" path="res://assets/sprites/Man/rotations/south.png" id="2_qhqgy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lu13d"]
-size = Vector2(28, 28)
+size = Vector2(14, 14)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_atk01"]
-radius = 70.0
+radius = 42.0
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 1
@@ -15,10 +15,11 @@ collision_mask = 4
 script = ExtResource("1_g2els")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 20)
+position = Vector2(0, 10)
 shape = SubResource("RectangleShape2D_lu13d")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
 texture = ExtResource("2_qhqgy")
 
 [node name="Camera2D" type="Camera2D" parent="."]

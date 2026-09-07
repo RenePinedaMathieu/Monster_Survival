@@ -3,7 +3,10 @@
 [ext_resource type="Script" path="res://scenes/monster.gd" id="1_mst01"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_mst01"]
-radius = 24.0
+radius = 14.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_det01"]
+radius = 240.0
 
 [node name="Monster" type="CharacterBody2D"]
 collision_layer = 2
@@ -11,8 +14,8 @@ collision_mask = 4
 script = ExtResource("1_mst01")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.28, 0.28)
-position = Vector2(0, -30)
+scale = Vector2(0.18, 0.18)
+position = Vector2(0, -20)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_mst01")
@@ -22,5 +25,4 @@ collision_layer = 0
 collision_mask = 1
 
 [node name="DetectionShape" type="CollisionShape2D" parent="DetectionArea"]
-shape = SubResource("CircleShape2D_mst01")
-scale = Vector2(10, 10)
+shape = SubResource("CircleShape2D_det01")
