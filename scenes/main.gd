@@ -107,6 +107,10 @@ func _spawn_monster(is_boss: bool) -> void:
 		tex_path = MONSTER_TEXTURES[randi() % MONSTER_TEXTURES.size()]
 	_monsters_container.add_child(m)
 	m.set_sprite(load(tex_path))
+	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
+	# sin necesidad de estar en el radio de detección. Los remote
+	# players quedan fuera del scope (cada cliente maneja los suyos).
+	m.target = _player
 	m.hit_player.connect(_on_monster_hit_player)
 	m.died.connect(_on_monster_died)
 
