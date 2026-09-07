@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://cdvel8ryd6hgs"]
+
+[ext_resource type="Script" path="res://scenes/remote_player.gd" id="1_rmt01"]
+[ext_resource type="Texture2D" uid="uid://b0lpaiuoj4rqq" path="res://assets/sprites/Man/rotations/south.png" id="2_rmt02"]
+
+[node name="RemotePlayer" type="Node2D"]
+script = ExtResource("1_rmt01")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_rmt02")
+
+[node name="Label" type="Label" parent="."]
+offset_left = -40.0
+offset_top = -80.0
+offset_right = 40.0
+offset_bottom = -60.0
+text = "player"
+horizontal_alignment = 1
