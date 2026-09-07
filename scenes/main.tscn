@@ -1,13 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://d0ec4v3g8x7rl"]
+[gd_scene load_steps=5 format=3 uid="uid://d0ec4v3g8x7rl"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main1"]
 [ext_resource type="PackedScene" uid="uid://11kub0tbd1er" path="res://scenes/player.tscn" id="2_plyr1"]
 [ext_resource type="PackedScene" uid="uid://d4hud01c8kj2m" path="res://scenes/hud.tscn" id="3_hud01"]
+[ext_resource type="PackedScene" uid="uid://cwrld001a8kj2m" path="res://scenes/world.tscn" id="4_wrl01"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main1")
 
-[node name="World" type="Node2D" parent="."]
+[node name="World" parent="." instance=ExtResource("4_wrl01")]
 
 [node name="RemotePlayers" type="Node2D" parent="."]
 
