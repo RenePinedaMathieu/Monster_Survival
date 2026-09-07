@@ -84,10 +84,13 @@ func _make_prop(tex: Texture2D, solid: bool) -> Node2D:
 		body.collision_mask = 0
 		var col := CollisionShape2D.new()
 		var shape := CircleShape2D.new()
-		# Radio en la base — chico para que puedas pasar entre árboles
-		shape.radius = max(6.0, tex.get_width() * 0.20)
+		# Radio pequeño en la BASE del sprite (anchor=pies). Ajustable
+		# desde el editor abriendo world.tscn y editando la propiedad
+		# shape.radius de cada CollisionShape2D. Para editar manual,
+		# ver comentario en world.gd al final.
+		shape.radius = max(4.0, tex.get_width() * 0.12)
 		col.shape = shape
-		col.position = Vector2(0, -6)
+		col.position = Vector2(0, -4)   # apenas encima del anchor
 		body.add_child(col)
 		root.add_child(body)
 	return root
