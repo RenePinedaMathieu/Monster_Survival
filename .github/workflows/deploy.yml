@@ -5,6 +5,14 @@ name: Export Godot + Deploy to Vercel
 on:
   push:
     branches: [main]
+    # Docs-only cambios no gatillan el deploy — ahorra minutos del
+    # workflow y evita redeploys idénticos. Cualquier .md, el
+    # .gitignore y LICENSE quedan fuera. Cambios de código o assets
+    # sí siguen disparando.
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch:
 
 env:
