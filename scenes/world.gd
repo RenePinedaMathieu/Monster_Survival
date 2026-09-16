@@ -23,12 +23,21 @@ extends Node2D
 ## Todo el layout usa un seed fijo (MAP_SEED) — el mapa es el mismo
 ## en cada run, así los players aprenden dónde está cada bioma.
 ##
-## Wang tile bit ordering — corner-based, 16 tiles:
-##   bit 0 = NW corner, bit 1 = NE, bit 2 = SW, bit 3 = SE
-## Y el atlas está indexado COLUMN-MAJOR según HANDOFF.md §4:
-##   tile mask N está en col=N/4, row=N%4.
-## Si al ver el mapa las transiciones se ven cruzadas/rotadas,
-## ese mapping es lo primero a tocar (ver _wang_atlas_pos).
+## Wang tile bit ordering — corner-based, 16 tiles. Bit layout:
+##   bit 0 = NW, bit 1 = NE, bit 2 = SW, bit 3 = SE
+##
+## El mapeo bit→posición en el atlas se derivó analizando los píxeles
+## de cada uno de los 16 tiles (ambos tilesets siguen el MISMO layout):
+##   col = 3 - (SW*2 + SE)
+##   row = 3 - (NW*2 + NE)
+## Mask 15 (todo "otro") está en (0,0); mask 0 (todo grass) en (3,3).
+##
+## Cada tile fuente es 96×72 pero el "top face" (la parte top-down real)
+## son los primeros 48px verticales. Los últimos 24px son el "front
+## face" (pared/acantilado) que estaba diseñado para overlapping en un
+## motor iso — en top-down puro se veía como bandas horizontales feas
+## en cada tile. Se cropea a 96×48 y se escala a 24×24 (stretch vertical
+## 2x, tolerable en pixel art).
 
 const TILE_SIZE := 24
 const WORLD_HALF_TILES := 40   # 80×80 tiles
@@ -74,6 +83,7 @@ const GRASS_WEIGHTS: Array[int] = [72, 10, 10, 8]
 const WANG_TO_WATER_PATH := "res://assets/tiles/pretty_grass_to_water._grass_color_3F9B0B.png"
 const WANG_TO_STONE_PATH := "res://assets/tiles/pretty_grass_3F9B0B_to_stone.png"
 const WANG_TILE_SIZE := Vector2(96, 72)
+const WANG_TOP_FACE_H := 48   # sólo los primeros 48px son "top-down"
 const WANG_GAP := 1
 
 # ── Props ────────────────────────────────────────────────────────
@@ -206,29 +216,34 @@ func _corner_is(vx: int, vy: int, kind: int) -> bool:
 	return _is_stone_at(float(vx), float(vy))
 
 func _make_wang_sprite(tex: Texture2D, mask: int) -> Sprite2D:
-	# HANDOFF.md §4: PixelLab wang tiles son COLUMN-MAJOR:
-	# tile mask N en col=N/4, row=N%4.
-	var col := mask / 4
-	var row := mask % 4
+	# Fórmula verificada empíricamente contra los píxeles del atlas:
+	#   col = 3 - (SW*2 + SE)
+	#   row = 3 - (NW*2 + NE)
+	# Mask 0 (todo grass) cae en (3,3); mask 15 en (0,0). Ver header del
+	# archivo para detalles.
+	var nw := int((mask & 1) != 0)
+	var ne := int((mask & 2) != 0)
+	var sw := int((mask & 4) != 0)
+	var se := int((mask & 8) != 0)
+	var col := 3 - (sw * 2 + se)
+	var row := 3 - (nw * 2 + ne)
 	var atlas := AtlasTexture.new()
 	atlas.atlas = tex
 	atlas.region = Rect2(
 		col * (WANG_TILE_SIZE.x + WANG_GAP),
 		row * (WANG_TILE_SIZE.y + WANG_GAP),
 		WANG_TILE_SIZE.x,
-		WANG_TILE_SIZE.y,
+		WANG_TOP_FACE_H,   # cropeamos front face para evitar strips
 	)
 	var s := Sprite2D.new()
 	s.texture = atlas
 	s.centered = false
-	# Los wang tiles son 96×72 y los renderizamos a 24×24 (mismo grid
-	# que el florest). Escala no-uniforme (0.25 h, 0.333 v) — genera un
-	# aplastamiento vertical leve que en pixel art se tolera bien. Si
-	# se ve mal, considerar cambiar el grid a 24×18 acá abajo y en
-	# TILE_SIZE — pero ojo que afecta cámara, minimap y todo el resto.
+	# 96×48 → 24×24: stretch vertical 2x. Aceptable en pixel art;
+	# si se ve mal, la opción sería bajar TILE_SIZE a 24×12 pero eso
+	# rompe el grid con el florest (24×24).
 	s.scale = Vector2(
 		float(TILE_SIZE) / WANG_TILE_SIZE.x,
-		float(TILE_SIZE) / WANG_TILE_SIZE.y,
+		float(TILE_SIZE) / WANG_TOP_FACE_H,
 	)
 	return s
 

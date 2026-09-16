@@ -4,3 +4,6 @@
 
 [node name="World" type="Node2D"]
 script = ExtResource("1_wrl01")
+
+[node name="PreviewCamera" type="Camera2D" parent="."]
+zoom = Vector2(0.35, 0.35)
