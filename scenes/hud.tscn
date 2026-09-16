@@ -10,7 +10,7 @@ script = ExtResource("1_hud01")
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 302.0
-offset_bottom = 62.0
+offset_bottom = 66.0
 
 [node name="Margin" type="MarginContainer" parent="HPPanel"]
 layout_mode = 2
@@ -21,13 +21,23 @@ theme_override_constants/margin_bottom = 8
 
 [node name="VBox" type="VBoxContainer" parent="HPPanel/Margin"]
 layout_mode = 2
+theme_override_constants/separation = 4
 
-[node name="HPLabel" type="Label" parent="HPPanel/Margin/VBox"]
+[node name="Row" type="HBoxContainer" parent="HPPanel/Margin/VBox"]
 layout_mode = 2
-text = "HP  100 / 100"
+
+[node name="Caption" type="Label" parent="HPPanel/Margin/VBox/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "VIDA"
+
+[node name="Value" type="Label" parent="HPPanel/Margin/VBox/Row"]
+layout_mode = 2
+horizontal_alignment = 2
+text = "100 / 100"
 
 [node name="HPBar" type="ProgressBar" parent="HPPanel/Margin/VBox"]
-custom_minimum_size = Vector2(260, 10)
+custom_minimum_size = Vector2(260, 14)
 layout_mode = 2
 max_value = 100.0
 value = 100.0
@@ -50,41 +60,58 @@ theme_override_constants/margin_bottom = 8
 
 [node name="TimerLabel" type="Label" parent="TimerPanel/Margin3"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
 text = "00:00"
 horizontal_alignment = 1
 
 [node name="LevelPanel" type="PanelContainer" parent="."]
 offset_left = 12.0
-offset_top = 76.0
+offset_top = 80.0
 offset_right = 302.0
-offset_bottom = 132.0
+offset_bottom = 138.0
 
 [node name="Margin2" type="MarginContainer" parent="LevelPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 12
+theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="VBox2" type="VBoxContainer" parent="LevelPanel/Margin2"]
+[node name="HBox2" type="HBoxContainer" parent="LevelPanel/Margin2"]
 layout_mode = 2
+theme_override_constants/separation = 10
 
-[node name="LevelLabel" type="Label" parent="LevelPanel/Margin2/VBox2"]
+[node name="LevelBadge" type="PanelContainer" parent="LevelPanel/Margin2/HBox2"]
+custom_minimum_size = Vector2(38, 38)
 layout_mode = 2
-text = "LVL 1"
+size_flags_vertical = 4
 
-[node name="XPBar" type="ProgressBar" parent="LevelPanel/Margin2/VBox2"]
-custom_minimum_size = Vector2(260, 10)
+[node name="LevelNumber" type="Label" parent="LevelPanel/Margin2/HBox2/LevelBadge"]
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "1"
+
+[node name="XPCol" type="VBoxContainer" parent="LevelPanel/Margin2/HBox2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 3
+
+[node name="XPCaption" type="Label" parent="LevelPanel/Margin2/HBox2/XPCol"]
+layout_mode = 2
+text = "EXPERIENCIA"
+
+[node name="XPBar" type="ProgressBar" parent="LevelPanel/Margin2/HBox2/XPCol"]
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 max_value = 4.0
 show_percentage = false
 
 [node name="WavePanel" type="PanelContainer" parent="."]
 offset_left = 12.0
-offset_top = 148.0
+offset_top = 150.0
 offset_right = 302.0
-offset_bottom = 200.0
+offset_bottom = 202.0
 
 [node name="Margin4" type="MarginContainer" parent="WavePanel"]
 layout_mode = 2
@@ -98,11 +125,11 @@ layout_mode = 2
 
 [node name="WaveLabel" type="Label" parent="WavePanel/Margin4/VBox3"]
 layout_mode = 2
-text = "WAVE 0"
+text = "OLEADA 0"
 
 [node name="MonstersLabel" type="Label" parent="WavePanel/Margin4/VBox3"]
 layout_mode = 2
-text = "Monsters 0"
+text = "Enemigos: 0"
 
 [node name="Minimap" parent="." instance=ExtResource("2_mmap")]
 anchor_left = 1.0
@@ -117,12 +144,11 @@ anchor_left = 0.5
 anchor_top = 0.35
 anchor_right = 0.5
 anchor_bottom = 0.35
-offset_left = -220.0
+offset_left = -260.0
 offset_top = -34.0
-offset_right = 220.0
+offset_right = 260.0
 offset_bottom = 34.0
-theme_override_font_sizes/font_size = 48
-text = "WAVE CLEARED"
+text = "OLEADA SUPERADA"
 horizontal_alignment = 1
 vertical_alignment = 1
 modulate = Color(1, 1, 1, 0)

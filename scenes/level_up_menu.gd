@@ -22,6 +22,7 @@ const UPGRADES: Array = [
 	{ "id": "hp_regen",     "title": "+1 HP/S",           "desc": "Regen pasivo" },
 	{ "id": "magnet",       "title": "+40% MAGNET",       "desc": "Absorbés XP desde más lejos" },
 	{ "id": "multishot",    "title": "+1 PROYECTIL",      "desc": "Un coin extra por disparo" },
+	{ "id": "ranged_bonus", "title": "DISPARO A DISTANCIA", "desc": "Sumás un coin automático a tu ataque normal" },
 ]
 
 var _player: Node = null

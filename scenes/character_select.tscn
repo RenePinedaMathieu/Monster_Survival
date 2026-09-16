@@ -1,0 +1,373 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/character_select.gd" id="1_select"]
+[ext_resource type="Script" path="res://scenes/neon_tunnel.gd" id="2_tunnel"]
+
+[node name="CharacterSelect" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_select")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.023, 0.027, 0.055, 1)
+
+[node name="GlowBase" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="GlowAccentA" type="TextureRect" parent="."]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = -220.0
+offset_top = -200.0
+offset_right = 420.0
+offset_bottom = 420.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+
+[node name="GlowAccentB" type="TextureRect" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -460.0
+offset_top = -460.0
+offset_right = 200.0
+offset_bottom = 200.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Layout" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = 32.0
+offset_right = -48.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+horizontal_alignment = 1
+text = "ELIGE TU HÉROE"
+
+[node name="Divider" type="ColorRect" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 3)
+mouse_filter = 2
+color = Color(0.878, 0.663, 0.298, 0.6)
+
+[node name="SpacerTop" type="Control" parent="Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="CardsRow" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+theme_override_constants/separation = 46
+
+[node name="Card1" type="Control" parent="Layout/CardsRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 400)
+mouse_filter = 2
+
+[node name="Glow" type="Panel" parent="Layout/CardsRow/Card1"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Frame" type="Panel" parent="Layout/CardsRow/Card1"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PortraitBg" type="Control" parent="Layout/CardsRow/Card1/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+
+[node name="Base" type="ColorRect" parent="Layout/CardsRow/Card1/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.039, 0.059, 0.122, 1)
+
+[node name="Lines" type="Control" parent="Layout/CardsRow/Card1/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_tunnel")
+
+[node name="Portrait" type="TextureRect" parent="Layout/CardsRow/Card1/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="IdlePreview" type="TextureRect" parent="Layout/CardsRow/Card1/Frame"]
+anchor_right = 1.0
+offset_left = 60.0
+offset_top = 250.0
+offset_right = -60.0
+offset_bottom = 348.0
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Layout/CardsRow/Card1/Frame"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -62.0
+offset_bottom = -10.0
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "..."
+
+[node name="HitButton" type="Button" parent="Layout/CardsRow/Card1"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 2
+text = ""
+
+[node name="Card2" type="Control" parent="Layout/CardsRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 400)
+mouse_filter = 2
+
+[node name="Glow" type="Panel" parent="Layout/CardsRow/Card2"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Frame" type="Panel" parent="Layout/CardsRow/Card2"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PortraitBg" type="Control" parent="Layout/CardsRow/Card2/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+
+[node name="Base" type="ColorRect" parent="Layout/CardsRow/Card2/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.039, 0.059, 0.122, 1)
+
+[node name="Lines" type="Control" parent="Layout/CardsRow/Card2/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_tunnel")
+
+[node name="Portrait" type="TextureRect" parent="Layout/CardsRow/Card2/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="IdlePreview" type="TextureRect" parent="Layout/CardsRow/Card2/Frame"]
+anchor_right = 1.0
+offset_left = 60.0
+offset_top = 250.0
+offset_right = -60.0
+offset_bottom = 348.0
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Layout/CardsRow/Card2/Frame"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -62.0
+offset_bottom = -10.0
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "..."
+
+[node name="HitButton" type="Button" parent="Layout/CardsRow/Card2"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 2
+text = ""
+
+[node name="Card3" type="Control" parent="Layout/CardsRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 400)
+mouse_filter = 2
+
+[node name="Glow" type="Panel" parent="Layout/CardsRow/Card3"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Frame" type="Panel" parent="Layout/CardsRow/Card3"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PortraitBg" type="Control" parent="Layout/CardsRow/Card3/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+
+[node name="Base" type="ColorRect" parent="Layout/CardsRow/Card3/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.039, 0.059, 0.122, 1)
+
+[node name="Lines" type="Control" parent="Layout/CardsRow/Card3/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_tunnel")
+
+[node name="Portrait" type="TextureRect" parent="Layout/CardsRow/Card3/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="IdlePreview" type="TextureRect" parent="Layout/CardsRow/Card3/Frame"]
+anchor_right = 1.0
+offset_left = 60.0
+offset_top = 250.0
+offset_right = -60.0
+offset_bottom = 348.0
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Layout/CardsRow/Card3/Frame"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -62.0
+offset_bottom = -10.0
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "..."
+
+[node name="HitButton" type="Button" parent="Layout/CardsRow/Card3"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 2
+text = ""
+
+[node name="SpacerBottom" type="Control" parent="Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Hint" type="Label" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+horizontal_alignment = 1
+text = "Flechas para elegir  ·  Enter / click para confirmar  ·  Esc para volver"
+
+[node name="BackButton" type="Button" parent="."]
+anchor_left = 0.0
+anchor_top = 0.0
+offset_left = 28.0
+offset_top = 26.0
+offset_right = 168.0
+offset_bottom = 76.0
+text = "VOLVER"

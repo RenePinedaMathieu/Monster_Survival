@@ -1,0 +1,110 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/main_menu.gd" id="1_menu"]
+
+[node name="MainMenu" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.25)
+
+[node name="MenuButtons" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -270.0
+offset_right = 120.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 18
+
+[node name="PlayButton" type="Button" parent="MenuButtons"]
+custom_minimum_size = Vector2(240, 58)
+size_flags_horizontal = 4
+text = "JUGAR"
+
+[node name="OptionsButton" type="Button" parent="MenuButtons"]
+custom_minimum_size = Vector2(240, 58)
+size_flags_horizontal = 4
+text = "OPCIONES"
+
+[node name="QuitButton" type="Button" parent="MenuButtons"]
+custom_minimum_size = Vector2(240, 58)
+size_flags_horizontal = 4
+text = "SALIR"
+
+[node name="OptionsPanel" type="Panel" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -115.0
+offset_right = 170.0
+offset_bottom = 115.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="OptionsPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 22.0
+offset_top = 18.0
+offset_right = -22.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="OptionsPanel/Content"]
+horizontal_alignment = 1
+text = "OPCIONES"
+
+[node name="VolumeRow" type="HBoxContainer" parent="OptionsPanel/Content"]
+theme_override_constants/separation = 12
+
+[node name="VolumeLabel" type="Label" parent="OptionsPanel/Content/VolumeRow"]
+custom_minimum_size = Vector2(140, 0)
+text = "Volumen"
+
+[node name="VolumeSlider" type="HSlider" parent="OptionsPanel/Content/VolumeRow"]
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="FullscreenRow" type="HBoxContainer" parent="OptionsPanel/Content"]
+theme_override_constants/separation = 12
+
+[node name="FullscreenLabel" type="Label" parent="OptionsPanel/Content/FullscreenRow"]
+custom_minimum_size = Vector2(140, 0)
+text = "Pantalla completa"
+
+[node name="FullscreenCheck" type="CheckButton" parent="OptionsPanel/Content/FullscreenRow"]
+
+[node name="BackButton" type="Button" parent="OptionsPanel/Content"]
+custom_minimum_size = Vector2(0, 46)
+text = "VOLVER"

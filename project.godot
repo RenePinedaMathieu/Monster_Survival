@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Caelvar"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -19,9 +19,12 @@ config/icon="res://icon.svg"
 
 Realtime="*uid://bhdn3haenx20g"
 Supabase="*uid://dyju2v7pxnojp"
+GameState="*res://autoload/game_state.gd"
 
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

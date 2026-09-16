@@ -16,14 +16,9 @@ const MONSTER_SCENE := preload("res://scenes/monster.tscn")
 const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 
-const MONSTER_TEXTURES: Array[String] = [
-	"res://assets/sprites/monsters/pipo-enemy001.png",
-	"res://assets/sprites/monsters/pipo-enemy004.png",
-	"res://assets/sprites/monsters/pipo-enemy008.png",
-	"res://assets/sprites/monsters/pipo-enemy015.png",
-	"res://assets/sprites/monsters/pipo-enemy023.png",
-]
-const BOSS_TEXTURE := "res://assets/sprites/monsters/pipo-boss001.png"
+## El kind (rata/murciélago/cangrejo/etc, con su propio set de
+## animaciones) lo resuelve monster.gd — ver KIND_IDS/BOSS_KIND_ID/
+## KIND_DATA ahí. Acá sólo elegimos cuál al azar.
 
 const SPAWN_INNER := 500.0
 const SPAWN_OUTER := 800.0
@@ -31,6 +26,12 @@ const WAVE_BREAK_SEC := 2.5
 # Densidad VS: mucho más volumen. Waves cortas y agresivas.
 const BASE_MONSTERS := 8
 const MONSTERS_PER_WAVE := 4
+
+# La velocidad de los monstruos sube con cada wave, no sólo la
+# cantidad — 3.5% más rápido por wave, tope en 75% extra (wave ~21)
+# para que no se vuelva injugable en runs largas.
+const WAVE_SPEED_STEP := 0.035
+const WAVE_SPEED_CAP := 1.75
 
 @onready var _remote_players_container: Node2D = $RemotePlayers
 @onready var _monsters_container: Node2D = $Monsters
@@ -64,6 +65,15 @@ func _ready() -> void:
 	# segundo antes de que caiga la fiesta
 	get_tree().create_timer(1.5).timeout.connect(_start_next_wave)
 
+## F11 para agrandar/achicar la ventana sin tener que volver al menú
+## (ahí las Opciones ya tienen el mismo toggle vía checkbox).
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
+		var fullscreen := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(
+			DisplayServer.WINDOW_MODE_WINDOWED if fullscreen else DisplayServer.WINDOW_MODE_FULLSCREEN
+		)
+
 # ── Multiplayer ──────────────────────────────────────────────────
 
 func _on_auth_ready() -> void:
@@ -93,7 +103,7 @@ func _start_next_wave() -> void:
 	_in_break = false
 	var count := BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE
 	# Cada 5 waves aparece 1 boss extra
-	var boss_count := 1 if _current_wave % 5 == 0 else 0
+	var boss_count: int = 1 if _current_wave % 5 == 0 else 0
 	print("[main] wave %d — %d monsters + %d bosses" % [_current_wave, count, boss_count])
 	for i in range(count):
 		_spawn_monster(false)
@@ -108,16 +118,16 @@ func _spawn_monster(is_boss: bool) -> void:
 	var ang := randf() * TAU
 	var r := SPAWN_INNER + randf() * (SPAWN_OUTER - SPAWN_INNER)
 	m.position = _player.position + Vector2(cos(ang) * r, sin(ang) * r)
-	# Textura al azar (o boss)
-	var tex_path: String
 	if is_boss:
-		tex_path = BOSS_TEXTURE
 		m.max_hp = 20.0
-		m.scale = Vector2(1.8, 1.8)
-	else:
-		tex_path = MONSTER_TEXTURES[randi() % MONSTER_TEXTURES.size()]
 	_monsters_container.add_child(m)
-	m.set_sprite(load(tex_path))
+	# set_kind necesita @onready resuelto — sólo funciona DESPUÉS de
+	# add_child (mismo motivo por el que antes set_sprite iba después).
+	if is_boss:
+		m.set_kind(m.BOSS_KIND_ID)
+	else:
+		m.set_kind(m.KIND_IDS[randi() % m.KIND_IDS.size()])
+	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
 	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
 	# sin necesidad de estar en el radio de detección. Los remote
 	# players quedan fuera del scope (cada cliente maneja los suyos).
