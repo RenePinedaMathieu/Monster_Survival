@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://cttouch01d0a8"]
+[gd_scene format=3 uid="uid://cttouch01d0a8"]
 
 [ext_resource type="Script" path="res://scenes/touch_controls.gd" id="1_tc01"]
 
