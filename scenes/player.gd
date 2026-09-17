@@ -299,7 +299,9 @@ func _process(_delta: float) -> void:
 		_set_zoom(cam.zoom.x + CAM_ZOOM_KEY_STEP)
 
 func _set_zoom(value: float) -> void:
-	var clamped := clamp(value, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
+	# clampf en vez de clamp — el proyecto tiene warnings como errores
+	# y el clamp untyped devuelve Variant (parser bomb).
+	var clamped: float = clampf(value, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
 	$Camera2D.zoom = Vector2(clamped, clamped)
 
 func _physics_process(delta: float) -> void:
