@@ -21,6 +21,10 @@ Realtime="*uid://bhdn3haenx20g"
 Supabase="*uid://dyju2v7pxnojp"
 GameState="*res://autoload/game_state.gd"
 
+[debug]
+
+shapes/collision/shape_color=Color(0.2, 1, 0.6, 0.5)
+
 [display]
 
 window/size/viewport_width=1280
@@ -44,14 +48,6 @@ shoot={
 [physics]
 
 3d/physics_engine="Jolt Physics"
-
-[debug]
-
-; Muestra los CollisionShape2D con outlines coloreados al correr.
-; Útil para calibrar hitboxes de árboles/piedras. Se puede togglear
-; también desde el menú "Depurar" del editor.
-shapes/collision/shape_color=Color(0.2, 1, 0.6, 0.5)
-shapes/collision/draw_2d_outlines=true
 
 [rendering]
 

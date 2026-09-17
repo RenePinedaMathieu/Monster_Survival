@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://cs4ndbox01dev"]
+[gd_scene format=3 uid="uid://cs4ndbox01dev"]
 
 [ext_resource type="Script" path="res://scenes/sandbox.gd" id="1_sbx01"]
 [ext_resource type="PackedScene" path="res://scenes/world.tscn" id="2_world"]
