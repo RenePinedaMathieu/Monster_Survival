@@ -275,6 +275,33 @@ func _apply_camera_zoom_for_device() -> void:
 	else:
 		cam.zoom = Vector2(2.0, 2.0)
 
+# ── Cámara: zoom con Q/E y rueda del mouse ──────────────────────
+
+const CAM_ZOOM_MIN := 0.3
+const CAM_ZOOM_MAX := 4.0
+const CAM_ZOOM_KEY_STEP := 0.06     # Q/E: cambio por frame mientras presionado
+const CAM_ZOOM_WHEEL_STEP := 0.15   # rueda: cambio por notch
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		var cam: Camera2D = $Camera2D
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_set_zoom(cam.zoom.x + CAM_ZOOM_WHEEL_STEP)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_set_zoom(cam.zoom.x - CAM_ZOOM_WHEEL_STEP)
+
+func _process(_delta: float) -> void:
+	# Q aleja, E acerca — mismo esquema que sandbox.gd.
+	var cam: Camera2D = $Camera2D
+	if Input.is_key_pressed(KEY_Q):
+		_set_zoom(cam.zoom.x - CAM_ZOOM_KEY_STEP)
+	elif Input.is_key_pressed(KEY_E):
+		_set_zoom(cam.zoom.x + CAM_ZOOM_KEY_STEP)
+
+func _set_zoom(value: float) -> void:
+	var clamped := clamp(value, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
+	$Camera2D.zoom = Vector2(clamped, clamped)
+
 func _physics_process(delta: float) -> void:
 	# Movement — teclado tiene prioridad; si no hay tecla, usamos touch.
 	var kb := _keyboard_input()
