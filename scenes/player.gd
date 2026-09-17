@@ -263,8 +263,8 @@ func _keyboard_input() -> Vector2:
 	return v
 
 ## En móvil la pantalla es chica y queremos ver menos mundo pero
-## más detalle — subimos el zoom. En desktop mantenemos 1.5 así
-## se sigue viendo bastante alrededor.
+## más detalle — subimos el zoom. En desktop 2.0 (match sandbox),
+## mobile 2.4. Antes eran 1.5/2.4 pero el 1.5 se sentía muy lejos.
 func _apply_camera_zoom_for_device() -> void:
 	var cam: Camera2D = $Camera2D
 	var vp := get_viewport().get_visible_rect().size
@@ -273,7 +273,7 @@ func _apply_camera_zoom_for_device() -> void:
 	if is_touch or is_small:
 		cam.zoom = Vector2(2.4, 2.4)
 	else:
-		cam.zoom = Vector2(1.5, 1.5)
+		cam.zoom = Vector2(2.0, 2.0)
 
 func _physics_process(delta: float) -> void:
 	# Movement — teclado tiene prioridad; si no hay tecla, usamos touch.

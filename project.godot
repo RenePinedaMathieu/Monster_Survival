@@ -45,11 +45,17 @@ shoot={
 
 3d/physics_engine="Jolt Physics"
 
+[debug]
+
+; Muestra los CollisionShape2D con outlines coloreados al correr.
+; Útil para calibrar hitboxes de árboles/piedras. Se puede togglear
+; también desde el menú "Depurar" del editor.
+shapes/collision/shape_color=Color(0.2, 1, 0.6, 0.5)
+shapes/collision/draw_2d_outlines=true
+
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-; Filtro NEAREST global — pixel art crisp en todos lados por default.
-; El LINEAR default de Godot 4 borronea el pixel art.
-textures/canvas_textures/default_texture_filter=0
