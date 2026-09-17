@@ -11,9 +11,9 @@ extends Node2D
 ## Movimiento: WASD/flechas. Q/E para zoomear si querés ver más chico
 ## o más grande. R para volver al centro del mundo.
 
-const SANDBOX_ZOOM := Vector2(1.2, 1.2)   # cerca del personaje por default
+const SANDBOX_ZOOM := Vector2(2.0, 2.0)   # cerca del personaje por default
 const ZOOM_MIN := Vector2(0.3, 0.3)       # alejar hasta ver ~medio mundo
-const ZOOM_MAX := Vector2(3.0, 3.0)
+const ZOOM_MAX := Vector2(4.0, 4.0)
 const ZOOM_STEP := 0.06
 
 @onready var _player: CharacterBody2D = $Player
@@ -23,6 +23,10 @@ func _ready() -> void:
 	# Se corre DESPUÉS del _ready del Player, así el override del zoom
 	# le gana a _apply_camera_zoom_for_device().
 	_camera.zoom = SANDBOX_ZOOM
+	# CRÍTICO: forzar que la cámara del player sea la current — sino la
+	# PreviewCamera del world.tscn (zoom 0.35 para vista completa)
+	# le gana y ves todo chiquito.
+	_camera.make_current()
 	print("[sandbox] WASD para mover · Q/E zoom · R centrar")
 
 func _process(_delta: float) -> void:
