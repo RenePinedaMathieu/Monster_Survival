@@ -274,6 +274,11 @@ func _apply_camera_zoom_for_device() -> void:
 		cam.zoom = Vector2(2.4, 2.4)
 	else:
 		cam.zoom = Vector2(2.0, 2.0)
+	# CRÍTICO: force ser la cámara current. Sin esto, la PreviewCamera
+	# de world.tscn (zoom 0.35, usada para F6 de solo el mundo) le gana
+	# porque entra al tree antes. Con esto la del player siempre wins,
+	# tanto en sandbox como en el juego real.
+	cam.make_current()
 
 # ── Cámara: zoom con Q/E y rueda del mouse ──────────────────────
 
