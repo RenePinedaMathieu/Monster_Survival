@@ -238,6 +238,8 @@ func _make_wang_sprite(tex: Texture2D, mask: int) -> Sprite2D:
 	var s := Sprite2D.new()
 	s.texture = atlas
 	s.centered = false
+	# Pixel-art crisp aunque el project setting no esté (defensivo).
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	# 96×48 → 24×24: stretch vertical 2x. Aceptable en pixel art;
 	# si se ve mal, la opción sería bajar TILE_SIZE a 24×12 pero eso
 	# rompe el grid con el florest (24×24).
@@ -270,6 +272,7 @@ func _make_grass_sprite(tex: Texture2D, x: int, y: int) -> Sprite2D:
 	var s := Sprite2D.new()
 	s.texture = atlas
 	s.centered = false
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	return s
 
 # ── Water collision ─────────────────────────────────────────────
@@ -339,6 +342,7 @@ func _make_prop(tex: Texture2D, solid: bool) -> Node2D:
 	var root := Node2D.new()
 	var sprite := Sprite2D.new()
 	sprite.texture = tex
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	# Ancla los sprites por la base para que el y-sort funcione bien
 	# y no se solapen con la cabeza cortada.
 	sprite.offset = Vector2(0, -tex.get_height() * 0.5)

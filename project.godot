@@ -50,3 +50,6 @@ shoot={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+; Filtro NEAREST global — pixel art crisp en todos lados por default.
+; El LINEAR default de Godot 4 borronea el pixel art.
+textures/canvas_textures/default_texture_filter=0

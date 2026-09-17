@@ -11,9 +11,9 @@ extends Node2D
 ## Movimiento: WASD/flechas. Q/E para zoomear si querés ver más chico
 ## o más grande. R para volver al centro del mundo.
 
-const SANDBOX_ZOOM := Vector2(0.7, 0.7)
-const ZOOM_MIN := Vector2(0.25, 0.25)
-const ZOOM_MAX := Vector2(2.4, 2.4)
+const SANDBOX_ZOOM := Vector2(1.2, 1.2)   # cerca del personaje por default
+const ZOOM_MIN := Vector2(0.3, 0.3)       # alejar hasta ver ~medio mundo
+const ZOOM_MAX := Vector2(3.0, 3.0)
 const ZOOM_STEP := 0.06
 
 @onready var _player: CharacterBody2D = $Player
