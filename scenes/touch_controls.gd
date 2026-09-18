@@ -27,9 +27,13 @@ var _active_touch: int = -1
 var _origin: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
-	# process_mode default → se pausa junto al juego, así el menú de
-	# level up no recibe input fantasma.
 	_base.visible = false
+	# CRÍTICO: process_mode ALWAYS. Sin esto, cuando el juego se pausa
+	# (level-up modal, cualquier menu), TouchControls también se pausa
+	# y NO recibe el evento de "release" del dedo. Al despausar, el
+	# joystick sigue creyendo que el dedo está apretado y el player
+	# camina solo. Con ALWAYS, el touch-up llega aunque haya pausa.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 
 func _unhandled_input(event: InputEvent) -> void:
 	var screen_w := get_viewport().get_visible_rect().size.x
