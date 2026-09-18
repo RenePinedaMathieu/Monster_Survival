@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://cpaintworld01dev"]
+[gd_scene format=3 uid="uid://bsn7deacgo1uj"]
 
 [ext_resource type="Script" path="res://scenes/painted_world.gd" id="1_pwrl"]
 [ext_resource type="PackedScene" path="res://scenes/Grass1.tscn" id="2_grass"]
