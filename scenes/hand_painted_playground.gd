@@ -25,7 +25,10 @@ extends Node2D
 ##
 ## Al correr, el player choca con esos tiles.
 
-const START_POS := Vector2(300, 300)   # arbitraria — moveme dentro del mapa
+## Arbitraria — dentro del mapa. Como escalé Grass1 2x, un tile es 32
+## unidades. Si tu mapa parte en (0,0) top-left, (400, 400) cae más o
+## menos donde antes hubiera sido (200, 200) sin escalar.
+const START_POS := Vector2(400, 400)
 
 const CAM_SPEED := 400.0
 const ZOOM_MIN := 0.3

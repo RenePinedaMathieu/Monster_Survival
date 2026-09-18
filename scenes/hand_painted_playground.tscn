@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://cplayground01dev"]
+[gd_scene format=3 uid="uid://xjeb30eshvuv"]
 
 [ext_resource type="Script" path="res://scenes/hand_painted_playground.gd" id="1_pg01"]
 [ext_resource type="PackedScene" path="res://scenes/Grass1.tscn" id="2_map"]
@@ -8,5 +8,6 @@
 script = ExtResource("1_pg01")
 
 [node name="Grass1" parent="." instance=ExtResource("2_map")]
+scale = Vector2(2, 2)
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
