@@ -37,6 +37,7 @@ const WAVE_SPEED_CAP := 1.75
 @onready var _monsters_container: Node2D = $Monsters
 @onready var _player: CharacterBody2D = $Player
 @onready var _hud: CanvasLayer = $HUD
+@onready var _world = $World
 
 var _remote_players: Dictionary = {}
 var _current_wave: int = 0
@@ -51,6 +52,7 @@ func _ready() -> void:
 	Realtime.remote_move.connect(_on_remote_move)
 	Supabase.sign_in_anonymous("player_" + str(randi() % 9999))
 	_player.hp_changed.connect(_hud.on_hp_changed)
+	_player.defense_changed.connect(_hud.on_defense_changed)
 	_player.xp_changed.connect(_hud.on_xp_changed)
 	_player.leveled_up.connect(_on_player_leveled_up)
 	_player.died.connect(_on_player_died)
@@ -102,8 +104,9 @@ func _start_next_wave() -> void:
 	_current_wave += 1
 	_in_break = false
 	var count := BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE
-	# Cada 5 waves aparece 1 boss extra
-	var boss_count: int = 1 if _current_wave % 5 == 0 else 0
+	# Cada 10 waves aparece 1 boss extra, bastante más grande y duro
+	# que el resto (ver KIND_DATA["golem"] en monster.gd).
+	var boss_count: int = 1 if _current_wave % 10 == 0 else 0
 	print("[main] wave %d — %d monsters + %d bosses" % [_current_wave, count, boss_count])
 	for i in range(count):
 		_spawn_monster(false)
@@ -112,14 +115,26 @@ func _start_next_wave() -> void:
 	_monsters_alive = count + boss_count
 	_hud.set_wave(_current_wave, _monsters_alive)
 
+## Anillo alrededor del player, pero reintentando si cae en agua o
+## fuera del mapa — antes tiraba el dado una sola vez y podía
+## spawnear un monstruo en el lago o más allá del borde.
+func _pick_spawn_position() -> Vector2:
+	for i in range(20):
+		var ang := randf() * TAU
+		var r := SPAWN_INNER + randf() * (SPAWN_OUTER - SPAWN_INNER)
+		var pos := _player.position + Vector2(cos(ang) * r, sin(ang) * r)
+		if _world.is_spawnable_at(pos):
+			return pos
+	# 20 intentos fallidos es rarísimo (el lago es chico) — mejor
+	# spawnear algo cerca del player que trabarnos sin spawnear nada.
+	return _player.position + Vector2(SPAWN_INNER, 0)
+
 func _spawn_monster(is_boss: bool) -> void:
 	var m = MONSTER_SCENE.instantiate()
-	# Spawn en un anillo alrededor del player
-	var ang := randf() * TAU
-	var r := SPAWN_INNER + randf() * (SPAWN_OUTER - SPAWN_INNER)
-	m.position = _player.position + Vector2(cos(ang) * r, sin(ang) * r)
+	m.position = _pick_spawn_position()
 	if is_boss:
-		m.max_hp = 20.0
+		m.max_hp = 80.0
+		m.coin_reward = 25
 	_monsters_container.add_child(m)
 	# set_kind necesita @onready resuelto — sólo funciona DESPUÉS de
 	# add_child (mismo motivo por el que antes set_sprite iba después).
@@ -134,6 +149,10 @@ func _spawn_monster(is_boss: bool) -> void:
 	m.target = _player
 	m.hit_player.connect(_on_monster_hit_player)
 	m.died.connect(_on_monster_died)
+	if is_boss:
+		_hud.show_boss_bar(m.max_hp)
+		m.hp_changed.connect(_hud.on_boss_hp_changed)
+		m.died.connect(_hud.hide_boss_bar)
 
 func _on_monster_hit_player(damage: float) -> void:
 	_player.take_damage(damage)
@@ -154,5 +173,8 @@ func _on_player_leveled_up(_new_level: int) -> void:
 
 func _on_player_died() -> void:
 	_hud.stop_timer()
+	# La moneda ganada esta run recién queda gastable en la tienda
+	# cuando la run termina — ver GameState.bank_run_currency().
+	GameState.bank_run_currency()
 	# Pequeño delay para que el player vea que murió
 	get_tree().create_timer(1.2).timeout.connect(func(): get_tree().reload_current_scene())

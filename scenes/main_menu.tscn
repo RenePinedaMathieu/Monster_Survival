@@ -32,7 +32,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -120.0
-offset_top = -270.0
+offset_top = -360.0
 offset_right = 120.0
 offset_bottom = -70.0
 grow_horizontal = 2
@@ -43,6 +43,11 @@ theme_override_constants/separation = 18
 custom_minimum_size = Vector2(240, 58)
 size_flags_horizontal = 4
 text = "JUGAR"
+
+[node name="ShopButton" type="Button" parent="MenuButtons"]
+custom_minimum_size = Vector2(240, 58)
+size_flags_horizontal = 4
+text = "MEJORAS"
 
 [node name="OptionsButton" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(240, 58)

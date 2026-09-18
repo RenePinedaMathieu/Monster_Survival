@@ -15,6 +15,7 @@ extends CharacterBody2D
 ## AtlasTexture igual que se hace en player.gd.
 
 signal hit_player(damage: float)
+signal hp_changed(current: float, max_hp: float)
 signal died
 
 enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN }
@@ -101,13 +102,14 @@ const KIND_DATA: Dictionary = {
 		"run": {"file": "Golem_Run.png", "frames": 4},
 		"attack": {"file": "Golem_AttackA.png", "frames": 12},
 		"death": {"file": "Golem_DeathA.png", "frames": 5},
-		"scale": 2.2,
-		"collision_scale": 1.8,
+		"scale": 3.4,
+		"collision_scale": 2.3,
 	},
 }
 
 @export var max_hp: float = 3.0
 @export var xp_reward: int = 1
+@export var coin_reward: int = 1
 ## Multiplicador de velocidad — main.gd lo sube con cada oleada para
 ## que el juego se sienta progresivamente más intenso, no sólo con
 ## más cantidad de bichos sino también más rápidos.
@@ -363,6 +365,7 @@ func _on_body_exited(_body: Node) -> void:
 func take_damage(amount: float) -> void:
 	if _dead: return
 	hp -= amount
+	emit_signal("hp_changed", max(0.0, hp), max_hp)
 	_sprite.modulate = Color(2.0, 2.0, 2.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)
 	if hp <= 0.0:
@@ -378,6 +381,7 @@ func _die() -> void:
 	_collision.set_deferred("disabled", true)
 	_detection.set_deferred("monitoring", false)
 	_drop_xp_orb()
+	GameState.add_run_currency(coin_reward)
 	emit_signal("died")
 
 	var death_frames: Array = _anim_frames.get("death", [])

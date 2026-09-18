@@ -152,6 +152,17 @@ func _build_cell_biomes() -> void:
 			else:
 				_cell_biome[Vector2i(x, y)] = BIOME_GRASS
 
+## Público — lo usa main.gd para no spawnear monstruos en el lago ni
+## más allá del borde del mundo. Las ruinas de piedra SÍ cuentan como
+## "tierra firme" válida (son transitables), sólo el agua y el
+## afuera del mapa quedan excluidos.
+func is_spawnable_at(world_pos: Vector2) -> bool:
+	if abs(world_pos.x) > WORLD_BOUND or abs(world_pos.y) > WORLD_BOUND:
+		return false
+	var tx := int(floor(world_pos.x / TILE_SIZE))
+	var ty := int(floor(world_pos.y / TILE_SIZE))
+	return _cell_biome.get(Vector2i(tx, ty), BIOME_GRASS) != BIOME_WATER
+
 func _is_water_at(x: float, y: float) -> bool:
 	var d := Vector2(x, y).distance_to(LAKE_CENTER)
 	var perturb := _noise_water.get_noise_2d(x, y) * BIOME_NOISE_STRENGTH

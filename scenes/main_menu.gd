@@ -8,10 +8,12 @@ extends Control
 const UITheme := preload("res://scenes/ui_theme.gd")
 
 const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
+const SHOP_SCENE := "res://scenes/shop_menu.tscn"
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
 @onready var _background: TextureRect = $Background
 @onready var _play_button: Button = $MenuButtons/PlayButton
+@onready var _shop_button: Button = $MenuButtons/ShopButton
 @onready var _options_button: Button = $MenuButtons/OptionsButton
 @onready var _quit_button: Button = $MenuButtons/QuitButton
 @onready var _options_panel: Panel = $OptionsPanel
@@ -22,12 +24,13 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 func _ready() -> void:
 	_background.texture = load(BACKGROUND_TEXTURE)
 
-	for button in [_play_button, _options_button, _quit_button, _back_button]:
+	for button in [_play_button, _shop_button, _options_button, _quit_button, _back_button]:
 		UITheme.style_button(button)
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
 		button.mouse_exited.connect(UITheme.pulse.bind(button, 1.0, 0.08))
 
 	_play_button.pressed.connect(_on_play_pressed)
+	_shop_button.pressed.connect(_on_shop_pressed)
 	_options_button.pressed.connect(_on_options_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_back_button.pressed.connect(_on_back_pressed)
@@ -55,6 +58,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_play_pressed() -> void:
 	get_tree().change_scene_to_file(CHARACTER_SELECT_SCENE)
+
+func _on_shop_pressed() -> void:
+	get_tree().change_scene_to_file(SHOP_SCENE)
 
 func _on_options_pressed() -> void:
 	_options_panel.visible = true

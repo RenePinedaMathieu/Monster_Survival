@@ -3,7 +3,7 @@ extends CharacterBody2D
 ## Vampire-Survivors-style player.
 ##
 ## Movimiento: WASD/flechas — foco 100% en dodgear.
-## Ataques: AUTOMÁTICOS. El coin dispara solo al monster más
+## Ataques: AUTOMÁTICOS. El disparo apunta solo al monster más
 ##   cercano cada AUTO_FIRE_INTERVAL segundos (modificable por
 ##   upgrades). Nada de space/F manual.
 ## XP: los monsters droppean orbs. El player tiene un magnet que
@@ -11,11 +11,14 @@ extends CharacterBody2D
 ##   el modal de upgrade.
 
 signal hp_changed(current: float, max_hp: float)
+signal defense_changed(current: float, max_defense: float)
 signal xp_changed(current: int, needed: int, level: int)
 signal leveled_up(new_level: int)
 signal died
 
-const COIN_SCENE := preload("res://scenes/coin_projectile.tscn")
+const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
+const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
+const FLYING_SWORDS_RIG_SCRIPT := preload("res://scenes/flying_swords_rig.gd")
 
 const BASE_SCALE := 0.5
 const BASE_SPEED := 175.0             # bajado de 220 — se sentía muy rápido/patinoso
@@ -24,7 +27,17 @@ const RUN_FPS := 12.0
 
 # Auto-attack
 const AUTO_FIRE_INTERVAL := 0.65      # segundos entre disparos base
-const AUTO_FIRE_RANGE := 550.0        # rango de auto-target
+# Subido de 550→750→900→1800→3600 (el doble otra vez). OJO: el mapa
+# (world.gd WORLD_BOUND=950) mide 1900 de punta a punta, así que a
+# 3600 CUALQUIER monstruo vivo entra en rango — el disparo deja de
+# tener un "límite" real, dispara a lo que sea que esté más cerca en
+# todo el mapa. Investigando Vampire Survivors: sus armas auto-target
+# (Magic Wand, etc.) en la práctica sólo alcanzan enemigos cerca de
+# lo que se ve en cámara, no todo el mapa — si en algún momento se
+# siente "raro" que dispare a algo que ni se ve en pantalla, este es
+# el valor a bajar. El proyectil (shot_projectile.gd) tiene
+# SPEED*LIFETIME > esto para que de verdad pueda llegar tan lejos.
+const AUTO_FIRE_RANGE := 3600.0       # rango de auto-target
 const AUTO_FIRE_SPREAD := 0.13        # radianes entre proyectiles extra
 
 # XP y level
@@ -34,6 +47,10 @@ const XP_MAGNET_RADIUS := 90.0
 
 # Regen
 const REGEN_TICK := 0.5               # se aplica cada medio segundo
+
+# Carta "meteoritos"
+const METEOR_BASE_INTERVAL := 5.0
+const METEOR_DAMAGE := 16.0
 
 const DIR_NAMES: Array[String] = [
 	"south", "south-east", "east", "north-east",
@@ -61,7 +78,7 @@ const AXEL_ATTACK_HIT_FRAME := 2
 const AXEL_SCALE := 0.8
 const AXEL_MELEE_DAMAGE := 4.0
 # Radio de "hay algo cerca, ataco" — a propósito más chico que
-# AUTO_FIRE_RANGE (que es para el coin a distancia). Sin este filtro,
+# AUTO_FIRE_RANGE (que es para el disparo a distancia). Sin este filtro,
 # el nearest_monster casi siempre encuentra algo dentro de 550px en
 # una wave llena y AXEL queda trabado en la animación de ataque en
 # vez de correr. Un poco más grande que el radio real de AttackArea
@@ -71,7 +88,7 @@ const AXEL_ATTACK_RANGE := 70.0
 const IDLE_ANIM_FPS := 6.0
 
 # KAY (main_char2) y LINA (main_char2_female): packs a distancia sin
-# animación de ataque propia — igual que "Man", disparan el coin sin
+# animación de ataque propia — igual que "Man", disparan sin
 # pose especial, sólo encarando al objetivo. Usan un esquema de 6
 # direcciones (sin izquierda/derecha puras, sólo diagonales + arriba/
 # abajo) en vez de las 8 de DIR_NAMES o las 4 de AXEL. Los nombres de
@@ -118,10 +135,38 @@ var atk_speed_mult: float = 1.0
 var magnet_radius: float = XP_MAGNET_RADIUS
 var hp_regen_per_sec: float = 0.0
 var projectiles_per_shot: int = 1
-## Carta "disparo a distancia" — coins extra que se suman AL ATAQUE
-## normal del personaje. En AXEL es lo que le da algo de rango a un
-## build 100% melee; en un personaje ranged es simplemente más coins.
+## "Disparo a distancia" — UNA sola carta que después se ramifica en
+## dos caminos separados, el jugador elige cuál priorizar en cada
+## level-up:
+##   - ranged_power_level (id "ranged_power"): sube el daño y el
+##     color del disparo, hasta rosado con más partículas en el nivel
+##     máximo (ver shot_projectile.gd LEVEL_BODY).
+##   - ranged_bonus_shots (id "ranged_count"): más disparos por ráfaga.
+## En AXEL, esta carta es lo que le da algo de alcance a un build
+## 100% melee; en un personaje ranged es simplemente más/mejores disparos.
+const RANGED_MAX_POWER_LEVEL := 5
+const RANGED_MAX_BONUS_SHOTS := 4
+var ranged_power_level: int = 0
 var ranged_bonus_shots: int = 0
+## Carta "instinto asesino" — +10% daño automático en cada level up
+## futuro (además de lo que ya sumen las cartas de daño normales).
+var _damage_scales_with_level: bool = false
+## Carta "meteoritos"
+var _has_meteors: bool = false
+var _meteor_interval: float = METEOR_BASE_INTERVAL
+var _meteor_cd: float = 3.0
+## Carta "espadas voladoras" — el rig se crea una sola vez; picks
+## repetidos lo potencian en vez de crear un segundo rig. Sin tipo
+## explícito a propósito: el script real se le pega en runtime con
+## set_script(), y el chequeo estático de GDScript no sabe de eso —
+## tiparlo como Node2D rompería la build (warnings-as-errors) al
+## llamar .setup()/.buff(), que no existen en la clase base.
+var _swords_rig = null
+
+# Armadura (compra permanente en la tienda) — una barra de defensa
+# que absorbe daño ANTES que la vida. No regenera durante la run.
+var max_defense: float = 0.0
+var defense: float = 0.0
 
 # XP / level
 var level: int = 1
@@ -131,6 +176,9 @@ var xp_to_next: int = XP_TO_NEXT_BASE
 # Runtime state
 var current_dir: int = 0
 var _fire_cd: float = 0.0
+## Al subir de nivel, el próximo disparo sale "cargado" (más grande,
+## más brillante, más daño) — estilo buster cargado de Mega Man.
+var _charged_shot_pending: bool = false
 var _regen_accum: float = 0.0
 var _run_time: float = 0.0
 var _run_frame: int = 0
@@ -163,6 +211,14 @@ var _ranged_facing: String = "down"
 
 func _ready() -> void:
 	add_to_group("player")
+	# Mejoras permanentes compradas en la tienda (persisten entre
+	# runs) — se aplican ANTES de hp = max_hp para que la vida inicial
+	# ya cuente el bonus.
+	max_hp += GameState.get_bonus_max_hp()
+	damage_mult += GameState.get_bonus_damage_mult()
+	hp_regen_per_sec += GameState.get_bonus_regen()
+	max_defense = GameState.get_bonus_max_defense()
+	defense = max_defense
 	hp = max_hp
 	_apply_camera_zoom_for_device()
 	var skin_id: String = GameState.selected_character_id
@@ -185,6 +241,7 @@ func _ready() -> void:
 			_run_textures.append(frames)
 	_apply_idle()
 	emit_signal("hp_changed", hp, max_hp)
+	emit_signal("defense_changed", defense, max_defense)
 	emit_signal("xp_changed", xp, xp_to_next, level)
 
 ## Los sheets son un archivo por dirección con N frames en fila, a
@@ -273,7 +330,7 @@ func _apply_camera_zoom_for_device() -> void:
 	if is_touch or is_small:
 		cam.zoom = Vector2(2.4, 2.4)
 	else:
-		cam.zoom = Vector2(2.0, 2.0)
+		cam.zoom = Vector2(2.15, 2.15)
 	# CRÍTICO: force ser la cámara current. Sin esto, la PreviewCamera
 	# de world.tscn (zoom 0.35, usada para F6 de solo el mundo) le gana
 	# porque entra al tree antes. Con esto la del player siempre wins,
@@ -356,10 +413,17 @@ func _physics_process(delta: float) -> void:
 			heal(hp_regen_per_sec * REGEN_TICK)
 			_regen_accum = 0.0
 
-	# Auto-fire coin
+	# Auto-fire
 	_fire_cd -= delta
 	if _fire_cd <= 0.0:
 		_auto_fire()
+
+	# Carta "meteoritos"
+	if _has_meteors:
+		_meteor_cd -= delta
+		if _meteor_cd <= 0.0:
+			_spawn_meteor()
+			_meteor_cd = _meteor_interval
 
 	# Magnetismo XP
 	_magnet_orbs()
@@ -383,25 +447,47 @@ func _auto_fire() -> void:
 	if _is_axel:
 		_start_axel_attack(to_target)
 		# Carta "disparo a distancia": el espadachín también larga
-		# coins, además del sablazo — no reemplaza el melee.
+		# disparos, además del sablazo — no reemplaza el melee.
 		if ranged_bonus_shots > 0:
-			_fire_coin(to_target, ranged_bonus_shots)
+			_fire_shot(to_target, ranged_bonus_shots)
 	else:
 		if _is_ranged_skin:
 			_ranged_facing = _side_dir_key(to_target)
-		_fire_coin(to_target, projectiles_per_shot + ranged_bonus_shots)
+		_fire_shot(to_target, projectiles_per_shot + ranged_bonus_shots)
 
-func _fire_coin(to_target: Vector2, count: int) -> void:
+func _fire_shot(to_target: Vector2, count: int) -> void:
+	# El primer disparo de la ráfaga después de subir de nivel sale
+	# "cargado" — más grande, más brillante, más daño.
+	var charged := _charged_shot_pending
+	_charged_shot_pending = false
 	# Multishot: proyectiles con un ligero spread
 	for i in range(count):
 		var offset := (i - (count - 1) / 2.0) * AUTO_FIRE_SPREAD
 		var dir := to_target.rotated(offset)
-		var coin = COIN_SCENE.instantiate()
-		get_tree().current_scene.add_child(coin)
-		coin.global_position = global_position + dir * 24.0
-		coin.setup(dir)
-		if coin.has_method("set_damage"):
-			coin.set_damage(coin.DAMAGE * damage_mult)
+		var shot = SHOT_SCENE.instantiate()
+		get_tree().current_scene.add_child(shot)
+		shot.global_position = global_position + dir * 24.0
+		# set_damage ANTES de setup(): setup() multiplica el daño ya
+		# escalado si charged, en vez de que set_damage lo pise.
+		if shot.has_method("set_damage"):
+			shot.set_damage(shot.DAMAGE * damage_mult * (1.0 + ranged_power_level * 0.3))
+		shot.setup(dir, charged and i == 0, ranged_power_level)
+
+func _spawn_meteor() -> void:
+	var monsters := get_tree().get_nodes_in_group("monster")
+	var target_pos: Vector2
+	if monsters.is_empty():
+		target_pos = global_position + Vector2(randf_range(-200.0, 200.0), randf_range(-200.0, 200.0))
+	else:
+		var m = monsters[randi() % monsters.size()]
+		target_pos = m.global_position + Vector2(randf_range(-40.0, 40.0), randf_range(-40.0, 40.0))
+	# Sin tipo explícito (mismo motivo que _swords_rig más arriba):
+	# .damage no existe en Node2D, sólo en el script que le pegamos.
+	var meteor = Node2D.new()
+	meteor.set_script(METEOR_SCRIPT)
+	get_tree().current_scene.add_child(meteor)
+	meteor.global_position = target_pos
+	meteor.damage = METEOR_DAMAGE * damage_mult
 
 # ── AXEL: ataque melee ────────────────────────────────────────────
 
@@ -466,6 +552,11 @@ func gain_xp(amount: int) -> void:
 func _level_up() -> void:
 	level += 1
 	xp_to_next = int(round(xp_to_next * XP_TO_NEXT_MULT))
+	if _damage_scales_with_level:
+		damage_mult *= 1.10
+	# El próximo disparo sale cargado — el "premio" visual de subir de
+	# nivel, estilo buster cargado de Mega Man.
+	_charged_shot_pending = true
 	emit_signal("leveled_up", level)
 
 func apply_upgrade(id: String) -> void:
@@ -479,24 +570,89 @@ func apply_upgrade(id: String) -> void:
 			emit_signal("hp_changed", hp, max_hp)
 		"hp_regen":   hp_regen_per_sec += 1.0
 		"magnet":     magnet_radius *= 1.40
-		"multishot":  projectiles_per_shot = min(5, projectiles_per_shot + 1)
-		"ranged_bonus": ranged_bonus_shots = min(3, ranged_bonus_shots + 1)
+		"multishot":  projectiles_per_shot = min(4, projectiles_per_shot + 1)
+		# Desbloqueo — arranca los dos caminos en su primer escalón.
+		"ranged_bonus":
+			ranged_power_level = 1
+			ranged_bonus_shots = max(ranged_bonus_shots, 1)
+		# Camino "más fuerte": sube potencia + color del disparo.
+		"ranged_power": ranged_power_level = min(RANGED_MAX_POWER_LEVEL, ranged_power_level + 1)
+		# Camino "más cantidad": suma otro disparo a la ráfaga.
+		"ranged_count": ranged_bonus_shots = min(RANGED_MAX_BONUS_SHOTS, ranged_bonus_shots + 1)
+		"level_damage": _damage_scales_with_level = true
+		"meteors":
+			if not _has_meteors:
+				_has_meteors = true
+			else:
+				_meteor_interval = max(2.0, _meteor_interval - 0.7)
+		# Desbloqueo — crea el rig la primera vez.
+		"flying_swords":
+			if _swords_rig == null:
+				_swords_rig = Node2D.new()
+				_swords_rig.set_script(FLYING_SWORDS_RIG_SCRIPT)
+				get_tree().current_scene.add_child(_swords_rig)
+				_swords_rig.setup(self)
+		# Camino "más fuerte": sube nivel/color/daño de cada espada.
+		"flying_swords_power":
+			if _swords_rig != null:
+				_swords_rig.buff()
+		# Camino "más cantidad": más espadas atacan a la vez por ciclo.
+		"flying_swords_count":
+			if _swords_rig != null:
+				_swords_rig.buff_count()
 
 # ── HP ──────────────────────────────────────────────────────────
 
+## La armadura comprada en la tienda da una barra de defensa que
+## absorbe daño ANTES que la vida (no regenera durante la run — es
+## efectivamente HP extra "gratis" cada partida).
 func take_damage(amount: float) -> void:
 	if hp <= 0.0: return
-	hp = max(0.0, hp - amount)
-	emit_signal("hp_changed", hp, max_hp)
-	# Flash rojo brevísimo
-	_sprite.modulate = Color(1.6, 0.5, 0.5)
-	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.2)
+	var remaining := amount
+	if defense > 0.0:
+		var absorbed: float = min(defense, remaining)
+		defense -= absorbed
+		remaining -= absorbed
+		emit_signal("defense_changed", defense, max_defense)
+		_sprite.modulate = Color(0.5, 0.7, 1.6)
+		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.15)
+	if remaining > 0.0:
+		hp = max(0.0, hp - remaining)
+		emit_signal("hp_changed", hp, max_hp)
+		# Flash rojo brevísimo
+		_sprite.modulate = Color(1.6, 0.5, 0.5)
+		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.2)
 	if hp <= 0.0:
 		emit_signal("died")
 
 func heal(amount: float) -> void:
 	hp = min(max_hp, hp + amount)
 	emit_signal("hp_changed", hp, max_hp)
+
+# ── Estado consultado por level_up_menu.gd para filtrar cartas ──────
+
+## true si el player dispara algo de alguna forma ahora mismo — todo
+## personaje ranged, o AXEL sólo si ya tiene "disparo a distancia".
+## Sin esto, cartas como "+1 proyectil" podían salir sorteadas antes
+## de que AXEL tuviera siquiera un disparo que multiplicar.
+func has_ranged_attack() -> bool:
+	return not _is_axel or ranged_power_level > 0
+
+func has_flying_swords() -> bool:
+	return _swords_rig != null
+
+## Cuántas espadas atacan a la vez por ciclo (carta "más cantidad").
+## 0 si todavía no tenemos la carta base de espadas.
+func sword_attacks_per_cycle() -> int:
+	return _swords_rig.attacks_per_cycle if _swords_rig != null else 0
+
+## 0 si todavía no tenemos la carta. Lo usa level_up_menu.gd para
+## dejar de ofrecer "espadas voladoras" una vez llegado al máximo.
+func sword_level() -> int:
+	return _swords_rig.level if _swords_rig != null else 0
+
+func has_meteors() -> bool:
+	return _has_meteors
 
 # ── Utils ───────────────────────────────────────────────────────
 

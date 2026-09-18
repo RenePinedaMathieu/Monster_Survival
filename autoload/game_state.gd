@@ -1,12 +1,113 @@
 extends Node
 
-## Guarda la elección hecha en character_select.tscn para que quede
-## disponible después del cambio de escena.
+## Guarda la elección hecha en character_select.tscn, y el progreso
+## persistente entre runs: moneda ganada matando monstruos y las
+## mejoras permanentes compradas en shop_menu.tscn.
 ##
-## NOTA: el gameplay (player.gd) todavía NO lee este valor — sigue
-## usando su sprite "Man" por defecto. Cada uno de los 3 packs en
-## assets/main_characters/ trae su propio set de direcciones y
-## tamaño de frame (distinto entre sí y distinto del sprite actual
-## del player), así que conectar el skin real es trabajo aparte.
+## NOTA: character_select sólo conecta bien el skin de main_char1
+## (AXEL) a player.gd — main_char2/main_char2_female sí tienen su
+## propio sprite (ver player.gd) pero no ataque propio.
+##
+## Persistencia: user://save.cfg vía ConfigFile — sobrevive entre
+## sesiones del juego (funciona igual en editor, build de escritorio
+## y export Web, que guarda esto en IndexedDB).
 
 var selected_character_id: String = "main_char1"
+
+signal currency_changed(amount: int)
+
+const SAVE_PATH := "user://save.cfg"
+
+## Cada item: nombre, descripción, costo base, cuánto sube el costo
+## por nivel comprado, y tope de niveles. Los bonos reales que dan
+## están en get_bonus_*() más abajo — player.gd los lee al arrancar
+## cada run.
+const SHOP_ITEMS: Dictionary = {
+	"armor": {
+		"name": "Armadura", "desc": "+8 de defensa — absorbe daño antes que la vida",
+		"base_cost": 20, "cost_step": 15, "max_level": 10,
+	},
+	"max_hp": {
+		"name": "Vitalidad", "desc": "+15 vida máxima inicial",
+		"base_cost": 15, "cost_step": 10, "max_level": 10,
+	},
+	"damage": {
+		"name": "Fuerza", "desc": "+5% daño inicial",
+		"base_cost": 18, "cost_step": 12, "max_level": 10,
+	},
+	"regen": {
+		"name": "Vigor", "desc": "+0.3 HP/s de regeneración inicial",
+		"base_cost": 25, "cost_step": 18, "max_level": 5,
+	},
+}
+
+var total_currency: int = 0
+## Lo ganado DURANTE la run en curso — se banca a total_currency (y
+## se guarda a disco) recién cuando la run termina, ver
+## bank_run_currency(). Así el HUD puede mostrar "lo que vas ganando"
+## sin que ya cuente como gastable hasta terminar.
+var run_currency: int = 0
+var shop_levels: Dictionary = {}   # id -> nivel comprado (int), default 0
+
+func _ready() -> void:
+	_load()
+
+func _load() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SAVE_PATH) == OK:
+		total_currency = cfg.get_value("progress", "total_currency", 0)
+		shop_levels = cfg.get_value("progress", "shop_levels", {})
+
+func _save() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("progress", "total_currency", total_currency)
+	cfg.set_value("progress", "shop_levels", shop_levels)
+	cfg.save(SAVE_PATH)
+
+## Se llama por cada monstruo que muere durante la run (ver
+## monster.gd). No toca total_currency todavía.
+func add_run_currency(amount: int) -> void:
+	run_currency += amount
+	currency_changed.emit(run_currency)
+
+## Se llama al terminar la run (main.gd, cuando el player muere) —
+## banca lo ganado al total persistente y lo guarda a disco.
+func bank_run_currency() -> void:
+	total_currency += run_currency
+	run_currency = 0
+	_save()
+
+func get_shop_level(id: String) -> int:
+	return shop_levels.get(id, 0)
+
+func get_shop_cost(id: String) -> int:
+	var item: Dictionary = SHOP_ITEMS[id]
+	return item["base_cost"] + get_shop_level(id) * item["cost_step"]
+
+func can_afford(id: String) -> bool:
+	var item: Dictionary = SHOP_ITEMS[id]
+	if get_shop_level(id) >= item["max_level"]:
+		return false
+	return total_currency >= get_shop_cost(id)
+
+func buy_shop_item(id: String) -> bool:
+	if not can_afford(id):
+		return false
+	total_currency -= get_shop_cost(id)
+	shop_levels[id] = get_shop_level(id) + 1
+	_save()
+	return true
+
+# ── Bonos permanentes — player.gd los aplica al arrancar cada run ──
+
+func get_bonus_max_hp() -> float:
+	return get_shop_level("max_hp") * 15.0
+
+func get_bonus_damage_mult() -> float:
+	return get_shop_level("damage") * 0.05
+
+func get_bonus_max_defense() -> float:
+	return get_shop_level("armor") * 8.0
+
+func get_bonus_regen() -> float:
+	return get_shop_level("regen") * 0.3
