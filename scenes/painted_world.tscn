@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://cpaintworld01dev"]
+
+[ext_resource type="Script" path="res://scenes/painted_world.gd" id="1_pwrl"]
+[ext_resource type="PackedScene" path="res://scenes/Grass1.tscn" id="2_grass"]
+
+[node name="PaintedWorld" type="Node2D"]
+script = ExtResource("1_pwrl")
+
+[node name="Grass1" parent="." instance=ExtResource("2_grass")]
+scale = Vector2(2, 2)
