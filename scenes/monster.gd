@@ -39,8 +39,14 @@ const HIT_DAMAGE := 12.0
 const ANIM_FPS := 9.0     # idle/run — no crítico para el gameplay
 const DEATH_FPS := 10.0
 
-const KIND_IDS: Array[String] = ["rat", "bat", "crab", "skull"]
-const BOSS_KIND_ID := "golem"
+const KIND_IDS: Array[String] = ["rat", "bat", "crab", "skull", "sword_lvl1", "imp", "lizardman"]
+## Pool "avanzado" — se prioriza a partir de cierta wave para
+## que el juego se sienta escalando en variedad además de en cantidad.
+const KIND_IDS_ADVANCED: Array[String] = ["sword_lvl1", "sword_lvl2", "imp", "lizardman", "rat_new"]
+const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
+## Bosses ordenados por tier — main.gd los elige según cuántos bosses
+## ya cayeron en la run (1er boss → demon1, 2do → demon2, 3ro+ → demon3).
+const BOSS_KIND_IDS: Array[String] = ["demon1", "demon2", "demon3"]
 
 ## "scale" está calibrado a mano para cada pack — cada uno trae
 ## distinto padding dentro de su celda (ver bbox medidos al armar
@@ -105,6 +111,101 @@ const KIND_DATA: Dictionary = {
 		"scale": 3.4,
 		"collision_scale": 2.3,
 	},
+
+	# ── Packs nuevos (sprites 128x128 y 64x64, animaciones en filas
+	# horizontales de un frame cada una, generadas al batch-exportar
+	# los .aseprite a PNG con py-aseprite). Cada anim tiene su propio
+	# "cols" = frame_count porque las hojas son de una fila.
+	# ────────────────────────────────────────────────────────────────
+
+	# Demons — bosses. Cada tier es visualmente más agresivo. Se
+	# elige el demon_i según el i-ésimo boss del run (main.gd).
+	"demon1": {
+		"base": "res://assets/sprites/Demon/Demon1/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Demon1_Idle_front.png",     "frames": 4,  "cols": 4},
+		"run":    {"file": "Run/Demon1_Run_front.png",       "frames": 8,  "cols": 8},
+		"attack": {"file": "Attack/Demon1_Attack_front.png", "frames": 10, "cols": 10},
+		"death":  {"file": "Death/Demon1_Death_front.png",   "frames": 13, "cols": 13},
+		"scale": 0.55,
+		"collision_scale": 1.6,
+	},
+	"demon2": {
+		"base": "res://assets/sprites/Demon/Demon2/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Demon2_Idle_front.png",     "frames": 4,  "cols": 4},
+		"run":    {"file": "Run/Demon2_Run_front.png",       "frames": 8,  "cols": 8},
+		"attack": {"file": "Attack/Demon2_Attack_front.png", "frames": 10, "cols": 10},
+		"death":  {"file": "Death/Demon2_Death_front.png",   "frames": 13, "cols": 13},
+		"scale": 0.62,
+		"collision_scale": 1.8,
+	},
+	"demon3": {
+		"base": "res://assets/sprites/Demon/Demon3/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Demon3_Idle_front.png",     "frames": 4,  "cols": 4},
+		"run":    {"file": "Run/Demon3_Run_front.png",       "frames": 8,  "cols": 8},
+		"attack": {"file": "Attack/Demon3_Attack_front.png", "frames": 10, "cols": 10},
+		"death":  {"file": "Death/Demon3_Death_front.png",   "frames": 13, "cols": 13},
+		"scale": 0.7,
+		"collision_scale": 2.0,
+	},
+
+	# Swordsmen — enemigos regulares que "crecen" durante la run.
+	# Lvl1 aparece siempre; lvl2 empieza a spawnear en las waves más
+	# adelantadas (ver KIND_IDS_ADVANCED en main.gd).
+	"sword_lvl1": {
+		"base": "res://assets/sprites/swordman/Swordsman_lvl1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Swordsman_lvl1_Idle/Swordsman_lvl1_Idle_front.png",   "frames": 6, "cols": 6},
+		"run":    {"file": "Swordsman_lvl1_Run/Swordsman_lvl1_Run_front.png",     "frames": 8, "cols": 8},
+		"attack": {"file": "Swordsman_lvl1_Attack/Swordsman_lvl1_attack_front.png","frames": 8, "cols": 8},
+		"death":  {"file": "Swordsman_lvl1_Death/Swordsman_lvl1_Death_front.png", "frames": 7, "cols": 7},
+		"scale": 0.7,
+	},
+	"sword_lvl2": {
+		"base": "res://assets/sprites/swordman/Swordsman_lvl2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Swordsman_lvl2_Idle/Swordsman_lvl2_Idle_front.png",   "frames": 6, "cols": 6},
+		"run":    {"file": "Swordsman_lvl2_Run/Swordsman_lvl2_Run_front.png",     "frames": 8, "cols": 8},
+		"attack": {"file": "Swordsman_lvl2_Attack/Swordsman_lvl2_attack_front.png","frames": 8, "cols": 8},
+		"death":  {"file": "Swordsman_lvl2_Death/Swordsman_lvl2_Death_front.png", "frames": 7, "cols": 7},
+		"scale": 0.7,
+	},
+
+	# Imp — enemigo chico y rápido. Ideal como filler de waves llenas.
+	"imp": {
+		"base": "res://assets/sprites/IMP/Imp1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Imp1_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Imp1_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Imp1_Attack_front.png", "frames": 6, "cols": 6},
+		"death":  {"file": "Death/Imp1_Death_front.png",   "frames": 10, "cols": 10},
+		"scale": 0.7,
+	},
+
+	# Lizardman — enemigo mediano equilibrado. Aparece en el mid-game.
+	"lizardman": {
+		"base": "res://assets/sprites/Lizardman/Lizardman1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Lizardman1_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Lizardman1_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Lizardman1_Attack_front.png", "frames": 7, "cols": 7},
+		"death":  {"file": "Death/Lizardman1_Death_front.png",   "frames": 7, "cols": 7},
+		"scale": 0.7,
+	},
+
+	# Rat "new" — más grande y más animado que el rat "enemy_galore"
+	# de Pipoya (que es 64x64). Este es 128x128, se ve más detallado.
+	"rat_new": {
+		"base": "res://assets/sprites/Rat/Rat1/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Rat1_Idle_front.png",     "frames": 6, "cols": 6},
+		"run":    {"file": "Run/Rat1_Run_front.png",       "frames": 6, "cols": 6},
+		"attack": {"file": "Attack/Rat1_Attack_front.png", "frames": 8, "cols": 8},
+		"death":  {"file": "Death/Rat1_Death_front.png",   "frames": 5, "cols": 5},
+		"scale": 0.4,
+	},
 }
 
 @export var max_hp: float = 3.0
@@ -163,8 +264,13 @@ func set_kind(kind_id: String) -> void:
 	for anim_name in ["idle", "run", "attack", "death"]:
 		if data.has(anim_name):
 			var info: Dictionary = data[anim_name]
+			# Los packs nuevos (Demon/Sword/Imp/Lizard/Rat_new) traen
+			# hojas de una sola fila con "cols" = frames de esa anim.
+			# Los viejos (Pipoya) usan el "cols" del kind. info.cols
+			# gana si está.
+			var anim_cols: int = info.get("cols", cols)
 			_anim_frames[anim_name] = _slice_frames(
-				data["base"] + info["file"], frame_size, cols, info["frames"], info.get("start", 0)
+				data["base"] + info["file"], frame_size, anim_cols, info["frames"], info.get("start", 0)
 			)
 
 	_base_sprite_scale = Vector2.ONE * float(data.get("scale", 1.0))

@@ -43,6 +43,11 @@ var _remote_players: Dictionary = {}
 var _current_wave: int = 0
 var _monsters_alive: int = 0
 var _in_break: bool = false
+## Cuenta cuántos bosses ya spawneó la run — para elegir demon1/2/3.
+var _bosses_spawned: int = 0
+## A partir de esta wave, la pool "advanced" (sword_lvl2 + variedad)
+## empieza a mezclarse con la básica.
+const WAVE_ADVANCED_START := 6
 
 func _ready() -> void:
 	print("[main] booting…")
@@ -143,15 +148,27 @@ func _spawn_monster(is_boss: bool) -> void:
 	var m = MONSTER_SCENE.instantiate()
 	m.position = _pick_spawn_position()
 	if is_boss:
-		m.max_hp = 80.0
-		m.coin_reward = 25
+		# HP y coin_reward escalan por tier de boss para que cada
+		# encuentro se sienta progresivamente más importante.
+		var tier: int = min(_bosses_spawned, m.BOSS_KIND_IDS.size() - 1)
+		m.max_hp = 80.0 + tier * 40.0
+		m.coin_reward = 25 + tier * 15
 	_monsters_container.add_child(m)
 	# set_kind necesita @onready resuelto — sólo funciona DESPUÉS de
 	# add_child (mismo motivo por el que antes set_sprite iba después).
 	if is_boss:
-		m.set_kind(m.BOSS_KIND_ID)
+		# Boss tier per encounter: 1er boss → demon1, 2do → demon2, 3ro+ → demon3
+		var tier: int = min(_bosses_spawned, m.BOSS_KIND_IDS.size() - 1)
+		m.set_kind(m.BOSS_KIND_IDS[tier])
+		_bosses_spawned += 1
 	else:
-		m.set_kind(m.KIND_IDS[randi() % m.KIND_IDS.size()])
+		# Antes de WAVE_ADVANCED_START usamos sólo el pool básico
+		# (rat, bat, crab, skull, sword_lvl1, imp, lizardman). Pasada esa
+		# wave metemos el pool advanced que incluye sword_lvl2.
+		var pool: Array = m.KIND_IDS.duplicate()
+		if _current_wave >= WAVE_ADVANCED_START:
+			pool.append_array(m.KIND_IDS_ADVANCED)
+		m.set_kind(pool[randi() % pool.size()])
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
 	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
 	# sin necesidad de estar en el radio de detección. Los remote
