@@ -39,11 +39,12 @@ const HIT_DAMAGE := 12.0
 const ANIM_FPS := 9.0     # idle/run — no crítico para el gameplay
 const DEATH_FPS := 10.0
 
-const KIND_IDS: Array[String] = ["rat", "bat", "crab", "skull", "imp", "lizardman"]
-## Pool "avanzado" — se prioriza a partir de cierta wave para
-## que el juego se sienta escalando en variedad además de en cantidad.
-## (Swordman se sacó — ahora es personaje jugable con evolución de nivel.)
-const KIND_IDS_ADVANCED: Array[String] = ["imp", "lizardman", "rat_new"]
+## Pool base — sólo los nuevos packs (Rat128, Imp, Lizardman). Los
+## Pipoya viejos (rat 64x64, bat, crab, skull, golem) se retiraron.
+const KIND_IDS: Array[String] = ["rat", "imp", "lizardman"]
+## Pool "avanzado" — mismo pool por ahora. Cuando sumemos más
+## variantes (Imp2, Lizardman2, Rat2/3) las agregamos acá.
+const KIND_IDS_ADVANCED: Array[String] = ["rat", "imp", "lizardman"]
 const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
 ## Bosses ordenados por tier — main.gd los elige según cuántos bosses
 ## ya cayeron en la run (1er boss → demon1, 2do → demon2, 3ro+ → demon3).
@@ -62,56 +63,10 @@ const BOSS_KIND_IDS: Array[String] = ["demon1", "demon2", "demon3"]
 ## siempre 0); "start" != 0 sirve para un pack que comparta una
 ## única hoja grande con varias animaciones en filas distintas, si
 ## se suma alguno más adelante.
+## Cada kind trae paths a sheets pre-cortados (una fila horizontal
+## por animación). "cols" por anim = frame_count. "scale" y opcional
+## "collision_scale" están calibrados a ojo para cada pack.
 const KIND_DATA: Dictionary = {
-	"rat": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Rat/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Rat_Idle.png", "frames": 4},
-		"run": {"file": "Rat_Run.png", "frames": 6},
-		"attack": {"file": "Rat_Attack.png", "frames": 8},
-		"death": {"file": "Rat_Death.png", "frames": 5},
-		"scale": 1.2,
-	},
-	"bat": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Bat/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		# El bat siempre vuela — Fly hace de idle Y de run.
-		"idle": {"file": "Bat_Fly.png", "frames": 4},
-		"run": {"file": "Bat_Fly.png", "frames": 4},
-		"attack": {"file": "Bat_Attack.png", "frames": 7},
-		"death": {"file": "Bat_Death.png", "frames": 11},
-		"scale": 1.1,
-	},
-	"crab": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Crab/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Crab_Idle.png", "frames": 4},
-		"run": {"file": "Crab_Run.png", "frames": 6},
-		"attack": {"file": "Crab_AttackA.png", "frames": 10},
-		"death": {"file": "Crab_Death.png", "frames": 5},
-		"scale": 1.0,
-	},
-	"skull": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Skull/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Bones_SingleSkull_Idle.png", "frames": 4},
-		"run": {"file": "Bones_SingleSkull_Fly.png", "frames": 8},
-		"death": {"file": "Bones_SingleSkull_Death.png", "frames": 10},
-		"scale": 1.2,
-		# Sin "attack": este pack no trae animación de golpe — el
-		# telegraph del windup sigue siendo 100% el tint rojo, como
-		# antes de sumar animaciones a los demás.
-	},
-	"golem": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Golem/No Armor/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Golem_IdleA.png", "frames": 4},
-		"run": {"file": "Golem_Run.png", "frames": 4},
-		"attack": {"file": "Golem_AttackA.png", "frames": 12},
-		"death": {"file": "Golem_DeathA.png", "frames": 5},
-		"scale": 3.4,
-		"collision_scale": 2.3,
-	},
 
 	# ── Packs nuevos (sprites 128x128 y 64x64, animaciones en filas
 	# horizontales de un frame cada una, generadas al batch-exportar
@@ -152,28 +107,6 @@ const KIND_DATA: Dictionary = {
 		"collision_scale": 2.0,
 	},
 
-	# Swordsmen — enemigos regulares que "crecen" durante la run.
-	# Lvl1 aparece siempre; lvl2 empieza a spawnear en las waves más
-	# adelantadas (ver KIND_IDS_ADVANCED en main.gd).
-	"sword_lvl1": {
-		"base": "res://assets/sprites/swordman/Swordsman_lvl1/",
-		"frame_size": Vector2(64, 64),
-		"idle":   {"file": "Swordsman_lvl1_Idle/Swordsman_lvl1_Idle_front.png",   "frames": 6, "cols": 6},
-		"run":    {"file": "Swordsman_lvl1_Run/Swordsman_lvl1_Run_front.png",     "frames": 8, "cols": 8},
-		"attack": {"file": "Swordsman_lvl1_Attack/Swordsman_lvl1_attack_front.png","frames": 8, "cols": 8},
-		"death":  {"file": "Swordsman_lvl1_Death/Swordsman_lvl1_Death_front.png", "frames": 7, "cols": 7},
-		"scale": 0.7,
-	},
-	"sword_lvl2": {
-		"base": "res://assets/sprites/swordman/Swordsman_lvl2/",
-		"frame_size": Vector2(64, 64),
-		"idle":   {"file": "Swordsman_lvl2_Idle/Swordsman_lvl2_Idle_front.png",   "frames": 6, "cols": 6},
-		"run":    {"file": "Swordsman_lvl2_Run/Swordsman_lvl2_Run_front.png",     "frames": 8, "cols": 8},
-		"attack": {"file": "Swordsman_lvl2_Attack/Swordsman_lvl2_attack_front.png","frames": 8, "cols": 8},
-		"death":  {"file": "Swordsman_lvl2_Death/Swordsman_lvl2_Death_front.png", "frames": 7, "cols": 7},
-		"scale": 0.7,
-	},
-
 	# Imp — enemigo chico y rápido. Ideal como filler de waves llenas.
 	"imp": {
 		"base": "res://assets/sprites/IMP/Imp1/",
@@ -196,9 +129,8 @@ const KIND_DATA: Dictionary = {
 		"scale": 0.7,
 	},
 
-	# Rat "new" — más grande y más animado que el rat "enemy_galore"
-	# de Pipoya (que es 64x64). Este es 128x128, se ve más detallado.
-	"rat_new": {
+	# Rat — 128x128 sprite del pack Rat1. Detallado y animado.
+	"rat": {
 		"base": "res://assets/sprites/Rat/Rat1/",
 		"frame_size": Vector2(128, 128),
 		"idle":   {"file": "Idle/Rat1_Idle_front.png",     "frames": 6, "cols": 6},
@@ -492,8 +424,9 @@ func _die() -> void:
 	_detection.set_deferred("monitoring", false)
 	_drop_xp_orb()
 	GameState.add_run_currency(coin_reward)
-	# Boss suena distinto — más grave y grande. El "golem" es el boss.
-	if _kind_id == BOSS_KIND_ID:
+	# Boss suena distinto — más grave y grande. Cualquier demon (tier)
+	# cuenta como boss.
+	if _kind_id in BOSS_KIND_IDS:
 		Audio.play_sfx("boss_death", global_position, 0.05)
 	else:
 		Audio.play_sfx("monster_death", global_position, 0.15)
