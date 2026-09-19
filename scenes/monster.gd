@@ -165,6 +165,11 @@ var _dead := false
 
 var _base_sprite_scale := Vector2.ONE
 var _kind_id := ""
+## Dirección actual del sprite del monstruo. Se actualiza en cada
+## frame según el vector velocity — el eje dominante manda.
+var _facing := "front"
+
+const DIRECTIONS: Array[String] = ["front", "back", "left", "right"]
 var _attack_range := ATTACK_RANGE
 var _anim_frames: Dictionary = {}   # "idle"/"run"/"attack"/"death" -> Array[Texture2D]
 var _anim_name := ""
@@ -197,14 +202,24 @@ func set_kind(kind_id: String) -> void:
 	for anim_name in ["idle", "run", "attack", "death"]:
 		if data.has(anim_name):
 			var info: Dictionary = data[anim_name]
-			# Los packs nuevos (Demon/Sword/Imp/Lizard/Rat_new) traen
-			# hojas de una sola fila con "cols" = frames de esa anim.
-			# Los viejos (Pipoya) usan el "cols" del kind. info.cols
-			# gana si está.
+			# "cols" = frames por anim en las hojas horizontales (1 fila).
 			var anim_cols: int = info.get("cols", cols)
-			_anim_frames[anim_name] = _slice_frames(
-				data["base"] + info["file"], frame_size, anim_cols, info["frames"], info.get("start", 0)
-			)
+			# Los packs nuevos traen SHEETS SEPARADAS por dirección con
+			# sufijo _front/_back/_left/_right en el filename. Cargamos
+			# las 4 y las guardamos en un dict por dirección; el
+			# _update_animation elige según _facing.
+			var front_path: String = info["file"]
+			var per_dir: Dictionary = {}
+			for dir_name in DIRECTIONS:
+				var dir_path: String = front_path.replace("_front", "_" + dir_name)
+				var full_path: String = data["base"] + dir_path
+				if not ResourceLoader.exists(full_path):
+					# Fallback al _front si no existe esa dirección
+					full_path = data["base"] + front_path
+				per_dir[dir_name] = _slice_frames(
+					full_path, frame_size, anim_cols, info["frames"], info.get("start", 0)
+				)
+			_anim_frames[anim_name] = per_dir
 
 	_base_sprite_scale = Vector2.ONE * float(data.get("scale", 1.0))
 	_sprite.scale = _base_sprite_scale
@@ -281,8 +296,10 @@ func _tick_chase(_delta: float) -> void:
 	# Sin techo de distancia — persigue eternamente al player.
 	var dir := to_player.normalized()
 	velocity = dir * CHASE_SPEED * speed_mult
-	if abs(dir.x) > 0.1:
-		_sprite.flip_h = dir.x < 0
+	# Actualiza el _facing por eje dominante del vector velocity.
+	# Con esto los sprites _back / _front / _left / _right se usan
+	# correctamente en vez de mostrar siempre el _front.
+	_update_facing(dir)
 
 func _tick_windup(delta: float) -> void:
 	velocity = Vector2.ZERO
@@ -371,8 +388,24 @@ func _set_animation(name: String, fps: float = ANIM_FPS) -> void:
 	_anim_frame = 0
 	_anim_time = 0.0
 
+## Ajusta _facing por eje dominante del vector de movimiento.
+## Con velocidad casi cero mantiene el facing anterior (evita el
+## flicker cuando el monstruo se detiene apenas).
+func _update_facing(dir: Vector2) -> void:
+	if dir.length_squared() < 0.01:
+		return
+	if abs(dir.x) > abs(dir.y):
+		_facing = "left" if dir.x < 0 else "right"
+	else:
+		_facing = "back" if dir.y < 0 else "front"
+
 func _update_animation(delta: float) -> void:
-	var frames: Array = _anim_frames.get(_anim_name, [])
+	# _anim_frames[anim] ahora es Dictionary[direction] = Array[Texture2D].
+	# Elige la dirección actual; cae en "front" si no existe.
+	var per_dir = _anim_frames.get(_anim_name, {})
+	if per_dir == null or (per_dir is Dictionary and per_dir.is_empty()):
+		return
+	var frames: Array = per_dir.get(_facing, per_dir.get("front", []))
 	if frames.is_empty():
 		return
 	_anim_time += delta
