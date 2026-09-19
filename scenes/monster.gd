@@ -39,10 +39,11 @@ const HIT_DAMAGE := 12.0
 const ANIM_FPS := 9.0     # idle/run — no crítico para el gameplay
 const DEATH_FPS := 10.0
 
-const KIND_IDS: Array[String] = ["rat", "bat", "crab", "skull", "sword_lvl1", "imp", "lizardman"]
+const KIND_IDS: Array[String] = ["rat", "bat", "crab", "skull", "imp", "lizardman"]
 ## Pool "avanzado" — se prioriza a partir de cierta wave para
 ## que el juego se sienta escalando en variedad además de en cantidad.
-const KIND_IDS_ADVANCED: Array[String] = ["sword_lvl1", "sword_lvl2", "imp", "lizardman", "rat_new"]
+## (Swordman se sacó — ahora es personaje jugable con evolución de nivel.)
+const KIND_IDS_ADVANCED: Array[String] = ["imp", "lizardman", "rat_new"]
 const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
 ## Bosses ordenados por tier — main.gd los elige según cuántos bosses
 ## ya cayeron en la run (1er boss → demon1, 2do → demon2, 3ro+ → demon3).
