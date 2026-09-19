@@ -20,6 +20,11 @@ config/icon="res://icon.svg"
 Realtime="*uid://bhdn3haenx20g"
 Supabase="*uid://dyju2v7pxnojp"
 GameState="*res://autoload/game_state.gd"
+Audio="*res://autoload/audio.gd"
+
+[audio]
+
+buses/default_bus_layout="res://default_bus_layout.tres"
 
 [debug]
 

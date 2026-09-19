@@ -27,7 +27,11 @@ func _ready() -> void:
 	for button in [_play_button, _shop_button, _options_button, _quit_button, _back_button]:
 		UITheme.style_button(button)
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
+		button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
 		button.mouse_exited.connect(UITheme.pulse.bind(button, 1.0, 0.08))
+		button.pressed.connect(func(): Audio.play_sfx("ui_click"))
+	# Música del menú
+	Audio.play_music("menu", 1200)
 
 	_play_button.pressed.connect(_on_play_pressed)
 	_shop_button.pressed.connect(_on_shop_pressed)

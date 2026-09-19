@@ -73,12 +73,14 @@ func show_for(player: Node) -> void:
 	for i in range(3):
 		var u = _current_choices[i]
 		cards[i].text = _title_for(u) + "\n\n" + u.desc
+	Audio.play_sfx("level_up")
 	get_tree().paused = true
 
 func _pick(idx: int) -> void:
 	var u = _current_choices[idx]
 	if _player and _player.has_method("apply_upgrade"):
 		_player.apply_upgrade(u.id)
+	Audio.play_sfx("card_selected")
 	emit_signal("upgrade_chosen", u.id)
 	get_tree().paused = false
 	queue_free()

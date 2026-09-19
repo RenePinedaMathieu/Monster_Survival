@@ -130,6 +130,7 @@ var _did_hit_this_strike := false
 var _dead := false
 
 var _base_sprite_scale := Vector2.ONE
+var _kind_id := ""
 var _attack_range := ATTACK_RANGE
 var _anim_frames: Dictionary = {}   # "idle"/"run"/"attack"/"death" -> Array[Texture2D]
 var _anim_name := ""
@@ -154,6 +155,7 @@ func _ready() -> void:
 ## BOSS_KIND_ID. Se llama después de add_child (necesita @onready
 ## resuelto). Sin esto el monstruo queda con el sprite en blanco.
 func set_kind(kind_id: String) -> void:
+	_kind_id = kind_id
 	var data: Dictionary = KIND_DATA.get(kind_id, KIND_DATA[KIND_IDS[0]])
 	var frame_size: Vector2 = data.get("frame_size", Vector2(64, 64))
 	var cols: int = data.get("cols", 4)
@@ -368,6 +370,7 @@ func take_damage(amount: float) -> void:
 	emit_signal("hp_changed", max(0.0, hp), max_hp)
 	_sprite.modulate = Color(2.0, 2.0, 2.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)
+	Audio.play_sfx("monster_hit", global_position, 0.15)
 	if hp <= 0.0:
 		_die()
 
@@ -382,6 +385,11 @@ func _die() -> void:
 	_detection.set_deferred("monitoring", false)
 	_drop_xp_orb()
 	GameState.add_run_currency(coin_reward)
+	# Boss suena distinto — más grave y grande. El "golem" es el boss.
+	if _kind_id == BOSS_KIND_ID:
+		Audio.play_sfx("boss_death", global_position, 0.05)
+	else:
+		Audio.play_sfx("monster_death", global_position, 0.15)
 	emit_signal("died")
 
 	var death_frames: Array = _anim_frames.get("death", [])

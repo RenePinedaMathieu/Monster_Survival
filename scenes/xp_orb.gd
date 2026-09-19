@@ -43,4 +43,8 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player") and body.has_method("gain_xp"):
 		body.gain_xp(xp_value)
+		# Tier del orb → variar el pitch. Los orbs grandes (más XP)
+		# suenan un pelín más grave.
+		var pitch_shift: float = 0.0 if xp_value < 3 else (-0.08 if xp_value < 5 else -0.15)
+		Audio.play_sfx("xp_pickup", global_position, 0.1 - pitch_shift)
 		queue_free()

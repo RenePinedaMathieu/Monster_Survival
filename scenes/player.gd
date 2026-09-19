@@ -441,6 +441,11 @@ func _auto_fire() -> void:
 		_fire_cd = 0.15
 		return
 	_fire_cd = AUTO_FIRE_INTERVAL / atk_speed_mult
+	# Sonido del disparo (o del swing melee de AXEL)
+	if _is_axel:
+		Audio.play_sfx("player_melee", global_position)
+	else:
+		Audio.play_sfx("player_shoot", global_position)
 	var to_target: Vector2 = (target.global_position - global_position).normalized()
 	# Face hacia el target así el sprite gira acorde
 	current_dir = _vec_to_dir(to_target)
@@ -608,6 +613,7 @@ func apply_upgrade(id: String) -> void:
 ## efectivamente HP extra "gratis" cada partida).
 func take_damage(amount: float) -> void:
 	if hp <= 0.0: return
+	Audio.play_sfx("player_hurt", global_position, 0.1)
 	var remaining := amount
 	if defense > 0.0:
 		var absorbed: float = min(defense, remaining)
@@ -623,6 +629,7 @@ func take_damage(amount: float) -> void:
 		_sprite.modulate = Color(1.6, 0.5, 0.5)
 		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.2)
 	if hp <= 0.0:
+		Audio.play_sfx("player_death", global_position)
 		emit_signal("died")
 
 func heal(amount: float) -> void:

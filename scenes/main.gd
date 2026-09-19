@@ -63,6 +63,8 @@ func _ready() -> void:
 	var tc = TOUCH_CONTROLS_SCENE.instantiate()
 	add_child(tc)
 	tc.move_input.connect(_player.set_touch_input)
+	# Música de gameplay al arrancar la scene
+	Audio.play_music("gameplay_chill", 1200)
 	# Primer wave con un delay corto para que veas el mundo un
 	# segundo antes de que caiga la fiesta
 	get_tree().create_timer(1.5).timeout.connect(_start_next_wave)
@@ -108,6 +110,14 @@ func _start_next_wave() -> void:
 	# que el resto (ver KIND_DATA["golem"] en monster.gd).
 	var boss_count: int = 1 if _current_wave % 10 == 0 else 0
 	print("[main] wave %d — %d monsters + %d bosses" % [_current_wave, count, boss_count])
+	Audio.play_sfx("wave_start")
+	# En wave con boss, cambiamos a música de boss (cross-fade)
+	if boss_count > 0:
+		Audio.play_music("boss", 800)
+		Audio.play_sfx("boss_spawn")
+	# Cuando la intensidad sube (wave 5+), pasamos a track más agresivo
+	elif _current_wave == 5:
+		Audio.play_music("gameplay_intense", 1500)
 	for i in range(count):
 		_spawn_monster(false)
 	for i in range(boss_count):
@@ -162,6 +172,11 @@ func _on_monster_died() -> void:
 	_hud.set_wave(_current_wave, _monsters_alive)
 	if _monsters_alive == 0 and not _in_break:
 		_in_break = true
+		Audio.play_sfx("wave_clear")
+		# Volver a track normal si veníamos de un boss (wave % 10 == 0)
+		if _current_wave % 10 == 0:
+			var next_track := "gameplay_intense" if _current_wave >= 5 else "gameplay_chill"
+			Audio.play_music(next_track, 1200)
 		_hud.show_wave_break(WAVE_BREAK_SEC)
 		get_tree().create_timer(WAVE_BREAK_SEC).timeout.connect(_start_next_wave)
 
