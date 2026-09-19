@@ -117,11 +117,11 @@ const SFX_LIBRARY: Dictionary = {
 }
 
 const MUSIC_LIBRARY: Dictionary = {
-	"menu":            "res://assets/audio/music/menu_theme.ogg",
-	"gameplay_chill":  "res://assets/audio/music/gameplay_chill.ogg",
-	"gameplay_intense":"res://assets/audio/music/gameplay_intense.ogg",
-	"boss":            "res://assets/audio/music/boss_theme.ogg",
-	"death":           "res://assets/audio/music/death.ogg",
+	"menu":             "res://assets/sound/music/menu_theme.ogg",
+	"gameplay_chill":   "res://assets/sound/music/gameplay_chill.ogg",
+	"gameplay_intense": "res://assets/sound/music/gameplay_intense.ogg",
+	"boss":             "res://assets/sound/music/boss_theme.ogg",
+	"death":            "res://assets/sound/music/death.ogg",
 }
 
 # Cache de streams cargados. Evita re-cargar el mismo .wav 1000 veces
