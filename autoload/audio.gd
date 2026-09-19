@@ -117,11 +117,13 @@ const SFX_LIBRARY: Dictionary = {
 }
 
 const MUSIC_LIBRARY: Dictionary = {
-	"menu":             "res://assets/sound/music/menu_theme.ogg",
-	"gameplay_chill":   "res://assets/sound/music/gameplay_chill.ogg",
-	"gameplay_intense": "res://assets/sound/music/gameplay_intense.ogg",
-	"boss":             "res://assets/sound/music/boss_theme.ogg",
-	"death":            "res://assets/sound/music/death.ogg",
+	"menu":             "res://assets/sound/music/Comfortable Mystery 3.mp3",
+	"gameplay_chill":   "res://assets/sound/music/Sneaky Adventure.mp3",
+	"gameplay_intense": "res://assets/sound/music/Kick Shock.mp3",
+	"boss":             "res://assets/sound/music/Voxel Revolution.mp3",
+	# Sin track dedicado para death screen todavía — cae en "menu"
+	# (que es más contemplativo) al recargar hasta que sumemos uno.
+	"death":            "res://assets/sound/music/Comfortable Mystery 3.mp3",
 }
 
 # Cache de streams cargados. Evita re-cargar el mismo .wav 1000 veces
@@ -205,6 +207,12 @@ func play_music(id: String, fade_ms: int = 800) -> void:
 	if not ResourceLoader.exists(path):
 		return
 	var stream: AudioStream = load(path)
+	# Los MP3 no tienen loop por default cuando se cargan vía load().
+	# Lo prendemos acá así el track de fondo se repite sin quedar en
+	# silencio a los 2 min. AudioStreamMP3 y AudioStreamOggVorbis tienen
+	# la property "loop" — otros formatos ni loop tienen ni fallan.
+	if "loop" in stream:
+		stream.set("loop", true)
 	# Fade out del track anterior
 	if is_instance_valid(_current_music):
 		var old_music: AudioStreamPlayer = _current_music

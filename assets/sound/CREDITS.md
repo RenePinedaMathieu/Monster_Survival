@@ -33,8 +33,34 @@ enemigos no golpean todos con el mismo hit repetido.
 Cuando agregues más audios, mantené el nombre exacto del archivo del
 pack y editá `SFX_LIBRARY` en `autoload/audio.gd` para referenciarlo.
 
-## Créditos que agregar al juego (final release)
+## Música (music/)
 
-- Sound Effects: Kenney (kenney.nl) — CC-0
-- Music: (pendiente — quizás Kevin MacLeod si sumamos su música,
-  requiere CC-BY)
+Tracks de **Kevin MacLeod** — https://incompetech.com — licencia
+**CC-BY 4.0**. **REQUIERE ATRIBUCIÓN** en los créditos del juego.
+
+| Archivo | Uso en el juego |
+|---|---|
+| `Comfortable Mystery 3.mp3` | Menú principal + death screen (fallback) |
+| `Sneaky Adventure.mp3` | Gameplay chill (waves 1-4) |
+| `Kick Shock.mp3` | Gameplay intenso (wave 5+) |
+| `Voxel Revolution.mp3` | Boss theme (cada wave % 10 == 0) |
+
+## Créditos obligatorios en el juego final
+
+Al final del juego (créditos del ending, o menú de opciones → "About")
+DEBE aparecer literalmente:
+
+```
+Music by Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License
+http://creativecommons.org/licenses/by/4.0/
+
+Tracks used:
+- "Comfortable Mystery 3"
+- "Sneaky Adventure"
+- "Kick Shock"
+- "Voxel Revolution"
+```
+
+Sound Effects: Kenney (kenney.nl) — CC-0, sin crédito requerido pero
+igual les tiramos un guiño en los créditos.
