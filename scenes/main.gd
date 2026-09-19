@@ -45,9 +45,12 @@ var _monsters_alive: int = 0
 var _in_break: bool = false
 ## Cuenta cuántos bosses ya spawneó la run — para elegir demon1/2/3.
 var _bosses_spawned: int = 0
-## A partir de esta wave, la pool "advanced" (sword_lvl2 + variedad)
-## empieza a mezclarse con la básica.
-const WAVE_ADVANCED_START := 6
+## Umbrales de dificultad. Debajo de MID sólo tier 1 (crías). Entre
+## MID y HIGH mix de tier 1 y 2. En HIGH sólo tier 2 y 3 (los más
+## amenazantes). Se siente la escalada de la run sin necesidad de
+## tocar nada más.
+const WAVE_MID_START := 4
+const WAVE_HIGH_START := 7
 
 func _ready() -> void:
 	print("[main] booting…")
@@ -162,12 +165,15 @@ func _spawn_monster(is_boss: bool) -> void:
 		m.set_kind(m.BOSS_KIND_IDS[tier])
 		_bosses_spawned += 1
 	else:
-		# Antes de WAVE_ADVANCED_START usamos sólo el pool básico
-		# (rat, bat, crab, skull, sword_lvl1, imp, lizardman). Pasada esa
-		# wave metemos el pool advanced que incluye sword_lvl2.
-		var pool: Array = m.KIND_IDS.duplicate()
-		if _current_wave >= WAVE_ADVANCED_START:
-			pool.append_array(m.KIND_IDS_ADVANCED)
+		# Pool de spawn depende de la wave — waves altas traen bichos
+		# más grandes/duros (tier 2 y 3 sólo aparecen tarde).
+		var pool: Array
+		if _current_wave >= WAVE_HIGH_START:
+			pool = m.KIND_IDS_HIGH
+		elif _current_wave >= WAVE_MID_START:
+			pool = m.KIND_IDS_MID
+		else:
+			pool = m.KIND_IDS
 		m.set_kind(pool[randi() % pool.size()])
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
 	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,

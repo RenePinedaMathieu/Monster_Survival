@@ -39,12 +39,16 @@ const HIT_DAMAGE := 12.0
 const ANIM_FPS := 9.0     # idle/run — no crítico para el gameplay
 const DEATH_FPS := 10.0
 
-## Pool base — sólo los nuevos packs (Rat128, Imp, Lizardman). Los
-## Pipoya viejos (rat 64x64, bat, crab, skull, golem) se retiraron.
+## Tier 1 — enemigos "cría", HP bajísimo. Sólo aparecen en las
+## primeras waves (main.gd elige el pool según _current_wave).
 const KIND_IDS: Array[String] = ["rat", "imp", "lizardman"]
-## Pool "avanzado" — mismo pool por ahora. Cuando sumemos más
-## variantes (Imp2, Lizardman2, Rat2/3) las agregamos acá.
-const KIND_IDS_ADVANCED: Array[String] = ["rat", "imp", "lizardman"]
+## Tier 2 — mezcla del tier 1 con las variantes intermedias. Empiezan
+## a asomar en la wave media.
+const KIND_IDS_MID: Array[String] = ["rat", "imp", "lizardman", "rat_2", "imp_2", "lizardman_2"]
+## Tier 3 — sólo variantes fuertes. Waves altas.
+const KIND_IDS_HIGH: Array[String] = ["rat_2", "imp_2", "lizardman_2", "rat_3", "imp_3", "lizardman_3"]
+## Alias para compat: main.gd todavía referencia KIND_IDS_ADVANCED.
+const KIND_IDS_ADVANCED: Array[String] = ["rat_2", "imp_2", "lizardman_2", "rat_3", "imp_3", "lizardman_3"]
 const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
 ## Bosses ordenados por tier — main.gd los elige según cuántos bosses
 ## ya cayeron en la run (1er boss → demon1, 2do → demon2, 3ro+ → demon3).
@@ -107,7 +111,13 @@ const KIND_DATA: Dictionary = {
 		"collision_scale": 2.0,
 	},
 
-	# Imp — enemigo chico y rápido. Ideal como filler de waves llenas.
+	# ── Regulares por tier ──────────────────────────────────────
+	# Cada familia (Imp/Lizardman/Rat) tiene 3 variantes (1/2/3) con
+	# animaciones idénticas — sólo cambia el arte (más armado, más
+	# oscuro/rojo, más grande). Cada tier sube hp y coin_reward para
+	# que el jugador SIENTA la escalada, no sólo la vea.
+
+	# ── IMP: chiquito y rápido ──────────────────────────────────
 	"imp": {
 		"base": "res://assets/sprites/IMP/Imp1/",
 		"frame_size": Vector2(64, 64),
@@ -115,10 +125,28 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp1_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp1_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp1_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 0.7,
+		"scale": 0.7, "hp": 3.0, "coin_reward": 1,
+	},
+	"imp_2": {
+		"base": "res://assets/sprites/IMP/Imp2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Imp2_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Imp2_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Imp2_Attack_front.png", "frames": 6, "cols": 6},
+		"death":  {"file": "Death/Imp2_Death_front.png",   "frames": 10, "cols": 10},
+		"scale": 0.75, "hp": 6.0, "coin_reward": 2,
+	},
+	"imp_3": {
+		"base": "res://assets/sprites/IMP/Imp3/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Imp3_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Imp3_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Imp3_Attack_front.png", "frames": 6, "cols": 6},
+		"death":  {"file": "Death/Imp3_Death_front.png",   "frames": 10, "cols": 10},
+		"scale": 0.8, "hp": 12.0, "coin_reward": 4,
 	},
 
-	# Lizardman — enemigo mediano equilibrado. Aparece en el mid-game.
+	# ── LIZARDMAN: mediano equilibrado ──────────────────────────
 	"lizardman": {
 		"base": "res://assets/sprites/Lizardman/Lizardman1/",
 		"frame_size": Vector2(64, 64),
@@ -126,10 +154,28 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Lizardman1_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Lizardman1_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman1_Death_front.png",   "frames": 7, "cols": 7},
-		"scale": 0.7,
+		"scale": 0.7, "hp": 4.0, "coin_reward": 1,
+	},
+	"lizardman_2": {
+		"base": "res://assets/sprites/Lizardman/Lizardman2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Lizardman2_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Lizardman2_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Lizardman2_Attack_front.png", "frames": 7, "cols": 7},
+		"death":  {"file": "Death/Lizardman2_Death_front.png",   "frames": 7, "cols": 7},
+		"scale": 0.75, "hp": 8.0, "coin_reward": 2,
+	},
+	"lizardman_3": {
+		"base": "res://assets/sprites/Lizardman/Lizardman3/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Lizardman3_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Lizardman3_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Lizardman3_Attack_front.png", "frames": 7, "cols": 7},
+		"death":  {"file": "Death/Lizardman3_Death_front.png",   "frames": 7, "cols": 7},
+		"scale": 0.8, "hp": 16.0, "coin_reward": 4,
 	},
 
-	# Rat — 128x128 sprite del pack Rat1. Detallado y animado.
+	# ── RAT: 128x128, muy animado ───────────────────────────────
 	"rat": {
 		"base": "res://assets/sprites/Rat/Rat1/",
 		"frame_size": Vector2(128, 128),
@@ -137,7 +183,25 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Rat1_Run_front.png",       "frames": 6, "cols": 6},
 		"attack": {"file": "Attack/Rat1_Attack_front.png", "frames": 8, "cols": 8},
 		"death":  {"file": "Death/Rat1_Death_front.png",   "frames": 5, "cols": 5},
-		"scale": 0.4,
+		"scale": 0.4, "hp": 3.0, "coin_reward": 1,
+	},
+	"rat_2": {
+		"base": "res://assets/sprites/Rat/Rat2/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Rat2_Idle_front.png",     "frames": 6, "cols": 6},
+		"run":    {"file": "Run/Rat2_Run_front.png",       "frames": 6, "cols": 6},
+		"attack": {"file": "Attack/Rat2_Attack_front.png", "frames": 8, "cols": 8},
+		"death":  {"file": "Death/Rat2_Death_front.png",   "frames": 5, "cols": 5},
+		"scale": 0.44, "hp": 6.0, "coin_reward": 2,
+	},
+	"rat_3": {
+		"base": "res://assets/sprites/Rat/Rat3/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Rat3_Idle_front.png",     "frames": 6, "cols": 6},
+		"run":    {"file": "Run/Rat3_Run_front.png",       "frames": 6, "cols": 6},
+		"attack": {"file": "Attack/Rat3_Attack_front.png", "frames": 8, "cols": 8},
+		"death":  {"file": "Death/Rat3_Death_front.png",   "frames": 5, "cols": 5},
+		"scale": 0.48, "hp": 12.0, "coin_reward": 4,
 	},
 }
 
@@ -224,6 +288,15 @@ func set_kind(kind_id: String) -> void:
 	_base_sprite_scale = Vector2.ONE * float(data.get("scale", 1.0))
 	_sprite.scale = _base_sprite_scale
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+
+	# Aplicamos hp y coin_reward del KIND_DATA si están definidos.
+	# Esto permite que cada tier tenga sus stats sin tocar main.gd
+	# ni el @export default del monster.tscn.
+	if data.has("hp"):
+		max_hp = float(data["hp"])
+		hp = max_hp
+	if data.has("coin_reward"):
+		coin_reward = int(data["coin_reward"])
 
 	var collision_scale: float = data.get("collision_scale", 1.0)
 	_attack_range = ATTACK_RANGE * collision_scale
