@@ -18,36 +18,102 @@ extends Node
 ## Los buses ("Music", "SFX", "Master") se definen en
 ## default_bus_layout.tres y se configuran desde el menú de opciones.
 
+## Cada id mapea a UN string (un solo archivo) o a un ARRAY de strings
+## (variantes que se elijen al azar en cada play_sfx — evita fatiga
+## de escuchar siempre el mismo sample en waves llenas).
+## Los paths apuntan a los packs CC-0 de Kenney en assets/sound/.
 const SFX_LIBRARY: Dictionary = {
-	# Player
-	"player_shoot":    "res://assets/audio/sfx/player_shoot.wav",
-	"player_hurt":     "res://assets/audio/sfx/player_hurt.wav",
-	"player_death":    "res://assets/audio/sfx/player_death.wav",
-	"player_melee":    "res://assets/audio/sfx/player_melee.wav",
-	# Monsters
-	"monster_hit":     "res://assets/audio/sfx/monster_hit.wav",
-	"monster_death":   "res://assets/audio/sfx/monster_death.wav",
-	"monster_windup":  "res://assets/audio/sfx/monster_windup.wav",
-	# XP + coins
-	"xp_pickup":       "res://assets/audio/sfx/xp_pickup.wav",
-	"coin_pickup":     "res://assets/audio/sfx/coin_pickup.wav",
-	# Progression
-	"level_up":        "res://assets/audio/sfx/level_up.wav",
-	"card_hover":      "res://assets/audio/sfx/card_hover.wav",
-	"card_selected":   "res://assets/audio/sfx/card_selected.wav",
-	# UI
-	"ui_hover":        "res://assets/audio/sfx/ui_hover.wav",
-	"ui_click":        "res://assets/audio/sfx/ui_click.wav",
-	# Waves
-	"wave_start":      "res://assets/audio/sfx/wave_start.wav",
-	"wave_clear":      "res://assets/audio/sfx/wave_clear.wav",
-	# Special weapons
-	"meteor_whoosh":   "res://assets/audio/sfx/meteor_whoosh.wav",
-	"meteor_impact":   "res://assets/audio/sfx/meteor_impact.wav",
-	"sword_swing":     "res://assets/audio/sfx/sword_swing.wav",
-	# Boss
-	"boss_spawn":      "res://assets/audio/sfx/boss_spawn.wav",
-	"boss_death":      "res://assets/audio/sfx/boss_death.wav",
+	# ── Player ──────────────────────────────────────────────────
+	"player_shoot": [
+		"res://assets/sound/Audio/pluck_001.ogg",
+		"res://assets/sound/Audio/pluck_002.ogg",
+	],
+	"player_melee": [
+		"res://assets/sound/Audio3/knifeSlice.ogg",
+		"res://assets/sound/Audio3/knifeSlice2.ogg",
+	],
+	"player_hurt": [
+		"res://assets/sound/Audio/impactPunch_heavy_000.ogg",
+		"res://assets/sound/Audio/impactPunch_heavy_001.ogg",
+		"res://assets/sound/Audio/impactPunch_heavy_002.ogg",
+		"res://assets/sound/Audio/impactPunch_heavy_003.ogg",
+		"res://assets/sound/Audio/impactPunch_heavy_004.ogg",
+	],
+	"player_death": [
+		"res://assets/sound/Audio/error_006.ogg",
+		"res://assets/sound/Audio/error_007.ogg",
+		"res://assets/sound/Audio/error_008.ogg",
+	],
+	# ── Monsters ────────────────────────────────────────────────
+	"monster_hit": [
+		"res://assets/sound/Audio/impactSoft_medium_000.ogg",
+		"res://assets/sound/Audio/impactSoft_medium_001.ogg",
+		"res://assets/sound/Audio/impactSoft_medium_002.ogg",
+		"res://assets/sound/Audio/impactSoft_medium_003.ogg",
+		"res://assets/sound/Audio/impactSoft_medium_004.ogg",
+	],
+	"monster_death": [
+		"res://assets/sound/Audio/impactWood_heavy_000.ogg",
+		"res://assets/sound/Audio/impactWood_heavy_001.ogg",
+		"res://assets/sound/Audio/impactWood_heavy_002.ogg",
+		"res://assets/sound/Audio/impactWood_heavy_003.ogg",
+		"res://assets/sound/Audio/impactWood_heavy_004.ogg",
+	],
+	"boss_spawn": [
+		"res://assets/sound/Audio/glitch_003.ogg",
+		"res://assets/sound/Audio/glitch_004.ogg",
+	],
+	"boss_death": [
+		"res://assets/sound/Audio/glitch_001.ogg",
+		"res://assets/sound/Audio/glitch_002.ogg",
+	],
+	# ── XP + coins ──────────────────────────────────────────────
+	"xp_pickup": [
+		"res://assets/sound/Audio3/handleCoins.ogg",
+		"res://assets/sound/Audio3/handleCoins2.ogg",
+	],
+	"coin_pickup": [
+		"res://assets/sound/Audio3/handleCoins.ogg",
+		"res://assets/sound/Audio3/handleCoins2.ogg",
+	],
+	# ── Progression ─────────────────────────────────────────────
+	"level_up": [
+		"res://assets/sound/Audio/confirmation_001.ogg",
+		"res://assets/sound/Audio/confirmation_004.ogg",
+	],
+	"card_hover": "res://assets/sound/Audio/tick_002.ogg",
+	"card_selected": [
+		"res://assets/sound/Audio/confirmation_002.ogg",
+		"res://assets/sound/Audio/confirmation_003.ogg",
+	],
+	# ── UI ──────────────────────────────────────────────────────
+	"ui_hover": [
+		"res://assets/sound/Audio/tick_001.ogg",
+		"res://assets/sound/Audio/tick_002.ogg",
+	],
+	"ui_click": [
+		"res://assets/sound/Audio/click_001.ogg",
+		"res://assets/sound/Audio/click_002.ogg",
+		"res://assets/sound/Audio/click_003.ogg",
+		"res://assets/sound/Audio/click_004.ogg",
+		"res://assets/sound/Audio/click_005.ogg",
+	],
+	# ── Waves ───────────────────────────────────────────────────
+	"wave_start":  "res://assets/sound/Audio/bong_001.ogg",
+	"wave_clear":  "res://assets/sound/Audio/confirmation_003.ogg",
+	# ── Special weapons ─────────────────────────────────────────
+	"meteor_whoosh": [
+		"res://assets/sound/Audio/scratch_001.ogg",
+		"res://assets/sound/Audio/scratch_002.ogg",
+	],
+	"meteor_impact": [
+		"res://assets/sound/Audio/impactPunch_heavy_003.ogg",
+		"res://assets/sound/Audio/impactPunch_heavy_004.ogg",
+	],
+	"sword_swing": [
+		"res://assets/sound/Audio3/knifeSlice.ogg",
+		"res://assets/sound/Audio3/knifeSlice2.ogg",
+	],
 }
 
 const MUSIC_LIBRARY: Dictionary = {
@@ -99,17 +165,30 @@ func play_sfx(id: String, pos: Vector2 = Vector2.INF, pitch_variance: float = 0.
 		player.finished.connect(player.queue_free)
 		player.play()
 
+## Resuelve el id a un AudioStream cargado (o null si no hay archivos).
+## Si el id mapea a un array de paths, elige uno AL AZAR cada llamada
+## — variantes distintas cada vez el mismo evento suena.
+## Los AudioStream se cachean por path individual (no por id) así
+## variantes compartidas entre ids no se cargan doble.
+var _path_cache: Dictionary = {}
 func _get_sfx_stream(id: String) -> AudioStream:
 	if not SFX_LIBRARY.has(id):
 		return null
-	if _sfx_cache.has(id):
-		return _sfx_cache[id]
-	var path: String = SFX_LIBRARY[id]
+	var entry = SFX_LIBRARY[id]
+	var path: String
+	if entry is Array:
+		if entry.is_empty():
+			return null
+		path = entry[randi() % entry.size()]
+	else:
+		path = entry
+	if _path_cache.has(path):
+		return _path_cache[path]
 	if not ResourceLoader.exists(path):
-		_sfx_cache[id] = null
+		_path_cache[path] = null
 		return null
 	var stream: AudioStream = load(path)
-	_sfx_cache[id] = stream
+	_path_cache[path] = stream
 	return stream
 
 # ── Música ──────────────────────────────────────────────────────
