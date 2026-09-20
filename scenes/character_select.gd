@@ -15,12 +15,17 @@ extends Control
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 
-const GAME_SCENE := "res://scenes/main.tscn"
+const CONFIRM_SCENE := "res://scenes/character_confirm.tscn"
 const MENU_SCENE := "res://scenes/main_menu.tscn"
+const SHOP_SCENE := "res://scenes/shop_menu.tscn"
 
 const DEFAULT_IDLE_FRAME_COUNT := 8   # fallback si el char no override
 const IDLE_FPS := 7.0
 
+## "role"/"blurb"/"stats" alimentan character_confirm.tscn (pantalla
+## "holográfica" previa a arrancar la run) — no se usan en esta
+## pantalla. "stats" es un rating manual del 1 al 5, no un valor
+## calculado de player.gd — es sólo orientativo para el jugador.
 const CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "main_char1",
@@ -28,6 +33,9 @@ const CHARACTERS: Array[Dictionary] = [
 		"portrait": "res://assets/main_characters/main_char1_selectwindow.png",
 		"idle_sheet": "res://assets/main_characters/main_char1/FREE_Adventurer 2D Pixel Art/Sprites/IDLE/idle_down.png",
 		"accent": Color("ff6b57"),
+		"role": "CUERPO A CUERPO",
+		"blurb": "Espadachín ágil. Pega fuerte de cerca; puede sumar disparos a distancia con la carta correcta.",
+		"stats": {"Daño": 4, "Velocidad": 3, "Alcance": 1, "Dificultad": 3},
 	},
 	{
 		"id": "main_char2",
@@ -35,6 +43,9 @@ const CHARACTERS: Array[Dictionary] = [
 		"portrait": "res://assets/main_characters/main_char2_selectwindow.png",
 		"idle_sheet": "res://assets/main_characters/main_char2/The Male adventurer - Free/Idle/idle_down.png",
 		"accent": Color("7c8cff"),
+		"role": "A DISTANCIA",
+		"blurb": "Aventurero equilibrado. Dispara automáticamente a lo que se ve en pantalla — ideal para empezar.",
+		"stats": {"Daño": 2, "Velocidad": 3, "Alcance": 4, "Dificultad": 2},
 	},
 	{
 		"id": "main_char2_female",
@@ -42,6 +53,9 @@ const CHARACTERS: Array[Dictionary] = [
 		"portrait": "res://assets/main_characters/main_char2_female_selectwindow.png",
 		"idle_sheet": "res://assets/main_characters/main_char2_female/The Female Adventurer - Free/Idle/Idle_Down.png",
 		"accent": Color("ff6cc9"),
+		"role": "A DISTANCIA",
+		"blurb": "Tan letal como KAY pero más ligera de pies — prioriza esquivar por sobre plantarse a pelear.",
+		"stats": {"Daño": 2, "Velocidad": 4, "Alcance": 4, "Dificultad": 2},
 	},
 	{
 		"id": "swordman",
@@ -53,6 +67,9 @@ const CHARACTERS: Array[Dictionary] = [
 		"idle_sheet": "res://assets/sprites/swordman/Swordsman_lvl3/Swordsman_lvl3_Idle/Swordsman_lvl3_Idle_front.png",
 		"idle_frames": 12,
 		"accent": Color("d4a648"),
+		"role": "CUERPO A CUERPO · EVOLUTIVO",
+		"blurb": "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final.",
+		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
 	},
 ]
 
@@ -62,6 +79,7 @@ const CHARACTERS: Array[Dictionary] = [
 @onready var _title: Label = $Layout/Title
 @onready var _hint: Label = $Layout/Hint
 @onready var _back_button: Button = $BackButton
+@onready var _shop_button: Button = $ShopButton
 
 @onready var _card_roots: Array[Control] = [
 	$Layout/CardsRow/Card1, $Layout/CardsRow/Card2, $Layout/CardsRow/Card3, $Layout/CardsRow/Card4,
@@ -118,6 +136,14 @@ func _ready() -> void:
 	_back_button.mouse_entered.connect(UITheme.pulse.bind(_back_button, 1.05, 0.08))
 	_back_button.mouse_exited.connect(UITheme.pulse.bind(_back_button, 1.0, 0.08))
 	_back_button.pressed.connect(_on_back_pressed)
+
+	# La tienda también es accesible desde acá (antes sólo desde el
+	# menú principal) — "para que se entienda bien" dónde conseguir
+	# mejoras permanentes sin tener que volver atrás primero.
+	UITheme.style_button(_shop_button)
+	_shop_button.mouse_entered.connect(UITheme.pulse.bind(_shop_button, 1.05, 0.08))
+	_shop_button.mouse_exited.connect(UITheme.pulse.bind(_shop_button, 1.0, 0.08))
+	_shop_button.pressed.connect(_on_shop_pressed)
 
 	for i in range(CHARACTERS.size()):
 		_setup_card(i)
@@ -273,6 +299,7 @@ func _on_card_selected(i: int) -> void:
 		return
 	_confirmed = true
 	GameState.selected_character_id = CHARACTERS[i]["id"]
+	GameState.pending_character = CHARACTERS[i]
 
 	for j in range(_card_roots.size()):
 		_hit_buttons[j].disabled = true
@@ -281,9 +308,16 @@ func _on_card_selected(i: int) -> void:
 		else:
 			create_tween().tween_property(_card_roots[j], "modulate:a", 0.25, 0.2)
 
+	# No arranca la partida directo — pasa por una pantalla de
+	# confirmación con el retrato grande y las stats antes de meterse
+	# de lleno a la horda (se sentía muy brusco elegir y arrancar).
 	get_tree().create_timer(0.45).timeout.connect(
-		func(): get_tree().change_scene_to_file(GAME_SCENE)
+		func(): get_tree().change_scene_to_file(CONFIRM_SCENE)
 	)
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file(MENU_SCENE)
+
+func _on_shop_pressed() -> void:
+	GameState.shop_return_scene = "res://scenes/character_select.tscn"
+	get_tree().change_scene_to_file(SHOP_SCENE)

@@ -15,6 +15,7 @@ const REMOTE_PLAYER_SCENE := preload("res://scenes/remote_player.tscn")
 const MONSTER_SCENE := preload("res://scenes/monster.tscn")
 const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
+const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 
 ## El kind (rata/murciélago/cangrejo/etc, con su propio set de
 ## animaciones) lo resuelve monster.gd — ver KIND_IDS/BOSS_KIND_ID/
@@ -85,6 +86,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		DisplayServer.window_set_mode(
 			DisplayServer.WINDOW_MODE_WINDOWED if fullscreen else DisplayServer.WINDOW_MODE_FULLSCREEN
 		)
+	# ESC abre pausa — sólo si nada más ya pausó el juego (ej: el modal
+	# de level-up), para no apilar dos menús pausados a la vez.
+	if event.is_action_pressed("ui_cancel") and not get_tree().paused:
+		var pause_menu = PAUSE_MENU_SCENE.instantiate()
+		add_child(pause_menu)
+		pause_menu.setup(_player)
+		get_tree().paused = true
+		get_viewport().set_input_as_handled()
 
 # ── Multiplayer ──────────────────────────────────────────────────
 
@@ -214,5 +223,8 @@ func _on_player_died() -> void:
 	# La moneda ganada esta run recién queda gastable en la tienda
 	# cuando la run termina — ver GameState.bank_run_currency().
 	GameState.bank_run_currency()
+	# Récord de oleada alcanzada y tiempo sobrevivido — independientes
+	# entre sí (ver GameState.report_run_result).
+	GameState.report_run_result(_current_wave, _hud.get_run_time())
 	# Pequeño delay para que el player vea que murió
 	get_tree().create_timer(1.2).timeout.connect(func(): get_tree().reload_current_scene())

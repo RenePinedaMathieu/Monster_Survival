@@ -458,3 +458,12 @@ offset_top = 26.0
 offset_right = 168.0
 offset_bottom = 76.0
 text = "VOLVER"
+
+[node name="ShopButton" type="Button" parent="."]
+anchor_left = 1.0
+anchor_top = 0.0
+offset_left = -168.0
+offset_top = 26.0
+offset_right = -28.0
+offset_bottom = 76.0
+text = "MEJORAS"

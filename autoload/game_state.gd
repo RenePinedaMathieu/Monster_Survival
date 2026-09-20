@@ -14,6 +14,29 @@ extends Node
 
 var selected_character_id: String = "main_char1"
 
+## Dato completo (dict) del personaje recién elegido en
+## character_select.tscn — lo lee character_confirm.tscn para armar
+## la pantalla de "revisá antes de arrancar" sin tener que duplicar
+## el array CHARACTERS en dos scripts. Transitorio: no se persiste.
+var pending_character: Dictionary = {}
+
+## A qué pantalla volver al salir de shop_menu.tscn — la tienda es
+## accesible tanto desde el menú principal como desde la selección de
+## personaje (barra superior), y el botón VOLVER de ahí debe volver a
+## la que corresponda. Transitorio: no se persiste.
+var shop_return_scene: String = "res://scenes/main_menu.tscn"
+
+## true la primera vez que se ve el tutorial — de ahí en más
+## main_menu.gd no lo vuelve a mostrar solo al picar "Jugar" (se
+## puede repasar a mano si en algún momento sumamos un botón para eso).
+var tutorial_seen: bool = false
+
+## Récord de la mejor run: hasta qué oleada se llegó y cuánto tiempo
+## se sobrevivió. Son independientes — quedarse mucho tiempo en una
+## oleada larga no implica haber llegado más lejos, y viceversa.
+var best_wave: int = 0
+var best_time: float = 0.0
+
 signal currency_changed(amount: int)
 
 const SAVE_PATH := "user://save.cfg"
@@ -57,12 +80,38 @@ func _load() -> void:
 	if cfg.load(SAVE_PATH) == OK:
 		total_currency = cfg.get_value("progress", "total_currency", 0)
 		shop_levels = cfg.get_value("progress", "shop_levels", {})
+		tutorial_seen = cfg.get_value("progress", "tutorial_seen", false)
+		best_wave = cfg.get_value("progress", "best_wave", 0)
+		best_time = cfg.get_value("progress", "best_time", 0.0)
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("progress", "total_currency", total_currency)
 	cfg.set_value("progress", "shop_levels", shop_levels)
+	cfg.set_value("progress", "tutorial_seen", tutorial_seen)
+	cfg.set_value("progress", "best_wave", best_wave)
+	cfg.set_value("progress", "best_time", best_time)
 	cfg.save(SAVE_PATH)
+
+## Se llama cuando termina una run (player muerto). Actualiza los
+## récords de forma independiente entre sí y guarda. Devuelve qué se
+## batió, para que main.gd pueda mostrar "¡nuevo récord!" si quiere.
+func report_run_result(wave: int, time_sec: float) -> Dictionary:
+	var beat_wave := wave > best_wave
+	var beat_time := time_sec > best_time
+	if beat_wave:
+		best_wave = wave
+	if beat_time:
+		best_time = time_sec
+	if beat_wave or beat_time:
+		_save()
+	return {"wave": beat_wave, "time": beat_time}
+
+func mark_tutorial_seen() -> void:
+	if tutorial_seen:
+		return
+	tutorial_seen = true
+	_save()
 
 ## Se llama por cada monstruo que muere durante la run (ver
 ## monster.gd). No toca total_currency todavía.

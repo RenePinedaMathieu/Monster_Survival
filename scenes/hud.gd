@@ -130,3 +130,6 @@ func show_wave_break(_duration: float) -> void:
 
 func stop_timer() -> void:
 	_running = false
+
+func get_run_time() -> float:
+	return _run_time

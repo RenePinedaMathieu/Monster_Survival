@@ -1,0 +1,105 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/tutorial_overlay.gd" id="1_tuto"]
+
+[node name="TutorialOverlay" type="CanvasLayer"]
+layer = 15
+script = ExtResource("1_tuto")
+
+[node name="FullDim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.8)
+
+[node name="Spotlight" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Top" type="ColorRect" parent="Spotlight"]
+color = Color(0, 0, 0, 0.82)
+
+[node name="Bottom" type="ColorRect" parent="Spotlight"]
+color = Color(0, 0, 0, 0.82)
+
+[node name="Left" type="ColorRect" parent="Spotlight"]
+color = Color(0, 0, 0, 0.82)
+
+[node name="Right" type="ColorRect" parent="Spotlight"]
+color = Color(0, 0, 0, 0.82)
+
+[node name="Guard" type="ColorRect" parent="Spotlight"]
+color = Color(0, 0, 0, 0)
+
+[node name="Highlight" type="Panel" parent="Spotlight"]
+mouse_filter = 2
+
+[node name="Arrow" type="Label" parent="Spotlight"]
+size = Vector2(32, 36)
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "▶"
+
+[node name="Bubble" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(560, 0)
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -280.0
+offset_top = 26.0
+offset_right = 280.0
+offset_bottom = 380.0
+grow_horizontal = 2
+
+[node name="Margin" type="MarginContainer" parent="Bubble"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="Bubble/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Bubble/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "..."
+
+[node name="Body" type="Label" parent="Bubble/Margin/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 110)
+autowrap_mode = 3
+vertical_alignment = 0
+text = "..."
+
+[node name="SkipButton" type="Button" parent="Bubble/Margin/VBox"]
+layout_mode = 2
+size_flags_horizontal = 8
+custom_minimum_size = Vector2(110, 34)
+text = "SALTAR"
+
+[node name="Nav" type="HBoxContainer" parent="Bubble/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="PrevButton" type="Button" parent="Bubble/Margin/VBox/Nav"]
+layout_mode = 2
+custom_minimum_size = Vector2(110, 40)
+text = "ANTERIOR"
+
+[node name="PageLabel" type="Label" parent="Bubble/Margin/VBox/Nav"]
+layout_mode = 2
+size_flags_vertical = 4
+horizontal_alignment = 1
+custom_minimum_size = Vector2(60, 0)
+text = "1 / 6"
+
+[node name="NextButton" type="Button" parent="Bubble/Margin/VBox/Nav"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 40)
+text = "SIGUIENTE"

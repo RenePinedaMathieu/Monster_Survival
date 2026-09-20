@@ -168,6 +168,11 @@ var _swords_rig = null
 var max_defense: float = 0.0
 var defense: float = 0.0
 
+## Historial de ids de cartas elegidas esta run, en orden — lo lee
+## pause_menu.gd para la pestaña "Potenciadores" (qué se fue
+## agarrando + stats actuales).
+var upgrade_log: Array[String] = []
+
 # XP / level
 var level: int = 1
 var xp: int = 0
@@ -688,6 +693,7 @@ func _level_up() -> void:
 	emit_signal("leveled_up", level)
 
 func apply_upgrade(id: String) -> void:
+	upgrade_log.append(id)
 	match id:
 		"damage":     damage_mult *= 1.25
 		"atk_speed":  atk_speed_mult *= 1.20
