@@ -22,10 +22,6 @@ Supabase="*uid://dyju2v7pxnojp"
 GameState="*res://autoload/game_state.gd"
 Audio="*res://autoload/audio.gd"
 
-[audio]
-
-buses/default_bus_layout="res://default_bus_layout.tres"
-
 [debug]
 
 shapes/collision/shape_color=Color(0.2, 1, 0.6, 0.5)

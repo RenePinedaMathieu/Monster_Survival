@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b4cvkw6s8ckaa"
+path="res://.godot/imported/Voxel Revolution.mp3-a3b56cfe2798272133b3c79f74feaedc.mp3str"
+
+[deps]
+
+source_file="res://assets/sound/music/Voxel Revolution.mp3"
+dest_files=["res://.godot/imported/Voxel Revolution.mp3-a3b56cfe2798272133b3c79f74feaedc.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

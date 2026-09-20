@@ -421,7 +421,7 @@ func _enter_windup() -> void:
 	# o no el kind una animación de ataque propia (algunos packs no
 	# traen una, ver KIND_DATA["skull"]).
 	_sprite.modulate = Color(1.4, 0.6, 0.6)
-	var attack_frames: Array = _anim_frames.get("attack", [])
+	var attack_frames: Array = _frames_for("attack")
 	if attack_frames.is_empty():
 		_set_animation("idle")
 	else:
@@ -471,6 +471,16 @@ func _update_facing(dir: Vector2) -> void:
 		_facing = "left" if dir.x < 0 else "right"
 	else:
 		_facing = "back" if dir.y < 0 else "front"
+
+## Frames de una animación para la dirección actual (_facing), con
+## fallback a "front". _anim_frames[anim] es un Dictionary por
+## dirección, no un Array — asignarlo directo a un Array rompía
+## _die() y _enter_windup(). Devuelve [] si el kind no tiene esa anim.
+func _frames_for(anim: String) -> Array:
+	var per_dir: Dictionary = _anim_frames.get(anim, {})
+	if per_dir.is_empty():
+		return []
+	return per_dir.get(_facing, per_dir.get("front", []))
 
 func _update_animation(delta: float) -> void:
 	# _anim_frames[anim] ahora es Dictionary[direction] = Array[Texture2D].
@@ -538,7 +548,7 @@ func _die() -> void:
 		Audio.play_sfx("monster_death", global_position, 0.15)
 	emit_signal("died")
 
-	var death_frames: Array = _anim_frames.get("death", [])
+	var death_frames: Array = _frames_for("death")
 	if death_frames.is_empty():
 		queue_free()
 		return
