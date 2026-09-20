@@ -18,7 +18,7 @@ const UITheme := preload("res://scenes/ui_theme.gd")
 const GAME_SCENE := "res://scenes/main.tscn"
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 
-const IDLE_FRAME_COUNT := 8
+const DEFAULT_IDLE_FRAME_COUNT := 8   # fallback si el char no override
 const IDLE_FPS := 7.0
 
 const CHARACTERS: Array[Dictionary] = [
@@ -43,6 +43,17 @@ const CHARACTERS: Array[Dictionary] = [
 		"idle_sheet": "res://assets/main_characters/main_char2_female/The Female Adventurer - Free/Idle/Idle_Down.png",
 		"accent": Color("ff6cc9"),
 	},
+	{
+		"id": "swordman",
+		"name": "GAROTH",
+		"portrait": "res://assets/main_characters/swordman_selectwindow.png",
+		# Preview con lvl3 — el tier del medio, para que el jugador vea
+		# a qué evoluciona (lvl1 se ve muy débil, lvl6 spoilería el
+		# clímax visual).
+		"idle_sheet": "res://assets/sprites/swordman/Swordsman_lvl3/Swordsman_lvl3_Idle/Swordsman_lvl3_Idle_front.png",
+		"idle_frames": 12,
+		"accent": Color("d4a648"),
+	},
 ]
 
 @onready var _glow_base: TextureRect = $GlowBase
@@ -53,28 +64,28 @@ const CHARACTERS: Array[Dictionary] = [
 @onready var _back_button: Button = $BackButton
 
 @onready var _card_roots: Array[Control] = [
-	$Layout/CardsRow/Card1, $Layout/CardsRow/Card2, $Layout/CardsRow/Card3,
+	$Layout/CardsRow/Card1, $Layout/CardsRow/Card2, $Layout/CardsRow/Card3, $Layout/CardsRow/Card4,
 ]
 @onready var _frames: Array[Panel] = [
-	$Layout/CardsRow/Card1/Frame, $Layout/CardsRow/Card2/Frame, $Layout/CardsRow/Card3/Frame,
+	$Layout/CardsRow/Card1/Frame, $Layout/CardsRow/Card2/Frame, $Layout/CardsRow/Card3/Frame, $Layout/CardsRow/Card4/Frame,
 ]
 @onready var _glows: Array[Panel] = [
-	$Layout/CardsRow/Card1/Glow, $Layout/CardsRow/Card2/Glow, $Layout/CardsRow/Card3/Glow,
+	$Layout/CardsRow/Card1/Glow, $Layout/CardsRow/Card2/Glow, $Layout/CardsRow/Card3/Glow, $Layout/CardsRow/Card4/Glow,
 ]
 @onready var _tunnel_lines: Array[Control] = [
-	$Layout/CardsRow/Card1/Frame/PortraitBg/Lines, $Layout/CardsRow/Card2/Frame/PortraitBg/Lines, $Layout/CardsRow/Card3/Frame/PortraitBg/Lines,
+	$Layout/CardsRow/Card1/Frame/PortraitBg/Lines, $Layout/CardsRow/Card2/Frame/PortraitBg/Lines, $Layout/CardsRow/Card3/Frame/PortraitBg/Lines, $Layout/CardsRow/Card4/Frame/PortraitBg/Lines,
 ]
 @onready var _portraits: Array[TextureRect] = [
-	$Layout/CardsRow/Card1/Frame/Portrait, $Layout/CardsRow/Card2/Frame/Portrait, $Layout/CardsRow/Card3/Frame/Portrait,
+	$Layout/CardsRow/Card1/Frame/Portrait, $Layout/CardsRow/Card2/Frame/Portrait, $Layout/CardsRow/Card3/Frame/Portrait, $Layout/CardsRow/Card4/Frame/Portrait,
 ]
 @onready var _idle_previews: Array[TextureRect] = [
-	$Layout/CardsRow/Card1/Frame/IdlePreview, $Layout/CardsRow/Card2/Frame/IdlePreview, $Layout/CardsRow/Card3/Frame/IdlePreview,
+	$Layout/CardsRow/Card1/Frame/IdlePreview, $Layout/CardsRow/Card2/Frame/IdlePreview, $Layout/CardsRow/Card3/Frame/IdlePreview, $Layout/CardsRow/Card4/Frame/IdlePreview,
 ]
 @onready var _name_labels: Array[Label] = [
-	$Layout/CardsRow/Card1/Frame/NameLabel, $Layout/CardsRow/Card2/Frame/NameLabel, $Layout/CardsRow/Card3/Frame/NameLabel,
+	$Layout/CardsRow/Card1/Frame/NameLabel, $Layout/CardsRow/Card2/Frame/NameLabel, $Layout/CardsRow/Card3/Frame/NameLabel, $Layout/CardsRow/Card4/Frame/NameLabel,
 ]
 @onready var _hit_buttons: Array[Button] = [
-	$Layout/CardsRow/Card1/HitButton, $Layout/CardsRow/Card2/HitButton, $Layout/CardsRow/Card3/HitButton,
+	$Layout/CardsRow/Card1/HitButton, $Layout/CardsRow/Card2/HitButton, $Layout/CardsRow/Card3/HitButton, $Layout/CardsRow/Card4/HitButton,
 ]
 
 var _frame_styles: Array[StyleBoxFlat] = []
@@ -83,7 +94,10 @@ var _idle_atlases: Array[AtlasTexture] = []
 var _idle_frame_widths: Array[float] = []
 var _idle_timers: Array[float] = []
 var _idle_frame_index: Array[int] = []
-var _was_active: Array[bool] = [false, false, false]
+var _was_active: Array[bool] = [false, false, false, false]
+## Frame count del idle sheet por card. Se usa para animar el preview
+## (algunos packs traen 8 frames, otros 12 — swordman).
+var _idle_frame_counts: Array[int] = []
 
 var _glow_a_base := Vector2.ZERO
 var _glow_b_base := Vector2.ZERO
@@ -145,13 +159,15 @@ func _setup_card(i: int) -> void:
 	UITheme.style_label(_name_labels[i], 30, true)
 
 	var idle_tex: Texture2D = load(data["idle_sheet"])
-	var frame_w := idle_tex.get_width() / float(IDLE_FRAME_COUNT)
+	var frame_count: int = data.get("idle_frames", DEFAULT_IDLE_FRAME_COUNT)
+	var frame_w := idle_tex.get_width() / float(frame_count)
 	var atlas := AtlasTexture.new()
 	atlas.atlas = idle_tex
 	atlas.region = Rect2(0, 0, frame_w, idle_tex.get_height())
 	_idle_previews[i].texture = atlas
 	_idle_atlases.append(atlas)
 	_idle_frame_widths.append(frame_w)
+	_idle_frame_counts.append(frame_count)
 	_idle_timers.append(randf() * 0.5)
 	_idle_frame_index.append(0)
 
@@ -221,7 +237,7 @@ func _animate_idle_previews(delta: float) -> void:
 		_idle_timers[i] += delta
 		if _idle_timers[i] >= 1.0 / IDLE_FPS:
 			_idle_timers[i] = 0.0
-			_idle_frame_index[i] = (_idle_frame_index[i] + 1) % IDLE_FRAME_COUNT
+			_idle_frame_index[i] = (_idle_frame_index[i] + 1) % _idle_frame_counts[i]
 			var atlas := _idle_atlases[i]
 			var r := atlas.region
 			r.position.x = _idle_frame_index[i] * _idle_frame_widths[i]

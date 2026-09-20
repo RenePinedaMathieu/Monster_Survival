@@ -43,6 +43,14 @@ var _remote_players: Dictionary = {}
 var _current_wave: int = 0
 var _monsters_alive: int = 0
 var _in_break: bool = false
+## Cuenta cuántos bosses ya spawneó la run — para elegir demon1/2/3.
+var _bosses_spawned: int = 0
+## Umbrales de dificultad. Debajo de MID sólo tier 1 (crías). Entre
+## MID y HIGH mix de tier 1 y 2. En HIGH sólo tier 2 y 3 (los más
+## amenazantes). Se siente la escalada de la run sin necesidad de
+## tocar nada más.
+const WAVE_MID_START := 4
+const WAVE_HIGH_START := 7
 
 func _ready() -> void:
 	print("[main] booting…")
@@ -143,15 +151,30 @@ func _spawn_monster(is_boss: bool) -> void:
 	var m = MONSTER_SCENE.instantiate()
 	m.position = _pick_spawn_position()
 	if is_boss:
-		m.max_hp = 80.0
-		m.coin_reward = 25
+		# HP y coin_reward escalan por tier de boss para que cada
+		# encuentro se sienta progresivamente más importante.
+		var tier: int = min(_bosses_spawned, m.BOSS_KIND_IDS.size() - 1)
+		m.max_hp = 80.0 + tier * 40.0
+		m.coin_reward = 25 + tier * 15
 	_monsters_container.add_child(m)
 	# set_kind necesita @onready resuelto — sólo funciona DESPUÉS de
 	# add_child (mismo motivo por el que antes set_sprite iba después).
 	if is_boss:
-		m.set_kind(m.BOSS_KIND_ID)
+		# Boss tier per encounter: 1er boss → demon1, 2do → demon2, 3ro+ → demon3
+		var tier: int = min(_bosses_spawned, m.BOSS_KIND_IDS.size() - 1)
+		m.set_kind(m.BOSS_KIND_IDS[tier])
+		_bosses_spawned += 1
 	else:
-		m.set_kind(m.KIND_IDS[randi() % m.KIND_IDS.size()])
+		# Pool de spawn depende de la wave — waves altas traen bichos
+		# más grandes/duros (tier 2 y 3 sólo aparecen tarde).
+		var pool: Array
+		if _current_wave >= WAVE_HIGH_START:
+			pool = m.KIND_IDS_HIGH
+		elif _current_wave >= WAVE_MID_START:
+			pool = m.KIND_IDS_MID
+		else:
+			pool = m.KIND_IDS
+		m.set_kind(pool[randi() % pool.size()])
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
 	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
 	# sin necesidad de estar en el radio de detección. Los remote

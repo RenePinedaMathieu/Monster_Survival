@@ -39,8 +39,20 @@ const HIT_DAMAGE := 12.0
 const ANIM_FPS := 9.0     # idle/run — no crítico para el gameplay
 const DEATH_FPS := 10.0
 
-const KIND_IDS: Array[String] = ["rat", "bat", "crab", "skull"]
-const BOSS_KIND_ID := "golem"
+## Tier 1 — enemigos "cría", HP bajísimo. Sólo aparecen en las
+## primeras waves (main.gd elige el pool según _current_wave).
+const KIND_IDS: Array[String] = ["rat", "imp", "lizardman"]
+## Tier 2 — mezcla del tier 1 con las variantes intermedias. Empiezan
+## a asomar en la wave media.
+const KIND_IDS_MID: Array[String] = ["rat", "imp", "lizardman", "rat_2", "imp_2", "lizardman_2"]
+## Tier 3 — sólo variantes fuertes. Waves altas.
+const KIND_IDS_HIGH: Array[String] = ["rat_2", "imp_2", "lizardman_2", "rat_3", "imp_3", "lizardman_3"]
+## Alias para compat: main.gd todavía referencia KIND_IDS_ADVANCED.
+const KIND_IDS_ADVANCED: Array[String] = ["rat_2", "imp_2", "lizardman_2", "rat_3", "imp_3", "lizardman_3"]
+const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
+## Bosses ordenados por tier — main.gd los elige según cuántos bosses
+## ya cayeron en la run (1er boss → demon1, 2do → demon2, 3ro+ → demon3).
+const BOSS_KIND_IDS: Array[String] = ["demon1", "demon2", "demon3"]
 
 ## "scale" está calibrado a mano para cada pack — cada uno trae
 ## distinto padding dentro de su celda (ver bbox medidos al armar
@@ -55,55 +67,141 @@ const BOSS_KIND_ID := "golem"
 ## siempre 0); "start" != 0 sirve para un pack que comparta una
 ## única hoja grande con varias animaciones en filas distintas, si
 ## se suma alguno más adelante.
+## Cada kind trae paths a sheets pre-cortados (una fila horizontal
+## por animación). "cols" por anim = frame_count. "scale" y opcional
+## "collision_scale" están calibrados a ojo para cada pack.
 const KIND_DATA: Dictionary = {
+
+	# ── Packs nuevos (sprites 128x128 y 64x64, animaciones en filas
+	# horizontales de un frame cada una, generadas al batch-exportar
+	# los .aseprite a PNG con py-aseprite). Cada anim tiene su propio
+	# "cols" = frame_count porque las hojas son de una fila.
+	# ────────────────────────────────────────────────────────────────
+
+	# Demons — bosses. Cada tier es visualmente más agresivo. Se
+	# elige el demon_i según el i-ésimo boss del run (main.gd).
+	"demon1": {
+		"base": "res://assets/sprites/Demon/Demon1/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Demon1_Idle_front.png",     "frames": 4,  "cols": 4},
+		"run":    {"file": "Run/Demon1_Run_front.png",       "frames": 8,  "cols": 8},
+		"attack": {"file": "Attack/Demon1_Attack_front.png", "frames": 10, "cols": 10},
+		"death":  {"file": "Death/Demon1_Death_front.png",   "frames": 13, "cols": 13},
+		"scale": 0.55,
+		"collision_scale": 1.6,
+	},
+	"demon2": {
+		"base": "res://assets/sprites/Demon/Demon2/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Demon2_Idle_front.png",     "frames": 4,  "cols": 4},
+		"run":    {"file": "Run/Demon2_Run_front.png",       "frames": 8,  "cols": 8},
+		"attack": {"file": "Attack/Demon2_Attack_front.png", "frames": 10, "cols": 10},
+		"death":  {"file": "Death/Demon2_Death_front.png",   "frames": 13, "cols": 13},
+		"scale": 0.62,
+		"collision_scale": 1.8,
+	},
+	"demon3": {
+		"base": "res://assets/sprites/Demon/Demon3/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Demon3_Idle_front.png",     "frames": 4,  "cols": 4},
+		"run":    {"file": "Run/Demon3_Run_front.png",       "frames": 8,  "cols": 8},
+		"attack": {"file": "Attack/Demon3_Attack_front.png", "frames": 10, "cols": 10},
+		"death":  {"file": "Death/Demon3_Death_front.png",   "frames": 13, "cols": 13},
+		"scale": 0.7,
+		"collision_scale": 2.0,
+	},
+
+	# ── Regulares por tier ──────────────────────────────────────
+	# Cada familia (Imp/Lizardman/Rat) tiene 3 variantes (1/2/3) con
+	# animaciones idénticas — sólo cambia el arte (más armado, más
+	# oscuro/rojo, más grande). Cada tier sube hp y coin_reward para
+	# que el jugador SIENTA la escalada, no sólo la vea.
+
+	# ── IMP: chiquito y rápido ──────────────────────────────────
+	"imp": {
+		"base": "res://assets/sprites/IMP/Imp1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Imp1_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Imp1_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Imp1_Attack_front.png", "frames": 6, "cols": 6},
+		"death":  {"file": "Death/Imp1_Death_front.png",   "frames": 10, "cols": 10},
+		"scale": 0.7, "hp": 3.0, "coin_reward": 1,
+	},
+	"imp_2": {
+		"base": "res://assets/sprites/IMP/Imp2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Imp2_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Imp2_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Imp2_Attack_front.png", "frames": 6, "cols": 6},
+		"death":  {"file": "Death/Imp2_Death_front.png",   "frames": 10, "cols": 10},
+		"scale": 0.75, "hp": 6.0, "coin_reward": 2,
+	},
+	"imp_3": {
+		"base": "res://assets/sprites/IMP/Imp3/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Imp3_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Imp3_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Imp3_Attack_front.png", "frames": 6, "cols": 6},
+		"death":  {"file": "Death/Imp3_Death_front.png",   "frames": 10, "cols": 10},
+		"scale": 0.8, "hp": 12.0, "coin_reward": 4,
+	},
+
+	# ── LIZARDMAN: mediano equilibrado ──────────────────────────
+	"lizardman": {
+		"base": "res://assets/sprites/Lizardman/Lizardman1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Lizardman1_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Lizardman1_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Lizardman1_Attack_front.png", "frames": 7, "cols": 7},
+		"death":  {"file": "Death/Lizardman1_Death_front.png",   "frames": 7, "cols": 7},
+		"scale": 0.7, "hp": 4.0, "coin_reward": 1,
+	},
+	"lizardman_2": {
+		"base": "res://assets/sprites/Lizardman/Lizardman2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Lizardman2_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Lizardman2_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Lizardman2_Attack_front.png", "frames": 7, "cols": 7},
+		"death":  {"file": "Death/Lizardman2_Death_front.png",   "frames": 7, "cols": 7},
+		"scale": 0.75, "hp": 8.0, "coin_reward": 2,
+	},
+	"lizardman_3": {
+		"base": "res://assets/sprites/Lizardman/Lizardman3/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Idle/Lizardman3_Idle_front.png",     "frames": 4, "cols": 4},
+		"run":    {"file": "Run/Lizardman3_Run_front.png",       "frames": 8, "cols": 8},
+		"attack": {"file": "Attack/Lizardman3_Attack_front.png", "frames": 7, "cols": 7},
+		"death":  {"file": "Death/Lizardman3_Death_front.png",   "frames": 7, "cols": 7},
+		"scale": 0.8, "hp": 16.0, "coin_reward": 4,
+	},
+
+	# ── RAT: 128x128, muy animado ───────────────────────────────
 	"rat": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Rat/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Rat_Idle.png", "frames": 4},
-		"run": {"file": "Rat_Run.png", "frames": 6},
-		"attack": {"file": "Rat_Attack.png", "frames": 8},
-		"death": {"file": "Rat_Death.png", "frames": 5},
-		"scale": 1.2,
+		"base": "res://assets/sprites/Rat/Rat1/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Rat1_Idle_front.png",     "frames": 6, "cols": 6},
+		"run":    {"file": "Run/Rat1_Run_front.png",       "frames": 6, "cols": 6},
+		"attack": {"file": "Attack/Rat1_Attack_front.png", "frames": 8, "cols": 8},
+		"death":  {"file": "Death/Rat1_Death_front.png",   "frames": 5, "cols": 5},
+		"scale": 0.4, "hp": 3.0, "coin_reward": 1,
 	},
-	"bat": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Bat/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		# El bat siempre vuela — Fly hace de idle Y de run.
-		"idle": {"file": "Bat_Fly.png", "frames": 4},
-		"run": {"file": "Bat_Fly.png", "frames": 4},
-		"attack": {"file": "Bat_Attack.png", "frames": 7},
-		"death": {"file": "Bat_Death.png", "frames": 11},
-		"scale": 1.1,
+	"rat_2": {
+		"base": "res://assets/sprites/Rat/Rat2/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Rat2_Idle_front.png",     "frames": 6, "cols": 6},
+		"run":    {"file": "Run/Rat2_Run_front.png",       "frames": 6, "cols": 6},
+		"attack": {"file": "Attack/Rat2_Attack_front.png", "frames": 8, "cols": 8},
+		"death":  {"file": "Death/Rat2_Death_front.png",   "frames": 5, "cols": 5},
+		"scale": 0.44, "hp": 6.0, "coin_reward": 2,
 	},
-	"crab": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Crab/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Crab_Idle.png", "frames": 4},
-		"run": {"file": "Crab_Run.png", "frames": 6},
-		"attack": {"file": "Crab_AttackA.png", "frames": 10},
-		"death": {"file": "Crab_Death.png", "frames": 5},
-		"scale": 1.0,
-	},
-	"skull": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Skull/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Bones_SingleSkull_Idle.png", "frames": 4},
-		"run": {"file": "Bones_SingleSkull_Fly.png", "frames": 8},
-		"death": {"file": "Bones_SingleSkull_Death.png", "frames": 10},
-		"scale": 1.2,
-		# Sin "attack": este pack no trae animación de golpe — el
-		# telegraph del windup sigue siendo 100% el tint rojo, como
-		# antes de sumar animaciones a los demás.
-	},
-	"golem": {
-		"base": "res://assets/sprites/monsters/enemy_galore/Golem/No Armor/",
-		"frame_size": Vector2(64, 64), "cols": 4,
-		"idle": {"file": "Golem_IdleA.png", "frames": 4},
-		"run": {"file": "Golem_Run.png", "frames": 4},
-		"attack": {"file": "Golem_AttackA.png", "frames": 12},
-		"death": {"file": "Golem_DeathA.png", "frames": 5},
-		"scale": 3.4,
-		"collision_scale": 2.3,
+	"rat_3": {
+		"base": "res://assets/sprites/Rat/Rat3/",
+		"frame_size": Vector2(128, 128),
+		"idle":   {"file": "Idle/Rat3_Idle_front.png",     "frames": 6, "cols": 6},
+		"run":    {"file": "Run/Rat3_Run_front.png",       "frames": 6, "cols": 6},
+		"attack": {"file": "Attack/Rat3_Attack_front.png", "frames": 8, "cols": 8},
+		"death":  {"file": "Death/Rat3_Death_front.png",   "frames": 5, "cols": 5},
+		"scale": 0.48, "hp": 12.0, "coin_reward": 4,
 	},
 }
 
@@ -131,6 +229,11 @@ var _dead := false
 
 var _base_sprite_scale := Vector2.ONE
 var _kind_id := ""
+## Dirección actual del sprite del monstruo. Se actualiza en cada
+## frame según el vector velocity — el eje dominante manda.
+var _facing := "front"
+
+const DIRECTIONS: Array[String] = ["front", "back", "left", "right"]
 var _attack_range := ATTACK_RANGE
 var _anim_frames: Dictionary = {}   # "idle"/"run"/"attack"/"death" -> Array[Texture2D]
 var _anim_name := ""
@@ -163,13 +266,37 @@ func set_kind(kind_id: String) -> void:
 	for anim_name in ["idle", "run", "attack", "death"]:
 		if data.has(anim_name):
 			var info: Dictionary = data[anim_name]
-			_anim_frames[anim_name] = _slice_frames(
-				data["base"] + info["file"], frame_size, cols, info["frames"], info.get("start", 0)
-			)
+			# "cols" = frames por anim en las hojas horizontales (1 fila).
+			var anim_cols: int = info.get("cols", cols)
+			# Los packs nuevos traen SHEETS SEPARADAS por dirección con
+			# sufijo _front/_back/_left/_right en el filename. Cargamos
+			# las 4 y las guardamos en un dict por dirección; el
+			# _update_animation elige según _facing.
+			var front_path: String = info["file"]
+			var per_dir: Dictionary = {}
+			for dir_name in DIRECTIONS:
+				var dir_path: String = front_path.replace("_front", "_" + dir_name)
+				var full_path: String = data["base"] + dir_path
+				if not ResourceLoader.exists(full_path):
+					# Fallback al _front si no existe esa dirección
+					full_path = data["base"] + front_path
+				per_dir[dir_name] = _slice_frames(
+					full_path, frame_size, anim_cols, info["frames"], info.get("start", 0)
+				)
+			_anim_frames[anim_name] = per_dir
 
 	_base_sprite_scale = Vector2.ONE * float(data.get("scale", 1.0))
 	_sprite.scale = _base_sprite_scale
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+
+	# Aplicamos hp y coin_reward del KIND_DATA si están definidos.
+	# Esto permite que cada tier tenga sus stats sin tocar main.gd
+	# ni el @export default del monster.tscn.
+	if data.has("hp"):
+		max_hp = float(data["hp"])
+		hp = max_hp
+	if data.has("coin_reward"):
+		coin_reward = int(data["coin_reward"])
 
 	var collision_scale: float = data.get("collision_scale", 1.0)
 	_attack_range = ATTACK_RANGE * collision_scale
@@ -242,8 +369,10 @@ func _tick_chase(_delta: float) -> void:
 	# Sin techo de distancia — persigue eternamente al player.
 	var dir := to_player.normalized()
 	velocity = dir * CHASE_SPEED * speed_mult
-	if abs(dir.x) > 0.1:
-		_sprite.flip_h = dir.x < 0
+	# Actualiza el _facing por eje dominante del vector velocity.
+	# Con esto los sprites _back / _front / _left / _right se usan
+	# correctamente en vez de mostrar siempre el _front.
+	_update_facing(dir)
 
 func _tick_windup(delta: float) -> void:
 	velocity = Vector2.ZERO
@@ -332,8 +461,24 @@ func _set_animation(name: String, fps: float = ANIM_FPS) -> void:
 	_anim_frame = 0
 	_anim_time = 0.0
 
+## Ajusta _facing por eje dominante del vector de movimiento.
+## Con velocidad casi cero mantiene el facing anterior (evita el
+## flicker cuando el monstruo se detiene apenas).
+func _update_facing(dir: Vector2) -> void:
+	if dir.length_squared() < 0.01:
+		return
+	if abs(dir.x) > abs(dir.y):
+		_facing = "left" if dir.x < 0 else "right"
+	else:
+		_facing = "back" if dir.y < 0 else "front"
+
 func _update_animation(delta: float) -> void:
-	var frames: Array = _anim_frames.get(_anim_name, [])
+	# _anim_frames[anim] ahora es Dictionary[direction] = Array[Texture2D].
+	# Elige la dirección actual; cae en "front" si no existe.
+	var per_dir = _anim_frames.get(_anim_name, {})
+	if per_dir == null or (per_dir is Dictionary and per_dir.is_empty()):
+		return
+	var frames: Array = per_dir.get(_facing, per_dir.get("front", []))
 	if frames.is_empty():
 		return
 	_anim_time += delta
@@ -385,8 +530,9 @@ func _die() -> void:
 	_detection.set_deferred("monitoring", false)
 	_drop_xp_orb()
 	GameState.add_run_currency(coin_reward)
-	# Boss suena distinto — más grave y grande. El "golem" es el boss.
-	if _kind_id == BOSS_KIND_ID:
+	# Boss suena distinto — más grave y grande. Cualquier demon (tier)
+	# cuenta como boss.
+	if _kind_id in BOSS_KIND_IDS:
 		Audio.play_sfx("boss_death", global_position, 0.05)
 	else:
 		Audio.play_sfx("monster_death", global_position, 0.15)

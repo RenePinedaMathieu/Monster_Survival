@@ -351,6 +351,93 @@ grow_vertical = 2
 focus_mode = 2
 text = ""
 
+[node name="Card4" type="Control" parent="Layout/CardsRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 400)
+mouse_filter = 2
+
+[node name="Glow" type="Panel" parent="Layout/CardsRow/Card4"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Frame" type="Panel" parent="Layout/CardsRow/Card4"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PortraitBg" type="Control" parent="Layout/CardsRow/Card4/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+
+[node name="Base" type="ColorRect" parent="Layout/CardsRow/Card4/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.039, 0.059, 0.122, 1)
+
+[node name="Lines" type="Control" parent="Layout/CardsRow/Card4/Frame/PortraitBg"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_tunnel")
+
+[node name="Portrait" type="TextureRect" parent="Layout/CardsRow/Card4/Frame"]
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 244.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="IdlePreview" type="TextureRect" parent="Layout/CardsRow/Card4/Frame"]
+anchor_right = 1.0
+offset_left = 60.0
+offset_top = 250.0
+offset_right = -60.0
+offset_bottom = 348.0
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Layout/CardsRow/Card4/Frame"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -62.0
+offset_bottom = -10.0
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "..."
+
+[node name="HitButton" type="Button" parent="Layout/CardsRow/Card4"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 2
+text = ""
+
 [node name="SpacerBottom" type="Control" parent="Layout"]
 layout_mode = 2
 size_flags_vertical = 3

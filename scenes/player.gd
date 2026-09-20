@@ -190,6 +190,30 @@ var _run_textures: Array = []
 
 # AXEL
 var _is_axel: bool = false
+# ── SWORDMAN (main_char_swordman): melee que EVOLUCIONA visualmente
+# durante la run. Cada 5 niveles del player la tier del sprite sube
+# (lvl1 → lvl2 → … → lvl6 al llegar a level 26+). Las tiers superiores
+# tienen armadura/armas más pesadas — se siente que crecés físicamente.
+const SWORDMAN_DIRS: Array[String] = ["front", "back", "side_left", "side_right"]
+const SWORDMAN_FRAME_SIZE := Vector2(64, 64)
+const SWORDMAN_IDLE_FRAMES := 12
+const SWORDMAN_RUN_FRAMES := 8
+# Attack: lvl 1-5 tienen 8f, lvl 6 tiene 7f. Usamos 7 como mínimo seguro.
+const SWORDMAN_ATTACK_FRAMES := 7
+const SWORDMAN_ATTACK_HIT_FRAME := 3
+const SWORDMAN_SCALE := 1.0
+const SWORDMAN_ATTACK_RANGE := 70.0
+const SWORDMAN_MELEE_DAMAGE := 5.0
+const SWORDMAN_MAX_TIER := 6
+var _is_swordman: bool = false
+var _swordman_tier: int = 1
+var _swordman_facing: String = "front"
+var _swordman_idle: Dictionary = {}
+var _swordman_run: Dictionary = {}
+var _swordman_attack: Dictionary = {}
+var _swordman_attacking: bool = false
+var _swordman_attack_elapsed: float = 0.0
+var _swordman_hit_applied: bool = false
 var _axel_idle: Dictionary = {}
 var _axel_run: Dictionary = {}
 var _axel_attack: Dictionary = {}
@@ -223,8 +247,13 @@ func _ready() -> void:
 	_apply_camera_zoom_for_device()
 	var skin_id: String = GameState.selected_character_id
 	_is_axel = skin_id == "main_char1"
+	_is_swordman = skin_id == "swordman"
 	_is_ranged_skin = RANGED_SKINS.has(skin_id)
-	if _is_axel:
+	if _is_swordman:
+		_sprite.scale = Vector2.ONE * SWORDMAN_SCALE
+		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_load_swordman_textures()
+	elif _is_axel:
 		_sprite.scale = Vector2.ONE * AXEL_SCALE
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_load_axel_textures()
@@ -256,6 +285,47 @@ func _slice_sheet(path: String, frame_size: Vector2, frame_count: int) -> Array[
 		atlas.region = Rect2(i * frame_size.x, 0, frame_size.x, frame_size.y)
 		frames.append(atlas)
 	return frames
+
+## Swordman: 4-direction melee que evoluciona por tier (lvl1..lvl6).
+## Se carga tier N según el level del player. Convención:
+##   - Level 1-5 → tier 1
+##   - Level 6-10 → tier 2
+##   - Level 11-15 → tier 3
+##   - Level 16-20 → tier 4
+##   - Level 21-25 → tier 5
+##   - Level 26+ → tier 6
+## Cada evolución cambia de sprites in-place — se siente el poder crecer.
+func _tier_for_level(lvl: int) -> int:
+	return clampi(1 + (lvl - 1) / 5, 1, SWORDMAN_MAX_TIER)
+
+## Path builder — lvl 1-5 y lvl 6 tienen folders con nombres distintos
+## (lvl 1-5 usan prefijo "Swordsman_lvlN_Anim/", lvl 6 usa sólo "Anim/").
+## Los filenames adentro también varían — "attack" es lowercase, el
+## resto capitalizado. Se maneja acá para no ensuciar el caller.
+func _swordman_path(tier: int, anim: String, direction: String) -> String:
+	var base := "res://assets/sprites/swordman/Swordsman_lvl%d/" % tier
+	var folder := anim if tier == 6 else "Swordsman_lvl%d_%s" % [tier, anim]
+	var fname := "Swordsman_lvl%d_%s_%s.png" % [tier, anim if anim != "Attack" else "attack", direction]
+	return "%s%s/%s" % [base, folder, fname]
+
+func _load_swordman_textures() -> void:
+	_swordman_tier = _tier_for_level(level)
+	_swordman_idle.clear()
+	_swordman_run.clear()
+	_swordman_attack.clear()
+	for dir_name in SWORDMAN_DIRS:
+		_swordman_idle[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Idle", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_IDLE_FRAMES)
+		_swordman_run[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Run", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_RUN_FRAMES)
+		_swordman_attack[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Attack", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_ATTACK_FRAMES)
+
+## Chequea si el level actual del player amerita subir de tier de sprite
+## — se llama desde _level_up. Si sube, recarga texturas in-place.
+func _maybe_upgrade_swordman_tier() -> void:
+	if not _is_swordman: return
+	var new_tier := _tier_for_level(level)
+	if new_tier != _swordman_tier:
+		_swordman_tier = new_tier
+		_load_swordman_textures()
 
 func _load_axel_textures() -> void:
 	for dir_name in AXEL_DIRS:
@@ -387,6 +457,8 @@ func _physics_process(delta: float) -> void:
 	# idle — el swing se ve completo aunque sigas esquivando.
 	if _axel_attacking:
 		_update_axel_attack(delta)
+	elif _swordman_attacking:
+		_update_swordman_attack(delta)
 	elif moving:
 		_run_time += delta
 		if _run_time >= 1.0 / RUN_FPS:
@@ -395,6 +467,9 @@ func _physics_process(delta: float) -> void:
 		if _is_axel:
 			_axel_facing = _dir_name_from_vec(input)
 			_sprite.texture = _axel_run[_axel_facing][_run_frame]
+		elif _is_swordman:
+			_swordman_facing = _swordman_dir_from_vec(input)
+			_sprite.texture = _swordman_run[_swordman_facing][_run_frame % SWORDMAN_RUN_FRAMES]
 		elif _is_ranged_skin:
 			_ranged_facing = _side_dir_key(input)
 			_sprite.texture = _ranged_run[_ranged_facing][_run_frame]
@@ -434,22 +509,29 @@ func _auto_fire() -> void:
 		# Sin blanco cerca — reintentamos rápido, no gastamos el CD
 		_fire_cd = 0.15
 		return
-	if _is_axel and global_position.distance_to(target.global_position) > AXEL_ATTACK_RANGE:
-		# Hay monstruos en el mapa pero ninguno realmente cerca —
-		# seguimos corriendo en vez de trabarnos en la animación de
-		# ataque apuntando a algo lejos.
+	# Personajes melee sólo atacan si el target está cerca — sino
+	# seguimos corriendo (no nos trabamos en la anim de attack).
+	var is_melee_char := _is_axel or _is_swordman
+	var melee_range: float = SWORDMAN_ATTACK_RANGE if _is_swordman else AXEL_ATTACK_RANGE
+	if is_melee_char and global_position.distance_to(target.global_position) > melee_range:
 		_fire_cd = 0.15
 		return
 	_fire_cd = AUTO_FIRE_INTERVAL / atk_speed_mult
-	# Sonido del disparo (o del swing melee de AXEL)
-	if _is_axel:
+	# Sonido del disparo o del swing melee
+	if is_melee_char:
 		Audio.play_sfx("player_melee", global_position)
 	else:
 		Audio.play_sfx("player_shoot", global_position)
 	var to_target: Vector2 = (target.global_position - global_position).normalized()
 	# Face hacia el target así el sprite gira acorde
 	current_dir = _vec_to_dir(to_target)
-	if _is_axel:
+	if _is_swordman:
+		_start_swordman_attack(to_target)
+		# La carta "disparo a distancia" también le suma disparos al
+		# swordman, igual que en AXEL — no reemplaza el melee.
+		if ranged_bonus_shots > 0:
+			_fire_shot(to_target, ranged_bonus_shots)
+	elif _is_axel:
 		_start_axel_attack(to_target)
 		# Carta "disparo a distancia": el espadachín también larga
 		# disparos, además del sablazo — no reemplaza el melee.
@@ -526,6 +608,46 @@ func _axel_apply_melee_damage() -> void:
 		if body.has_method("take_damage"):
 			body.take_damage(AXEL_MELEE_DAMAGE * damage_mult)
 
+# ── SWORDMAN: ataque melee con evolución por tier ────────────────
+
+func _start_swordman_attack(to_target: Vector2) -> void:
+	_swordman_facing = _swordman_dir_from_vec(to_target)
+	_swordman_attacking = true
+	_swordman_attack_elapsed = 0.0
+	_swordman_hit_applied = false
+
+## Anima el swing y aplica daño una sola vez, en el frame donde cae
+## el tajo (SWORDMAN_ATTACK_HIT_FRAME). El daño escala por tier: cada
+## tier de sprite suma 1.2x más daño — sentís que la evolución te da
+## mucho más punch, no sólo visual.
+func _update_swordman_attack(delta: float) -> void:
+	_swordman_attack_elapsed += delta
+	var duration: float = AUTO_FIRE_INTERVAL / atk_speed_mult
+	var t: float = clamp(_swordman_attack_elapsed / duration, 0.0, 1.0)
+	var frame: int = min(int(t * SWORDMAN_ATTACK_FRAMES), SWORDMAN_ATTACK_FRAMES - 1)
+	_sprite.texture = _swordman_attack[_swordman_facing][frame]
+	if not _swordman_hit_applied and frame >= SWORDMAN_ATTACK_HIT_FRAME:
+		_swordman_hit_applied = true
+		_swordman_apply_melee_damage()
+	if t >= 1.0:
+		_swordman_attacking = false
+
+func _swordman_apply_melee_damage() -> void:
+	# Damage boost por tier: tier 1 = 1.0x, tier 6 = 2.2x (0.24x extra per tier)
+	var tier_mult: float = 1.0 + (_swordman_tier - 1) * 0.24
+	var dmg: float = SWORDMAN_MELEE_DAMAGE * damage_mult * tier_mult
+	for body in _attack_area.get_overlapping_bodies():
+		if body.has_method("take_damage"):
+			body.take_damage(dmg)
+
+## Mapea un vector de movimiento/target a la dirección del sprite
+## swordman (front/back/side_left/side_right). Usa el eje dominante
+## para clasificar en 4 cuadrantes.
+func _swordman_dir_from_vec(v: Vector2) -> String:
+	if abs(v.x) > abs(v.y):
+		return "side_left" if v.x < 0 else "side_right"
+	return "back" if v.y < 0 else "front"
+
 func _nearest_monster() -> Node2D:
 	var monsters := get_tree().get_nodes_in_group("monster")
 	var best: Node2D = null
@@ -559,6 +681,9 @@ func _level_up() -> void:
 	xp_to_next = int(round(xp_to_next * XP_TO_NEXT_MULT))
 	if _damage_scales_with_level:
 		damage_mult *= 1.10
+	# Si sos swordman, chequeamos si toca subir de tier de sprite
+	# (cada 5 levels). La evolución cambia el look in-place.
+	_maybe_upgrade_swordman_tier()
 	# El próximo disparo sale cargado — el "premio" visual de subir de
 	# nivel, estilo buster cargado de Mega Man.
 	_charged_shot_pending = true
@@ -643,7 +768,11 @@ func heal(amount: float) -> void:
 ## Sin esto, cartas como "+1 proyectil" podían salir sorteadas antes
 ## de que AXEL tuviera siquiera un disparo que multiplicar.
 func has_ranged_attack() -> bool:
-	return not _is_axel or ranged_power_level > 0
+	# Swordman también es melee puro por default — como AXEL, sólo
+	# tiene disparo si tomó la carta "disparo a distancia".
+	if _is_axel or _is_swordman:
+		return ranged_power_level > 0
+	return true
 
 func has_flying_swords() -> bool:
 	return _swords_rig != null
@@ -664,7 +793,7 @@ func has_meteors() -> bool:
 # ── Utils ───────────────────────────────────────────────────────
 
 func _apply_idle(delta: float = 0.0) -> void:
-	if _axel_attacking:
+	if _axel_attacking or _swordman_attacking:
 		return
 	if _is_axel:
 		_idle_time += delta
@@ -672,6 +801,12 @@ func _apply_idle(delta: float = 0.0) -> void:
 			_idle_time = 0.0
 			_idle_frame = (_idle_frame + 1) % AXEL_FRAME_COUNT
 		_sprite.texture = _axel_idle[_axel_facing][_idle_frame]
+	elif _is_swordman:
+		_idle_time += delta
+		if _idle_time >= 1.0 / IDLE_ANIM_FPS:
+			_idle_time = 0.0
+			_idle_frame = (_idle_frame + 1) % SWORDMAN_IDLE_FRAMES
+		_sprite.texture = _swordman_idle[_swordman_facing][_idle_frame]
 	elif _is_ranged_skin:
 		_idle_time += delta
 		if _idle_time >= 1.0 / IDLE_ANIM_FPS:
