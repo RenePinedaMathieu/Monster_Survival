@@ -517,11 +517,9 @@ func _auto_fire() -> void:
 		_fire_cd = 0.15
 		return
 	_fire_cd = AUTO_FIRE_INTERVAL / atk_speed_mult
-	# Sonido del disparo o del swing melee
-	if is_melee_char:
-		Audio.play_sfx("player_melee", global_position)
-	else:
-		Audio.play_sfx("player_shoot", global_position)
+	# Sin sonido de ataque — sonaban muy fuerte disparando/atacando
+	# tan seguido (cada AUTO_FIRE_INTERVAL, a veces varias veces por
+	# segundo con atk_speed alto).
 	var to_target: Vector2 = (target.global_position - global_position).normalized()
 	# Face hacia el target así el sprite gira acorde
 	current_dir = _vec_to_dir(to_target)

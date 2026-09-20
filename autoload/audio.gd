@@ -118,12 +118,24 @@ const SFX_LIBRARY: Dictionary = {
 
 const MUSIC_LIBRARY: Dictionary = {
 	"menu":             "res://assets/sound/music/Comfortable Mystery 3.mp3",
-	"gameplay_chill":   "res://assets/sound/music/Sneaky Adventure.mp3",
+	"character_select": "res://assets/sound/music/Select Stage.mp3",
+	# Etapa 1 (primeras waves) — track propio del juego en vez del
+	# placeholder de Kevin MacLeod.
+	"gameplay_chill":   "res://assets/sound/music/Stage_01.mp3",
 	"gameplay_intense": "res://assets/sound/music/Kick Shock.mp3",
 	"boss":             "res://assets/sound/music/Voxel Revolution.mp3",
 	# Sin track dedicado para death screen todavía — cae en "menu"
 	# (que es más contemplativo) al recargar hasta que sumemos uno.
 	"death":            "res://assets/sound/music/Comfortable Mystery 3.mp3",
+}
+
+## Volumen de fade-in por track, en dB relativos al bus "Music" (0 =
+## el volumen normal del bus). Sólo hace falta declarar excepciones —
+## "Stage_01" venía grabado bastante más fuerte que el resto de la
+## librería, así que le bajamos el techo acá en vez de arriesgarnos a
+## que tape los SFX.
+const MUSIC_VOLUME_DB: Dictionary = {
+	"gameplay_chill": -10.0,
 }
 
 # Cache de streams cargados. Evita re-cargar el mismo .wav 1000 veces
@@ -219,7 +231,9 @@ func play_music(id: String, fade_ms: int = 800) -> void:
 		var tw_out := create_tween()
 		tw_out.tween_property(old_music, "volume_db", -60.0, fade_ms / 1000.0)
 		tw_out.tween_callback(old_music.queue_free)
-	# Fade in del nuevo
+	# Fade in del nuevo — hasta su volumen objetivo (0 dB salvo
+	# excepción en MUSIC_VOLUME_DB, ver arriba).
+	var target_db: float = MUSIC_VOLUME_DB.get(id, 0.0)
 	var new_music := AudioStreamPlayer.new()
 	new_music.stream = stream
 	new_music.bus = "Music"
@@ -227,7 +241,7 @@ func play_music(id: String, fade_ms: int = 800) -> void:
 	add_child(new_music)
 	new_music.play()
 	var tw_in := create_tween()
-	tw_in.tween_property(new_music, "volume_db", 0.0, fade_ms / 1000.0)
+	tw_in.tween_property(new_music, "volume_db", target_db, fade_ms / 1000.0)
 	_current_music = new_music
 	_current_music_id = id
 

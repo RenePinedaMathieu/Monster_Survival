@@ -46,7 +46,7 @@ const CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "swordman",
 		"name": "GAROTH",
-		"portrait": "res://assets/main_characters/swordman_selectwindow.png",
+		"portrait": "res://assets/main_characters/swordman_char.png",
 		# Preview con lvl3 — el tier del medio, para que el jugador vea
 		# a qué evoluciona (lvl1 se ve muy débil, lvl6 spoilería el
 		# clímax visual).
@@ -105,6 +105,7 @@ var _confirmed := false
 var _time := 0.0
 
 func _ready() -> void:
+	Audio.play_music("character_select", 1000)
 	_build_background_glow()
 	_glow_a_base = _glow_accent_a.position
 	_glow_b_base = _glow_accent_b.position
