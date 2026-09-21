@@ -40,14 +40,25 @@ const ANIM_FPS := 9.0     # idle/run — no crítico para el gameplay
 const DEATH_FPS := 10.0
 
 ## Tier 1 — enemigos "cría", HP bajísimo. Sólo aparecen en las
-## primeras waves (main.gd elige el pool según _current_wave).
-const KIND_IDS: Array[String] = ["rat", "imp", "lizardman"]
-## Tier 2 — mezcla del tier 1 con las variantes intermedias. Empiezan
-## a asomar en la wave media.
-const KIND_IDS_MID: Array[String] = ["rat", "imp", "lizardman", "rat_2", "imp_2", "lizardman_2"]
-## Tier 3 — sólo variantes fuertes. Waves altas.
-const KIND_IDS_HIGH: Array[String] = ["rat_2", "imp_2", "lizardman_2", "rat_3", "imp_3", "lizardman_3"]
-## Alias para compat: main.gd todavía referencia KIND_IDS_ADVANCED.
+## primeras waves. Slime se suma acá como filler clásico.
+const KIND_IDS: Array[String] = ["rat", "imp", "lizardman", "slime_1"]
+## Tier 2 — mezcla del tier 1 con las variantes intermedias +
+## ghost (mid-game spooky) + beholder 1 (wizard-ish).
+const KIND_IDS_MID: Array[String] = [
+	"rat", "imp", "lizardman",
+	"rat_2", "imp_2", "lizardman_2",
+	"slime_1", "slime_2", "ghost_1",
+]
+## Tier 3 — sólo variantes fuertes. Waves altas. Incluye beholders
+## (los que disparan tipo wizard) y ghosts de tier alto.
+const KIND_IDS_HIGH: Array[String] = [
+	"rat_2", "imp_2", "lizardman_2",
+	"rat_3", "imp_3", "lizardman_3",
+	"slime_2", "slime_3",
+	"ghost_2", "ghost_3",
+	"beholder_1", "beholder_2", "beholder_3",
+]
+## Alias para compat.
 const KIND_IDS_ADVANCED: Array[String] = ["rat_2", "imp_2", "lizardman_2", "rat_3", "imp_3", "lizardman_3"]
 const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
 ## Bosses ordenados por tier — main.gd los elige según cuántos bosses
@@ -173,6 +184,96 @@ const KIND_DATA: Dictionary = {
 		"attack": {"file": "Attack/Lizardman3_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman3_Death_front.png",   "frames": 7, "cols": 7},
 		"scale": 0.8, "hp": 16.0, "coin_reward": 4,
+	},
+
+	# ── SLIME: cada sheet es grid 64x64 con 4 filas (direcciones)
+	# y N cols (frames por dirección). Usamos la primera fila = 1
+	# dirección; monster.gd fallback repite para las 4 dirs porque
+	# el filename no tiene sufijo _front/_back.
+	"slime_1": {
+		"base": "res://assets/sprites/Slime/Slime1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Slime1_Idle_without_shadow.png",   "frames": 6, "cols": 6},
+		"run":    {"file": "Slime1_Run_without_shadow.png",    "frames": 8, "cols": 8},
+		"attack": {"file": "Slime1_Attack_without_shadow.png", "frames": 9, "cols": 10},
+		"death":  {"file": "Slime1_Death_without_shadow.png",  "frames": 8, "cols": 8},
+		"scale": 0.7, "hp": 2.0, "coin_reward": 1,
+	},
+	"slime_2": {
+		"base": "res://assets/sprites/Slime/Slime2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Slime2_Idle_without_shadow.png",   "frames": 6, "cols": 6},
+		"run":    {"file": "Slime2_Run_without_shadow.png",    "frames": 8, "cols": 8},
+		"attack": {"file": "Slime2_Attack_without_shadow.png", "frames": 9, "cols": 10},
+		"death":  {"file": "Slime2_Death_without_shadow.png",  "frames": 8, "cols": 10},
+		"scale": 0.8, "hp": 5.0, "coin_reward": 2,
+	},
+	"slime_3": {
+		"base": "res://assets/sprites/Slime/Slime3/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Slime3_Idle_without_shadow.png",   "frames": 6, "cols": 6},
+		"run":    {"file": "Slime3_Run_without_shadow.png",    "frames": 8, "cols": 8},
+		"attack": {"file": "Slime3_Attack_without_shadow.png", "frames": 9, "cols": 9},
+		"death":  {"file": "Slime3_Death_without_shadow.png",  "frames": 8, "cols": 10},
+		"scale": 0.9, "hp": 10.0, "coin_reward": 3,
+	},
+
+	# ── GHOST: mismo layout 64x64 x 4 filas ─────────────────────
+	"ghost_1": {
+		"base": "res://assets/sprites/Ghost/Ghost1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Ghost1_Idle_without_shadow.png",   "frames": 4,  "cols": 4},
+		"run":    {"file": "Ghost1_Run_without_shadow.png",    "frames": 6,  "cols": 6},
+		"attack": {"file": "Ghost1_Attack_without_shadow.png", "frames": 12, "cols": 12},
+		"death":  {"file": "Ghost1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
+		"scale": 0.7, "hp": 5.0, "coin_reward": 2,
+	},
+	"ghost_2": {
+		"base": "res://assets/sprites/Ghost/Ghost2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Ghost2_Idle_without_shadow.png",   "frames": 4,  "cols": 4},
+		"run":    {"file": "Ghost2_Run_without_shadow.png",    "frames": 6,  "cols": 6},
+		"attack": {"file": "Ghost2_Attack_without_shadow.png", "frames": 12, "cols": 12},
+		"death":  {"file": "Ghost2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
+		"scale": 0.8, "hp": 8.0, "coin_reward": 3,
+	},
+	"ghost_3": {
+		"base": "res://assets/sprites/Ghost/Ghost3/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Ghost3_Idle_without_shadow.png",   "frames": 4,  "cols": 4},
+		"run":    {"file": "Ghost3_Run_without_shadow.png",    "frames": 6,  "cols": 6},
+		"attack": {"file": "Ghost3_Attack_without_shadow.png", "frames": 12, "cols": 12},
+		"death":  {"file": "Ghost3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
+		"scale": 0.9, "hp": 14.0, "coin_reward": 5,
+	},
+
+	# ── BEHOLDER: el más animado del pool (12 frames idle) ──────
+	"beholder_1": {
+		"base": "res://assets/sprites/Beholder/Beholder1/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Beholder1_Idle_without_shadow.png",   "frames": 12, "cols": 12},
+		"run":    {"file": "Beholder1_Run_without_shadow.png",    "frames": 8,  "cols": 8},
+		"attack": {"file": "Beholder1_Attack_without_shadow.png", "frames": 12, "cols": 12},
+		"death":  {"file": "Beholder1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
+		"scale": 0.7, "hp": 6.0, "coin_reward": 2,
+	},
+	"beholder_2": {
+		"base": "res://assets/sprites/Beholder/Beholder2/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Beholder2_Idle_without_shadow.png",   "frames": 12, "cols": 12},
+		"run":    {"file": "Beholder2_Run_without_shadow.png",    "frames": 8,  "cols": 8},
+		"attack": {"file": "Beholder2_Attack_without_shadow.png", "frames": 12, "cols": 12},
+		"death":  {"file": "Beholder2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
+		"scale": 0.8, "hp": 10.0, "coin_reward": 3,
+	},
+	"beholder_3": {
+		"base": "res://assets/sprites/Beholder/Beholder3/",
+		"frame_size": Vector2(64, 64),
+		"idle":   {"file": "Beholder3_Idle_without_shadow.png",   "frames": 12, "cols": 12},
+		"run":    {"file": "Beholder3_Run_without_shadow.png",    "frames": 8,  "cols": 8},
+		"attack": {"file": "Beholder3_Attack_without_shadow.png", "frames": 12, "cols": 12},
+		"death":  {"file": "Beholder3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
+		"scale": 0.9, "hp": 18.0, "coin_reward": 6,
 	},
 
 	# ── RAT: 128x128, muy animado ───────────────────────────────
