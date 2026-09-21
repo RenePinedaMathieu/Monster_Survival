@@ -558,6 +558,13 @@ func _die() -> void:
 func _drop_xp_orb() -> void:
 	var orb = XP_ORB_SCENE.instantiate()
 	orb.add_to_group("xp_orb")
-	get_tree().current_scene.add_child(orb)
+	# _die() se llama desde take_damage(), que a su vez cuelga del
+	# body_entered de un proyectil/AttackArea — todavía estamos
+	# adentro del callback de física de ESE frame. Agregar un Area2D
+	# (el orb) a la escena ahí mismo dispara "Can't change this state
+	# while flushing queries" porque registrarlo toca el monitoring
+	# state en pleno flush. Diferido, se agrega recién en el próximo
+	# frame, ya fuera del flush.
+	get_tree().current_scene.add_child.call_deferred(orb)
 	orb.global_position = global_position
 	orb.set_xp(xp_reward)
