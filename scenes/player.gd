@@ -203,10 +203,13 @@ const SWORDMAN_DIRS: Array[String] = ["front", "back", "side_left", "side_right"
 const SWORDMAN_FRAME_SIZE := Vector2(64, 64)
 ## Los sheets de idle NO son consistentes en frame count entre
 ## direcciones: front/side_left/side_right traen 12 frames, back
-## sólo 4 (el sprite de espalda está menos detallado en el pack).
-## Usamos 4 como mínimo seguro — todas las direcciones animan al
-## mismo tempo aunque las de 12 usen menos detalle del que ofrecen.
-const SWORDMAN_IDLE_FRAMES := 4
+## sólo 4. Ahora _slice_sheet auto-detecta el count real por sheet
+## y _apply_idle usa el size del array por dirección — así cada
+## dir anima con sus frames reales sin off-by-one.
+## Este valor es el MÁXIMO tolerado (upper bound) que le pedimos
+## a _slice_sheet — el auto-detect lo cortará por debajo si el
+## sheet tiene menos.
+const SWORDMAN_IDLE_FRAMES := 12
 const SWORDMAN_RUN_FRAMES := 8
 # Attack: lvl 1-5 tienen 8f, lvl 6 tiene 7f. Usamos 7 como mínimo seguro.
 const SWORDMAN_ATTACK_FRAMES := 7
@@ -289,7 +292,16 @@ func _ready() -> void:
 func _slice_sheet(path: String, frame_size: Vector2, frame_count: int) -> Array[Texture2D]:
 	var sheet: Texture2D = load(path)
 	var frames: Array[Texture2D] = []
-	for i in range(frame_count):
+	if sheet == null:
+		return frames
+	# Defensivo: si el sheet trae MENOS frames que los pedidos (algunos
+	# packs tienen 4 back vs 12 front), sólo devolvemos los reales.
+	# Sino, frames "extras" quedan fuera del sheet → AtlasTexture con
+	# region inválida → sprite transparente → parece que "desaparece"
+	# el personaje mirando esa dirección.
+	var actual: int = int(sheet.get_width() / frame_size.x)
+	var safe_count: int = min(frame_count, actual) if actual > 0 else frame_count
+	for i in range(safe_count):
 		var atlas := AtlasTexture.new()
 		atlas.atlas = sheet
 		atlas.region = Rect2(i * frame_size.x, 0, frame_size.x, frame_size.y)
@@ -814,11 +826,20 @@ func _apply_idle(delta: float = 0.0) -> void:
 			_idle_frame = (_idle_frame + 1) % AXEL_FRAME_COUNT
 		_sprite.texture = _axel_idle[_axel_facing][_idle_frame]
 	elif _is_swordman:
+		# Cada dirección puede traer distinta cantidad de frames
+		# (front trae 12, back trae 4 en este pack). Usamos el size
+		# real del array de esa dirección para el módulo, así el
+		# _idle_frame nunca se sale del rango — con constante fija
+		# el sprite "desaparecía" al mirar norte.
+		var facing_frames: Array = _swordman_idle[_swordman_facing]
+		if facing_frames.is_empty():
+			return
 		_idle_time += delta
 		if _idle_time >= 1.0 / IDLE_ANIM_FPS:
 			_idle_time = 0.0
-			_idle_frame = (_idle_frame + 1) % SWORDMAN_IDLE_FRAMES
-		_sprite.texture = _swordman_idle[_swordman_facing][_idle_frame]
+			_idle_frame = (_idle_frame + 1) % facing_frames.size()
+		# Clamp por si _idle_frame quedó de otra dirección con más frames
+		_sprite.texture = facing_frames[_idle_frame % facing_frames.size()]
 	elif _is_ranged_skin:
 		_idle_time += delta
 		if _idle_time >= 1.0 / IDLE_ANIM_FPS:
