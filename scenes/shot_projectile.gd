@@ -47,6 +47,15 @@ const COLOR_BODY_CHARGED := Color(1.0, 0.85, 0.3, 1.0)
 const COLOR_TIP_CHARGED := Color(1.0, 1.0, 0.85, 1.0)
 const COLOR_TAIL_CHARGED := Color(1.0, 0.6, 0.15, 0.9)
 
+## Sprite del proyectil — flecha del pack weapon_icons. Se instancia
+## en _ready y se re-tinta por nivel/charged en _process.
+const ARROW_ICON := "res://assets/ui/weapon_icons/icon_43.png"
+const ARROW_SCALE := 0.65
+## El icono viene dibujado apuntando arriba-derecha (~45°). Compensamos
+## la rotación para que se alinee con el vector de vuelo.
+const ARROW_ROT_OFFSET := -PI * 0.25
+var _sprite: Sprite2D
+
 var velocity: Vector2 = Vector2.ZERO
 var _damage: float = DAMAGE
 var _age: float = 0.0
@@ -60,6 +69,12 @@ func set_damage(d: float) -> void:
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	_sprite = Sprite2D.new()
+	_sprite.texture = load(ARROW_ICON)
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.scale = Vector2(ARROW_SCALE, ARROW_SCALE)
+	_sprite.rotation = ARROW_ROT_OFFSET
+	add_child(_sprite)
 
 ## dir: dirección de vuelo (orienta el dibujo). charged: tiro post
 ## level-up — más grande, más brillante, más daño (siempre dorado, sin
@@ -105,15 +120,16 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	# El body ahora lo hace el Sprite2D con la flecha real. Acá sólo
+	# la trailita y las chispitas para el polish visual.
 	var body: Color = COLOR_BODY_CHARGED if _charged else LEVEL_BODY[_level]
-	var edge: Color = COLOR_EDGE_CHARGED if _charged else body.darkened(0.55)
-	var tip: Color = COLOR_TIP_CHARGED if _charged else body.lerp(Color.WHITE, 0.6)
 	var tail: Color = COLOR_TAIL_CHARGED if _charged else Color(body, 0.9)
-
 	draw_line(Vector2(-TAIL_LENGTH, 0.0), Vector2(-RADIUS * 0.4, 0.0), tail, 2.5, false)
-	draw_circle(Vector2.ZERO, RADIUS, edge)
-	draw_circle(Vector2(RADIUS * 0.15, 0.0), RADIUS * 0.62, body)
-	draw_circle(Vector2(RADIUS * 0.55, 0.0), RADIUS * 0.3, tip)
+
+	# Tint del sprite por nivel/charged en cada frame (el modulate es
+	# barato y así la flecha sube de color como antes).
+	if _sprite:
+		_sprite.modulate = body
 
 	var sparkle_color: Color = COLOR_BODY_CHARGED if _charged else body.lerp(Color.WHITE, 0.4)
 	for s in _sparkles:

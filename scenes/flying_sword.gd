@@ -44,6 +44,14 @@ const LEVEL_CORE: Array = [
 ]
 const MAX_LEVEL := 5
 
+## Sprite de la espada — icono del pack weapon_icons.
+const SWORD_ICON := "res://assets/ui/weapon_icons/icon_15.png"
+const SWORD_SCALE := 0.6
+## El icono viene dibujado apuntando arriba-derecha (~45°). Con este
+## offset queda alineado con la rotación de dash (rotation.angle()).
+const SWORD_ROT_OFFSET := -PI * 0.25
+var _sprite: Sprite2D
+
 signal consumed
 
 var state: int = State.FORMATION
@@ -61,6 +69,12 @@ var _time: float = 0.0
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	_sprite = Sprite2D.new()
+	_sprite.texture = load(SWORD_ICON)
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.scale = Vector2(SWORD_SCALE, SWORD_SCALE)
+	_sprite.rotation = SWORD_ROT_OFFSET
+	add_child(_sprite)
 
 func set_level(l: int) -> void:
 	level = clamp(l, 1, MAX_LEVEL)
@@ -120,14 +134,13 @@ func _core_color() -> Color:
 	return LEVEL_CORE[clamp(level - 1, 0, LEVEL_CORE.size() - 1)]
 
 func _draw() -> void:
+	# El body ahora lo hace el Sprite2D con la espada real. Acá sólo
+	# la estela y las chispitas para conservar el polish visual.
 	var core: Color = _core_color()
-	var tones := [core.lerp(Color.WHITE, 0.6), core, core.darkened(0.4), COLOR_HILT]
-	for cell in CELLS:
-		var col: int = cell[0]
-		var row: int = cell[1]
-		var tone: int = cell[2]
-		var pos: Vector2 = Vector2(col, row) * PIXEL - Vector2(PIXEL, PIXEL) * 0.5
-		draw_rect(Rect2(pos, Vector2(PIXEL, PIXEL)), tones[tone])
+
+	# Tint del sprite por nivel (rainbow en el máximo, sino LEVEL_CORE).
+	if _sprite:
+		_sprite.modulate = core
 
 	for t in _trail:
 		var a: float = 1.0 - (t["age"] / TRAIL_LIFE)
