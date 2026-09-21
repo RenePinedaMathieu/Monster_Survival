@@ -201,7 +201,12 @@ var _is_axel: bool = false
 # tienen armadura/armas más pesadas — se siente que crecés físicamente.
 const SWORDMAN_DIRS: Array[String] = ["front", "back", "side_left", "side_right"]
 const SWORDMAN_FRAME_SIZE := Vector2(64, 64)
-const SWORDMAN_IDLE_FRAMES := 12
+## Los sheets de idle NO son consistentes en frame count entre
+## direcciones: front/side_left/side_right traen 12 frames, back
+## sólo 4 (el sprite de espalda está menos detallado en el pack).
+## Usamos 4 como mínimo seguro — todas las direcciones animan al
+## mismo tempo aunque las de 12 usen menos detalle del que ofrecen.
+const SWORDMAN_IDLE_FRAMES := 4
 const SWORDMAN_RUN_FRAMES := 8
 # Attack: lvl 1-5 tienen 8f, lvl 6 tiene 7f. Usamos 7 como mínimo seguro.
 const SWORDMAN_ATTACK_FRAMES := 7
@@ -303,13 +308,14 @@ func _slice_sheet(path: String, frame_size: Vector2, frame_count: int) -> Array[
 func _tier_for_level(lvl: int) -> int:
 	return clampi(1 + (lvl - 1) / 5, 1, SWORDMAN_MAX_TIER)
 
-## Path builder — lvl 1-5 y lvl 6 tienen folders con nombres distintos
-## (lvl 1-5 usan prefijo "Swordsman_lvlN_Anim/", lvl 6 usa sólo "Anim/").
+## Path builder — el folder es INCONSISTENTE entre tiers:
+## Lvl 1-3 usan prefijo "Swordsman_lvlN_Anim/" (ej Swordsman_lvl1_Idle/)
+## Lvl 4-6 usan sólo "Anim/" (ej Idle/)
 ## Los filenames adentro también varían — "attack" es lowercase, el
 ## resto capitalizado. Se maneja acá para no ensuciar el caller.
 func _swordman_path(tier: int, anim: String, direction: String) -> String:
 	var base := "res://assets/sprites/swordman/Swordsman_lvl%d/" % tier
-	var folder := anim if tier == 6 else "Swordsman_lvl%d_%s" % [tier, anim]
+	var folder := anim if tier >= 4 else "Swordsman_lvl%d_%s" % [tier, anim]
 	var fname := "Swordsman_lvl%d_%s_%s.png" % [tier, anim if anim != "Attack" else "attack", direction]
 	return "%s%s/%s" % [base, folder, fname]
 
@@ -403,7 +409,9 @@ func _apply_camera_zoom_for_device() -> void:
 	var is_touch := DisplayServer.is_touchscreen_available()
 	var is_small := vp.x < 900.0 or vp.y < 700.0
 	if is_touch or is_small:
-		cam.zoom = Vector2(2.4, 2.4)
+		# Mobile más cerca — pantalla chica pide sprites grandes o el
+		# player se pierde en el bullet-hell.
+		cam.zoom = Vector2(3.0, 3.0)
 	else:
 		cam.zoom = Vector2(2.15, 2.15)
 	# CRÍTICO: force ser la cámara current. Sin esto, la PreviewCamera
