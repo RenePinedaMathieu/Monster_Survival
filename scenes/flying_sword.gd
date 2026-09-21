@@ -47,9 +47,11 @@ const MAX_LEVEL := 5
 ## Sprite de la espada — icono del pack weapon_icons.
 const SWORD_ICON := "res://assets/ui/weapon_icons/icon_15.png"
 const SWORD_SCALE := 0.6
-## El icono viene dibujado apuntando arriba-derecha (~45°). Con este
-## offset queda alineado con la rotación de dash (rotation.angle()).
-const SWORD_ROT_OFFSET := -PI * 0.25
+## El icono viene dibujado apuntando arriba-derecha (~45°). Rotando
+## -3π/4 lo dejamos apuntando abajo-izquierda relativo al eje 0, así
+## cuando el rig lo orienta con velocity.angle() al vector de dash
+## la espada queda apuntando hacia el enemigo con la hoja delante.
+const SWORD_ROT_OFFSET := -PI * 0.75
 var _sprite: Sprite2D
 
 signal consumed
