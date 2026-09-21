@@ -17,8 +17,13 @@ extends Area2D
 ## alcanza con que el proyectil cubra la diagonal completa del mapa
 ## (~2700) y no los 3600 literales — nada puede estar más lejos que
 ## eso dentro del mapa igual.
-const SPEED := 300.0            # más lento — a 380 seguía sin notarse bien
-const LIFETIME := 10.0          # 300*10.0 = 3000, cubre la diagonal del mapa entero
+## SPEED subido de 300 → 500 (proyectil más "flechazo", menos "slow
+## missile"); LIFETIME 10 → 8 así 500*8 = 4000 unidades de range que
+## supera holgadamente AUTO_FIRE_RANGE del player (3600) y el mundo
+## entero (WORLD_BOUND=950 × 2 = 1900). Ya no muere el proyectil antes
+## de llegar al monster que apuntó.
+const SPEED := 500.0
+const LIFETIME := 8.0 entero
 const DAMAGE := 2.0
 const CHARGED_DAMAGE_MULT := 2.5
 const CHARGED_SCALE := 1.6
