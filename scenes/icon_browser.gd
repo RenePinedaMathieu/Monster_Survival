@@ -24,7 +24,9 @@ func _ready() -> void:
 			path_to_upgrade[u["icon"]] = u["id"]
 
 	for n in range(1, 101):
-		var path := "res://assets/ui/weapon_icons/icon_%d.png" % n
+		# Los archivos usan padding a 2 dígitos para 1-9 (icon_01.png..
+		# icon_09.png), pero 10+ va sin padding extra (icon_10, icon_100).
+		var path := "res://assets/ui/weapon_icons/icon_%02d.png" % n if n < 10 else "res://assets/ui/weapon_icons/icon_%d.png" % n
 		if not ResourceLoader.exists(path):
 			continue
 		var col := (n - 1) % COLS

@@ -36,7 +36,7 @@ signal upgrade_chosen(id: String)
 const ICON_BASE := "res://assets/ui/weapon_icons/"
 const UPGRADES: Array = [
 	{ "id": "damage",       "title": "+25% DAÑO",         "desc": "El disparo pega más",
-		"icon": ICON_BASE + "icon_1.png" },       # espada base clásica
+		"icon": ICON_BASE + "icon_01.png" },       # espada base clásica
 	{ "id": "atk_speed",    "title": "+20% ATK SPEED",    "desc": "Auto-disparo más rápido",
 		"icon": ICON_BASE + "icon_21.png" },      # ballesta — velocidad de disparo
 	{ "id": "move_speed",   "title": "+12% MOVE SPEED",   "desc": "Corres más rápido",
@@ -60,7 +60,7 @@ const UPGRADES: Array = [
 	{ "id": "meteors",      "title": "LLUVIA DE METEOROS", "desc": "Meteoritos caen solos cerca de los enemigos",
 		"icon": ICON_BASE + "icon_47.png" },      # báculo de fuego
 	{ "id": "flying_swords",       "title": "ESPADAS VOLADORAS", "desc": "5 espadas te rodean y atacan solas",
-		"icon": ICON_BASE + "icon_2.png" },       # espada — unlock
+		"icon": ICON_BASE + "icon_02.png" },       # espada — unlock
 	{ "id": "flying_swords_power", "title": "ESPADAS VOLADORAS", "desc": "Más fuertes y más brillantes",
 		"icon": ICON_BASE + "icon_17.png" },      # espada de fuego — poder
 	{ "id": "flying_swords_count", "title": "ESPADAS VOLADORAS", "desc": "Más espadas atacan a la vez",
