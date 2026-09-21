@@ -24,7 +24,7 @@ func _ready() -> void:
 			path_to_upgrade[u["icon"]] = u["id"]
 
 	for n in range(1, 101):
-		var path := "res://assets/ui/skill_icons/skill_%d.png" % n
+		var path := "res://assets/ui/weapon_icons/icon_%d.png" % n
 		if not ResourceLoader.exists(path):
 			continue
 		var col := (n - 1) % COLS
