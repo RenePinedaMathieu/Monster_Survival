@@ -26,45 +26,43 @@ signal upgrade_chosen(id: String)
 #   _power  → más fuerte / más nivel / más efecto visual
 #   _count  → más cantidad (más disparos por ráfaga / más espadas
 #             atacando a la vez)
-## Mapeo icon → carta con el pack "100 weapon icons" (Craftpix). Los
-## iconos son 32x32 pixel art (espadas, arcos, escudos, martillos,
-## etc) — matchean mejor la estética pixel del juego que los skill
-## icons 256x256 de arte más pulido. Layout del atlas:
-##   001-020 espadas | 021-040 arcos/ballestas | 041-050 báculos
-##   051-060 martillos | 061-070 escudos | 071-080 lanzas
-##   081-090 hachas | 091-100 varitas
-const ICON_BASE := "res://assets/ui/weapon_icons/"
+## Mapeo icon → carta. La mayoría de las cartas usan skill_icons
+## (256x256, RPG fantasy skills). Sólo "flecha" (multishot y
+## ranged_count) y "espada voladora unlock" vienen de weapon_icons
+## (32x32 pixel art), matcheando conceptos más literales.
+const SKILL_ICONS := "res://assets/ui/skill_icons/"
+const WEAPON_ICONS := "res://assets/ui/weapon_icons/"
 const UPGRADES: Array = [
 	{ "id": "damage",       "title": "+25% DAÑO",         "desc": "El disparo pega más",
-		"icon": ICON_BASE + "icon_96.png" },
+		"icon": SKILL_ICONS + "skill_96.png" },
 	{ "id": "atk_speed",    "title": "+20% ATK SPEED",    "desc": "Auto-disparo más rápido",
-		"icon": ICON_BASE + "icon_99.png" },
+		"icon": SKILL_ICONS + "skill_99.png" },
 	{ "id": "move_speed",   "title": "+12% MOVE SPEED",   "desc": "Corres más rápido",
-		"icon": ICON_BASE + "icon_80.png" },
+		"icon": SKILL_ICONS + "skill_80.png" },
 	{ "id": "max_hp",       "title": "+25% MAX HP",       "desc": "Aguantas más golpes",
-		"icon": ICON_BASE + "icon_83.png" },
+		"icon": SKILL_ICONS + "skill_83.png" },
 	{ "id": "hp_regen",     "title": "+1 HP/S",           "desc": "Regen pasivo",
-		"icon": ICON_BASE + "icon_79.png" },
+		"icon": SKILL_ICONS + "skill_79.png" },
 	{ "id": "magnet",       "title": "+40% MAGNET",       "desc": "Absorbes XP desde más lejos",
-		"icon": ICON_BASE + "icon_30.png" },
+		"icon": SKILL_ICONS + "skill_30.png" },
 	{ "id": "multishot",    "title": "+1 PROYECTIL",      "desc": "Un disparo extra por ráfaga (hasta 4)",
-		"icon": ICON_BASE + "icon_43.png" },
+		"icon": WEAPON_ICONS + "icon_43.png" },       # flecha
 	{ "id": "ranged_bonus", "title": "DISPARO A DISTANCIA", "desc": "Desbloqueas un disparo automático en tu ataque normal",
-		"icon": ICON_BASE + "icon_55.png" },
+		"icon": SKILL_ICONS + "skill_55.png" },
 	{ "id": "ranged_power", "title": "DISPARO A DISTANCIA", "desc": "Más fuerte y más brillante",
-		"icon": ICON_BASE + "icon_67.png" },
+		"icon": SKILL_ICONS + "skill_67.png" },
 	{ "id": "ranged_count", "title": "DISPARO A DISTANCIA", "desc": "Sumas otro disparo a la ráfaga",
-		"icon": ICON_BASE + "icon_43.png" },
+		"icon": WEAPON_ICONS + "icon_43.png" },       # flecha
 	{ "id": "level_damage", "title": "INSTINTO ASESINO",  "desc": "+10% de daño automático en cada nivel futuro",
-		"icon": ICON_BASE + "icon_37.png" },
+		"icon": SKILL_ICONS + "skill_37.png" },
 	{ "id": "meteors",      "title": "LLUVIA DE METEOROS", "desc": "Meteoritos caen solos cerca de los enemigos",
-		"icon": ICON_BASE + "icon_22.png" },
+		"icon": SKILL_ICONS + "skill_22.png" },
 	{ "id": "flying_swords",       "title": "ESPADAS VOLADORAS", "desc": "5 espadas te rodean y atacan solas",
-		"icon": ICON_BASE + "icon_15.png" },
+		"icon": WEAPON_ICONS + "icon_15.png" },       # espada
 	{ "id": "flying_swords_power", "title": "ESPADAS VOLADORAS", "desc": "Más fuertes y más brillantes",
-		"icon": ICON_BASE + "icon_65.png" },
+		"icon": SKILL_ICONS + "skill_65.png" },
 	{ "id": "flying_swords_count", "title": "ESPADAS VOLADORAS", "desc": "Más espadas atacan a la vez",
-		"icon": ICON_BASE + "icon_65.png" },
+		"icon": SKILL_ICONS + "skill_65.png" },
 ]
 
 ## Cartas que "desbloquean" una mecánica nueva — mientras no las
