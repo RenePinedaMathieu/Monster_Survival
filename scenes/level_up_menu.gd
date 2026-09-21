@@ -52,7 +52,7 @@ const UPGRADES: Array = [
 	{ "id": "ranged_count", "title": "DISPARO A DISTANCIA", "desc": "Sumas otro disparo a la ráfaga",
 		"icon": ICON_BASE + "skill_63.png" },
 	{ "id": "level_damage", "title": "INSTINTO ASESINO",  "desc": "+10% de daño automático en cada nivel futuro",
-		"icon": ICON_BASE + "skill_37.png" },
+		"icon": ICON_BASE + "skill_53.png" },
 	{ "id": "meteors",      "title": "LLUVIA DE METEOROS", "desc": "Meteoritos caen solos cerca de los enemigos",
 		"icon": ICON_BASE + "skill_22.png" },
 	{ "id": "flying_swords",       "title": "ESPADAS VOLADORAS", "desc": "5 espadas te rodean y atacan solas",
