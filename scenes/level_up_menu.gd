@@ -105,6 +105,15 @@ func show_for(player: Node) -> void:
 			cards[i].expand_icon = true
 			cards[i].icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			cards[i].vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+			# Limita el ancho máximo del icon así deja lugar al texto
+			# abajo. Sin esto (o con icon_max_width default), el icon
+			# expandía a todo el botón y se solapaba con el texto — el
+			# hover forzaba un layout pass que acomodaba las cosas,
+			# pero se veía roto al mostrarse la carta.
+			cards[i].add_theme_constant_override("icon_max_width", 96)
+			# Fuerza recalc del layout inmediato en vez de esperar al
+			# primer hover.
+			cards[i].queue_sort()
 		else:
 			cards[i].icon = null
 	Audio.play_sfx("level_up")
