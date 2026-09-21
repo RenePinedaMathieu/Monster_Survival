@@ -36,35 +36,35 @@ signal upgrade_chosen(id: String)
 const ICON_BASE := "res://assets/ui/weapon_icons/"
 const UPGRADES: Array = [
 	{ "id": "damage",       "title": "+25% DAÑO",         "desc": "El disparo pega más",
-		"icon": ICON_BASE + "icon_01.png" },       # espada base clásica
+		"icon": ICON_BASE + "icon_96.png" },
 	{ "id": "atk_speed",    "title": "+20% ATK SPEED",    "desc": "Auto-disparo más rápido",
-		"icon": ICON_BASE + "icon_21.png" },      # ballesta — velocidad de disparo
+		"icon": ICON_BASE + "icon_99.png" },
 	{ "id": "move_speed",   "title": "+12% MOVE SPEED",   "desc": "Corres más rápido",
-		"icon": ICON_BASE + "icon_71.png" },      # lanza delgada — velocidad
+		"icon": ICON_BASE + "icon_80.png" },
 	{ "id": "max_hp",       "title": "+25% MAX HP",       "desc": "Aguantas más golpes",
-		"icon": ICON_BASE + "icon_61.png" },      # escudo de madera — HP clásico
+		"icon": ICON_BASE + "icon_83.png" },
 	{ "id": "hp_regen",     "title": "+1 HP/S",           "desc": "Regen pasivo",
-		"icon": ICON_BASE + "icon_69.png" },      # escudo verde — healing
+		"icon": ICON_BASE + "icon_79.png" },
 	{ "id": "magnet",       "title": "+40% MAGNET",       "desc": "Absorbes XP desde más lejos",
-		"icon": ICON_BASE + "icon_99.png" },      # varita con orbe — atracción mágica
+		"icon": ICON_BASE + "icon_30.png" },
 	{ "id": "multishot",    "title": "+1 PROYECTIL",      "desc": "Un disparo extra por ráfaga (hasta 4)",
-		"icon": ICON_BASE + "icon_25.png" },      # ballesta multi-flecha
+		"icon": ICON_BASE + "icon_63.png" },
 	{ "id": "ranged_bonus", "title": "DISPARO A DISTANCIA", "desc": "Desbloqueas un disparo automático en tu ataque normal",
-		"icon": ICON_BASE + "icon_31.png" },      # arco base — unlock
+		"icon": ICON_BASE + "icon_55.png" },
 	{ "id": "ranged_power", "title": "DISPARO A DISTANCIA", "desc": "Más fuerte y más brillante",
-		"icon": ICON_BASE + "icon_37.png" },      # arco de fuego — poder
+		"icon": ICON_BASE + "icon_67.png" },
 	{ "id": "ranged_count", "title": "DISPARO A DISTANCIA", "desc": "Sumas otro disparo a la ráfaga",
-		"icon": ICON_BASE + "icon_40.png" },      # arco variante — más disparos
+		"icon": ICON_BASE + "icon_63.png" },
 	{ "id": "level_damage", "title": "INSTINTO ASESINO",  "desc": "+10% de daño automático en cada nivel futuro",
-		"icon": ICON_BASE + "icon_56.png" },      # martillo con cráneo — instinto
+		"icon": ICON_BASE + "icon_37.png" },
 	{ "id": "meteors",      "title": "LLUVIA DE METEOROS", "desc": "Meteoritos caen solos cerca de los enemigos",
-		"icon": ICON_BASE + "icon_47.png" },      # báculo de fuego
+		"icon": ICON_BASE + "icon_22.png" },
 	{ "id": "flying_swords",       "title": "ESPADAS VOLADORAS", "desc": "5 espadas te rodean y atacan solas",
-		"icon": ICON_BASE + "icon_02.png" },       # espada — unlock
+		"icon": ICON_BASE + "icon_05.png" },
 	{ "id": "flying_swords_power", "title": "ESPADAS VOLADORAS", "desc": "Más fuertes y más brillantes",
-		"icon": ICON_BASE + "icon_17.png" },      # espada de fuego — poder
+		"icon": ICON_BASE + "icon_65.png" },
 	{ "id": "flying_swords_count", "title": "ESPADAS VOLADORAS", "desc": "Más espadas atacan a la vez",
-		"icon": ICON_BASE + "icon_19.png" },      # espada roja variante — cantidad
+		"icon": ICON_BASE + "icon_65.png" },
 ]
 
 ## Cartas que "desbloquean" una mecánica nueva — mientras no las
