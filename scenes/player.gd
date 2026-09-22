@@ -534,11 +534,18 @@ func _auto_fire() -> void:
 		# Sin blanco cerca — reintentamos rápido, no gastamos el CD
 		_fire_cd = 0.15
 		return
-	# Personajes melee sólo atacan si el target está cerca — sino
-	# seguimos corriendo (no nos trabamos en la anim de attack).
+	# Personajes melee: si el target está fuera del rango de la espada,
+	# no hacemos la animación de attack (nos trabaría), PERO si ya
+	# tienen desbloqueada la carta "disparo a distancia" igual sale la
+	# flecha — sino nunca dispararían nada a distancia aunque tengan la
+	# carta.
 	var is_melee_char := _is_axel or _is_swordman
 	var melee_range: float = SWORDMAN_ATTACK_RANGE if _is_swordman else AXEL_ATTACK_RANGE
-	if is_melee_char and global_position.distance_to(target.global_position) > melee_range:
+	var to_target_dist: float = global_position.distance_to(target.global_position)
+	var out_of_melee_range: bool = is_melee_char and to_target_dist > melee_range
+	if out_of_melee_range and ranged_bonus_shots == 0:
+		# Sin ranged bonus no hay nada para hacer a distancia — no
+		# gastamos el CD, reintentamos rápido.
 		_fire_cd = 0.15
 		return
 	_fire_cd = AUTO_FIRE_INTERVAL / atk_speed_mult
@@ -549,13 +556,18 @@ func _auto_fire() -> void:
 	# Face hacia el target así el sprite gira acorde
 	current_dir = _vec_to_dir(to_target)
 	if _is_swordman:
-		_start_swordman_attack(to_target)
+		# Si está en rango melee, hace el sablazo. Si sólo pudo llegar
+		# acá por tener ranged (out_of_melee_range), skippeamos la anim
+		# — sino se trabaría en el swing sin tocar a nadie.
+		if not out_of_melee_range:
+			_start_swordman_attack(to_target)
 		# La carta "disparo a distancia" también le suma disparos al
 		# swordman, igual que en AXEL — no reemplaza el melee.
 		if ranged_bonus_shots > 0:
 			_fire_shot(to_target, ranged_bonus_shots)
 	elif _is_axel:
-		_start_axel_attack(to_target)
+		if not out_of_melee_range:
+			_start_axel_attack(to_target)
 		# Carta "disparo a distancia": el espadachín también larga
 		# disparos, además del sablazo — no reemplaza el melee.
 		if ranged_bonus_shots > 0:
