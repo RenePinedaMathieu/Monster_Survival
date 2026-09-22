@@ -17,11 +17,12 @@ extends Area2D
 ## alcanza con que el proyectil cubra la diagonal completa del mapa
 ## (~2700) y no los 3600 literales — nada puede estar más lejos que
 ## eso dentro del mapa igual.
-## Range de la flecha con margen suficiente para que nunca muera
-## antes de llegar al monster: 500 * 12 = 6000 unidades (el mapa
-## mide 1900 de punta a punta, así que sobra).
-const SPEED := 500.0
-const LIFETIME := 12.0
+## Range de la flecha — la flecha es el ARMA DE LARGA DISTANCIA por
+## excelencia, tiene que sentirse que llega más lejos que las
+## espadas voladoras. 700 * 10 = 7000u (mapa entero cabe en 1900).
+## SPEED alto también hace que se sienta rápida/afilada.
+const SPEED := 700.0
+const LIFETIME := 10.0
 const DAMAGE := 2.0
 const CHARGED_DAMAGE_MULT := 2.5
 const CHARGED_SCALE := 1.6
@@ -54,11 +55,12 @@ const COLOR_TAIL_CHARGED := Color(1.0, 0.6, 0.15, 0.9)
 ## en _ready y se re-tinta por nivel/charged en _process.
 const ARROW_ICON := "res://assets/ui/weapon_icons/icon_43.png"
 const ARROW_SCALE := 0.65
-## El icono viene dibujado apuntando arriba-derecha (~45°). Rotar
-## +π/4 (en dirección clockwise en Godot, Y+ va hacia abajo) lo
-## alinea con el vector de vuelo horizontal, así al setear rotation
-## por dir.angle() la punta apunta hacia el target.
-const ARROW_ROT_OFFSET := PI * 0.25
+## La flecha del icono apunta HACIA ARRIBA (norte). Para que se
+## alinee con el vector de vuelo (que orienta al Area2D via
+## rotation = dir.angle()), el sprite necesita rotar +π/2 respecto
+## al parent — así "arriba" se alinea con "derecha", y de ahí sigue
+## la rotación del parent.
+const ARROW_ROT_OFFSET := PI * 0.5
 var _sprite: Sprite2D
 
 var velocity: Vector2 = Vector2.ZERO

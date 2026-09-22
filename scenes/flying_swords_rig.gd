@@ -18,9 +18,11 @@ const SWORD_DAMAGE := 3.0
 const ATTACK_INTERVAL := 1.3    # cada tanto ataca UNA espada disponible
 const RETRY_INTERVAL := 0.3     # si no hay blanco/espada, reintenta pronto
 const REGEN_TIME := 2.2         # tiempo para que reaparezca una espada consumida
-## Bastante más corto que AUTO_FIRE_RANGE del player (900) — las
-## espadas son de corto alcance, el disparo es el de largo alcance.
-const ATTACK_RANGE := 220.0
+## MUY corto — las espadas son de CORTO alcance, la flecha (disparo)
+## es la de LARGO alcance. Antes en 220 las espadas atacaban demasiado
+## lejos y se sentían tanto o más que las flechas. Ahora sólo pican al
+## que entra al club del player.
+const ATTACK_RANGE := 140.0
 const MAX_LEVEL := 5
 const MAX_ATTACKS_PER_CYCLE := 3
 
