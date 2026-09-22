@@ -47,11 +47,20 @@ const MAX_LEVEL := 5
 ## Sprite de la espada — icono del pack weapon_icons.
 const SWORD_ICON := "res://assets/ui/weapon_icons/icon_15.png"
 const SWORD_SCALE := 0.6
-## El icono viene dibujado apuntando arriba-derecha (~45°). Rotando
-## -3π/4 lo dejamos apuntando abajo-izquierda relativo al eje 0, así
-## cuando el rig lo orienta con velocity.angle() al vector de dash
-## la espada queda apuntando hacia el enemigo con la hoja delante.
-const SWORD_ROT_OFFSET := -PI * 0.75
+## La espada del icono apunta arriba-derecha (~45°). Tenemos DOS
+## offsets porque los dos states del blade orientan al parent Area2D
+## en direcciones distintas:
+##
+##  - FORMATION: rig setea rotation = _facing + PI (mira hacia
+##    ATRÁS del player). Con offset -3π/4 la espada visualmente
+##    queda apuntando HACIA ADELANTE (dirección de movimiento del
+##    player) — se ve como una escolta ordenada.
+##
+##  - DASH: la espada rota su propio Area2D a to_target.angle() en
+##    _process. Con offset +π/4 la hoja apunta AL target con la
+##    punta hacia el enemigo — la espada se "clava" en el bicho.
+const SWORD_ROT_OFFSET := -PI * 0.75          # formación (default en _ready)
+const SWORD_ROT_DASH_OFFSET := PI * 0.25       # apunta al target durante dash
 var _sprite: Sprite2D
 
 signal consumed
@@ -119,6 +128,10 @@ func launch_at(target_node: Node2D) -> void:
 	state = State.DASH
 	_dash_target_node = target_node
 	_dash_elapsed = 0.0
+	# Al entrar en dash cambiamos el offset del sprite para que la
+	# hoja apunte AL target, no hacia atrás como en formación.
+	if _sprite:
+		_sprite.rotation = SWORD_ROT_DASH_OFFSET
 
 func _finish() -> void:
 	consumed.emit()
