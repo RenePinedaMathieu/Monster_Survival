@@ -1,8 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://cqaroom01dev"]
+[gd_scene format=3 uid="uid://cqaroom01dev"]
 
-[ext_resource type="Script" path="res://scenes/qa_room.gd" id="1_qa01"]
-[ext_resource type="PackedScene" path="res://scenes/painted_world.tscn" id="2_world"]
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
+[ext_resource type="Script" uid="uid://cun5awm5sfsqw" path="res://scenes/qa_room.gd" id="1_qa01"]
+[ext_resource type="PackedScene" uid="uid://bsn7deacgo1uj" path="res://scenes/painted_world.tscn" id="2_world"]
+[ext_resource type="PackedScene" uid="uid://11kub0tbd1er" path="res://scenes/player.tscn" id="3_player"]
 
 [node name="QARoom" type="Node2D"]
 script = ExtResource("1_qa01")
@@ -19,13 +19,160 @@ script = ExtResource("1_qa01")
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 340.0
-offset_bottom = 240.0
+offset_bottom = 150.0
 color = Color(0, 0, 0, 0.75)
 
 [node name="HelpLabel" type="Label" parent="UI"]
 offset_left = 16.0
 offset_top = 14.0
 offset_right = 336.0
-offset_bottom = 236.0
+offset_bottom = 146.0
 theme_override_font_sizes/font_size = 12
 text = "..."
+
+[node name="TouchPanel" type="Panel" parent="UI"]
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 0
+grow_vertical = 2
+self_modulate = Color(1, 1, 1, 0.85)
+
+[node name="Content" type="VBoxContainer" parent="UI/TouchPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLbl" type="Label" parent="UI/TouchPanel/Content"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+text = "QA CONTROLS"
+
+[node name="ActionsLbl" type="Label" parent="UI/TouchPanel/Content"]
+theme_override_font_sizes/font_size = 11
+text = "Acciones"
+
+[node name="Actions" type="VBoxContainer" parent="UI/TouchPanel/Content"]
+theme_override_constants/separation = 4
+
+[node name="LevelUpBtn" type="Button" parent="UI/TouchPanel/Content/Actions"]
+custom_minimum_size = Vector2(0, 42)
+text = "LEVEL UP"
+
+[node name="KillAllBtn" type="Button" parent="UI/TouchPanel/Content/Actions"]
+custom_minimum_size = Vector2(0, 42)
+text = "KILL ALL"
+
+[node name="BackBtn" type="Button" parent="UI/TouchPanel/Content/Actions"]
+custom_minimum_size = Vector2(0, 42)
+text = "MENU"
+
+[node name="SpawnsLbl" type="Label" parent="UI/TouchPanel/Content"]
+theme_override_font_sizes/font_size = 11
+text = "Spawn"
+
+[node name="Spawns" type="GridContainer" parent="UI/TouchPanel/Content"]
+columns = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+
+[node name="RatBtn" type="Button" parent="UI/TouchPanel/Content/Spawns"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "Rat"
+
+[node name="ImpBtn" type="Button" parent="UI/TouchPanel/Content/Spawns"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "Imp"
+
+[node name="LizardBtn" type="Button" parent="UI/TouchPanel/Content/Spawns"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "Lizard"
+
+[node name="SlimeBtn" type="Button" parent="UI/TouchPanel/Content/Spawns"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "Slime"
+
+[node name="GhostBtn" type="Button" parent="UI/TouchPanel/Content/Spawns"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "Ghost"
+
+[node name="BeholderBtn" type="Button" parent="UI/TouchPanel/Content/Spawns"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "Beholder"
+
+[node name="BossesLbl" type="Label" parent="UI/TouchPanel/Content"]
+theme_override_font_sizes/font_size = 11
+text = "Bosses"
+
+[node name="Bosses" type="GridContainer" parent="UI/TouchPanel/Content"]
+columns = 3
+theme_override_constants/h_separation = 4
+
+[node name="Demon1Btn" type="Button" parent="UI/TouchPanel/Content/Bosses"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "D1"
+
+[node name="Demon2Btn" type="Button" parent="UI/TouchPanel/Content/Bosses"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "D2"
+
+[node name="Demon3Btn" type="Button" parent="UI/TouchPanel/Content/Bosses"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "D3"
+
+[node name="UnlocksLbl" type="Label" parent="UI/TouchPanel/Content"]
+theme_override_font_sizes/font_size = 11
+text = "Unlocks"
+
+[node name="Unlocks" type="VBoxContainer" parent="UI/TouchPanel/Content"]
+theme_override_constants/separation = 4
+
+[node name="SwordsBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 36)
+text = "Flying Swords"
+
+[node name="RangedBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 36)
+text = "Ranged"
+
+[node name="MeteorsBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 36)
+text = "Meteors"
+
+[node name="HPLbl" type="Label" parent="UI/TouchPanel/Content"]
+theme_override_font_sizes/font_size = 11
+text = "HP"
+
+[node name="HP" type="GridContainer" parent="UI/TouchPanel/Content"]
+columns = 2
+theme_override_constants/h_separation = 4
+
+[node name="HealBtn" type="Button" parent="UI/TouchPanel/Content/HP"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "+10 HP"
+
+[node name="DamageBtn" type="Button" parent="UI/TouchPanel/Content/HP"]
+custom_minimum_size = Vector2(0, 36)
+size_flags_horizontal = 3
+text = "-10 HP"
