@@ -22,6 +22,7 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 @onready var _volume_slider: HSlider = $OptionsPanel/Content/VolumeRow/VolumeSlider
 @onready var _fullscreen_check: CheckButton = $OptionsPanel/Content/FullscreenRow/FullscreenCheck
 @onready var _tutorial_button: Button = $OptionsPanel/Content/TutorialButton
+@onready var _qa_room_button: Button = $OptionsPanel/Content/QARoomButton
 @onready var _back_button: Button = $OptionsPanel/Content/BackButton
 
 func _ready() -> void:
@@ -35,7 +36,7 @@ func _ready() -> void:
 	else:
 		_record_label.text = ""
 
-	for button in [_play_button, _shop_button, _options_button, _quit_button, _back_button, _tutorial_button]:
+	for button in [_play_button, _shop_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
 		UITheme.style_button(button)
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
 		button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
@@ -59,6 +60,7 @@ func _ready() -> void:
 	_fullscreen_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 	_tutorial_button.pressed.connect(_on_tutorial_button_pressed)
+	_qa_room_button.pressed.connect(_on_qa_room_pressed)
 
 	# En Web no hay forma confiable de "cerrar" la pestaña del browser
 	# desde el juego — el botón no tiene sentido ahí.
@@ -89,6 +91,12 @@ func _on_tutorial_button_pressed() -> void:
 	_options_panel.visible = false
 	var tutorial = TUTORIAL_SCENE.instantiate()
 	add_child(tutorial)
+
+## Acceso al sandbox de QA — testing con hotkeys (level-up, spawn de
+## monstruos, unlocks). Escondido en Opciones para que no lo vea el
+## jugador final por accidente pero rápido de llegar mientras testeamos.
+func _on_qa_room_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/qa_room.tscn")
 
 func _on_shop_pressed() -> void:
 	GameState.shop_return_scene = "res://scenes/main_menu.tscn"
