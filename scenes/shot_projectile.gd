@@ -55,11 +55,9 @@ const COLOR_TAIL_CHARGED := Color(1.0, 0.6, 0.15, 0.9)
 ## en _ready y se re-tinta por nivel/charged en _process.
 const ARROW_ICON := "res://assets/ui/weapon_icons/icon_43.png"
 const ARROW_SCALE := 0.65
-## La flecha del icono apunta HACIA ARRIBA (norte). Para que se
-## alinee con el vector de vuelo (que orienta al Area2D via
-## rotation = dir.angle()), el sprite necesita rotar +π/2 respecto
-## al parent — así "arriba" se alinea con "derecha", y de ahí sigue
-## la rotación del parent.
+## Offset del sprite respecto al parent (que se orienta con
+## dir.angle() al vector de vuelo). +π/4 deja la flecha bien
+## alineada con la dirección del disparo — probado in-game.
 const ARROW_ROT_OFFSET := PI * 0.25
 var _sprite: Sprite2D
 
