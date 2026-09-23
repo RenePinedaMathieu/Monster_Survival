@@ -60,7 +60,7 @@ const ARROW_SCALE := 0.65
 ## rotation = dir.angle()), el sprite necesita rotar +π/2 respecto
 ## al parent — así "arriba" se alinea con "derecha", y de ahí sigue
 ## la rotación del parent.
-const ARROW_ROT_OFFSET := PI * 0.5
+const ARROW_ROT_OFFSET := PI * 0.25
 var _sprite: Sprite2D
 
 var velocity: Vector2 = Vector2.ZERO
