@@ -57,32 +57,32 @@ func _ready() -> void:
 	_wire_touch_buttons()
 
 func _wire_touch_buttons() -> void:
-	# LEVEL UP / KILL ALL / BACK
-	_touch_panel.get_node("Actions/LevelUpBtn").pressed.connect(_trigger_level_up)
-	_touch_panel.get_node("Actions/KillAllBtn").pressed.connect(_kill_all)
-	_touch_panel.get_node("Actions/BackBtn").pressed.connect(_back_to_menu)
+	# Los botones cuelgan de UI/TouchPanel/Content/<Group>/<Btn> — la
+	# ruta empieza con "Content/" porque el VBoxContainer intermedio
+	# organiza todo el layout adentro del Panel.
+	var root: Node = _touch_panel.get_node("Content")
 
-	# Spawns regulares
-	_touch_panel.get_node("Spawns/RatBtn").pressed.connect(_spawn_monster.bind("rat", false))
-	_touch_panel.get_node("Spawns/ImpBtn").pressed.connect(_spawn_monster.bind("imp", false))
-	_touch_panel.get_node("Spawns/LizardBtn").pressed.connect(_spawn_monster.bind("lizardman", false))
-	_touch_panel.get_node("Spawns/SlimeBtn").pressed.connect(_spawn_monster.bind("slime_1", false))
-	_touch_panel.get_node("Spawns/GhostBtn").pressed.connect(_spawn_monster.bind("ghost_1", false))
-	_touch_panel.get_node("Spawns/BeholderBtn").pressed.connect(_spawn_monster.bind("beholder_1", false))
+	root.get_node("Actions/LevelUpBtn").pressed.connect(_trigger_level_up)
+	root.get_node("Actions/KillAllBtn").pressed.connect(_kill_all)
+	root.get_node("Actions/BackBtn").pressed.connect(_back_to_menu)
 
-	# Bosses
-	_touch_panel.get_node("Bosses/Demon1Btn").pressed.connect(_spawn_monster.bind("demon1", true))
-	_touch_panel.get_node("Bosses/Demon2Btn").pressed.connect(_spawn_monster.bind("demon2", true))
-	_touch_panel.get_node("Bosses/Demon3Btn").pressed.connect(_spawn_monster.bind("demon3", true))
+	root.get_node("Spawns/RatBtn").pressed.connect(_spawn_monster.bind("rat", false))
+	root.get_node("Spawns/ImpBtn").pressed.connect(_spawn_monster.bind("imp", false))
+	root.get_node("Spawns/LizardBtn").pressed.connect(_spawn_monster.bind("lizardman", false))
+	root.get_node("Spawns/SlimeBtn").pressed.connect(_spawn_monster.bind("slime_1", false))
+	root.get_node("Spawns/GhostBtn").pressed.connect(_spawn_monster.bind("ghost_1", false))
+	root.get_node("Spawns/BeholderBtn").pressed.connect(_spawn_monster.bind("beholder_1", false))
 
-	# Unlocks
-	_touch_panel.get_node("Unlocks/SwordsBtn").pressed.connect(_unlock.bind("flying_swords"))
-	_touch_panel.get_node("Unlocks/RangedBtn").pressed.connect(_unlock.bind("ranged_bonus"))
-	_touch_panel.get_node("Unlocks/MeteorsBtn").pressed.connect(_unlock.bind("meteors"))
+	root.get_node("Bosses/Demon1Btn").pressed.connect(_spawn_monster.bind("demon1", true))
+	root.get_node("Bosses/Demon2Btn").pressed.connect(_spawn_monster.bind("demon2", true))
+	root.get_node("Bosses/Demon3Btn").pressed.connect(_spawn_monster.bind("demon3", true))
 
-	# HP
-	_touch_panel.get_node("HP/HealBtn").pressed.connect(func(): _player.heal(10.0))
-	_touch_panel.get_node("HP/DamageBtn").pressed.connect(func(): _player.take_damage(10.0))
+	root.get_node("Unlocks/SwordsBtn").pressed.connect(_unlock.bind("flying_swords"))
+	root.get_node("Unlocks/RangedBtn").pressed.connect(_unlock.bind("ranged_bonus"))
+	root.get_node("Unlocks/MeteorsBtn").pressed.connect(_unlock.bind("meteors"))
+
+	root.get_node("HP/HealBtn").pressed.connect(func(): _player.heal(10.0))
+	root.get_node("HP/DamageBtn").pressed.connect(func(): _player.take_damage(10.0))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
