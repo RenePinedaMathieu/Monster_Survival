@@ -15,6 +15,8 @@ const SELECT_SCENE := "res://scenes/character_select.tscn"
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
 const STAT_COLOR := Color("57c767")
+## La habilidad activa de cada héroe vive en player.gd (ACTIVE_SKILLS).
+const PLAYER_SCRIPT := preload("res://scenes/player.gd")
 const STAT_MAX := 5
 
 @onready var _portrait_frame: PanelContainer = $Layout/Left/PortraitFrame
@@ -49,6 +51,14 @@ func _ready() -> void:
 
 	_blurb_label.text = data.get("blurb", "")
 	RpgTheme.style_ink_label(_blurb_label, 15, false, true)
+	var skill: Dictionary = PLAYER_SCRIPT.ACTIVE_SKILLS.get(data["id"], {})
+	if not skill.is_empty():
+		var skill_label := Label.new()
+		skill_label.text = "HABILIDAD: %s — %s" % [skill["name"], skill["desc"]]
+		skill_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		RpgTheme.style_ink_label(skill_label, 15, true)
+		skill_label.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)
+		_blurb_label.add_sibling(skill_label)
 
 	_build_stats(data.get("stats", {}))
 

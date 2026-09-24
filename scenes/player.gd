@@ -18,6 +18,28 @@ signal died
 ## Cada vez que cambia la build (carta o evolución) — lleva
 ## build_summary(), con lo que el HUD arma la barra de mejoras activas.
 signal upgrades_changed(summary: Array)
+## Cooldown de la habilidad activa — el HUD lo muestra en su botón.
+signal skill_cooldown_changed(remaining: float, total: float)
+
+# ── Habilidad activa (una por personaje) ─────────────────────────
+## Se usa con ESPACIO o con el botón redondo del HUD (táctil en el
+## teléfono). Le da identidad a cada héroe más allá del ataque base.
+const SKILL_ICON := "res://assets/ui/skill_icons/"
+const ACTIVE_SKILLS: Dictionary = {
+	"main_char1": {"id": "dash", "name": "Embestida", "cooldown": 4.0, "icon": SKILL_ICON + "skill_62.png",
+		"desc": "Te lanzas hacia adelante golpeando todo a tu paso"},
+	"main_char2": {"id": "volley", "name": "Ráfaga", "cooldown": 6.0, "icon": SKILL_ICON + "skill_61.png",
+		"desc": "Disparas 12 flechas en círculo"},
+	"main_char2_female": {"id": "roll", "name": "Voltereta", "cooldown": 3.5, "icon": SKILL_ICON + "skill_77.png",
+		"desc": "Ruedas lejos y eres invulnerable un instante"},
+	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_76.png",
+		"desc": "2 s invulnerable y empujas a los enemigos cercanos"},
+}
+const DASH_SPEED := 900.0
+const DASH_DAMAGE := 8.0
+const SHIELD_RADIUS := 110.0
+const SHIELD_DAMAGE := 10.0
+const VOLLEY_ARROWS := 12
 
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
@@ -189,6 +211,15 @@ var evolutions: Array[String] = []
 var _arrow_pierce: int = 0
 var _meteors_evolved: bool = false
 
+var active_skill: Dictionary = {}
+var _skill_cd: float = 0.0
+var _invuln_t: float = 0.0
+var _dash_t: float = 0.0
+var _dash_dir: Vector2 = Vector2.DOWN
+var _dash_hit: Array = []
+var _last_move_dir: Vector2 = Vector2.DOWN
+var _shield_fx_t: float = 0.0
+
 # Armadura (compra permanente en la tienda) — una barra de defensa
 # que absorbe daño ANTES que la vida. No regenera durante la run.
 var max_defense: float = 0.0
@@ -286,6 +317,7 @@ func _ready() -> void:
 	_apply_camera_zoom_for_device()
 	Screen.layout_changed.connect(_on_layout_changed)
 	var skin_id: String = GameState.selected_character_id
+	active_skill = ACTIVE_SKILLS.get(skin_id, ACTIVE_SKILLS["main_char1"])
 	_is_axel = skin_id == "main_char1"
 	_is_swordman = skin_id == "swordman"
 	_is_ranged_skin = RANGED_SKINS.has(skin_id)
@@ -537,9 +569,12 @@ func _physics_process(delta: float) -> void:
 			current_dir = new_dir
 			_run_frame = 0
 			_run_time = 0.0
+	if moving:
+		_last_move_dir = input
 	# Aceleración en vez de velocidad instantánea — un toque de peso
 	# natural sin perder respuesta (llega a top speed en ~0.11s).
 	velocity = velocity.move_toward(input * move_speed, ACCELERATION * delta)
+	_tick_active_skill(delta)
 	move_and_slide()
 
 	# Sprite: ataque (si está en curso) tiene prioridad sobre correr/
@@ -884,6 +919,8 @@ func _level_weapon(node, script: Script, id: String, attach_to_player: bool):
 ## efectivamente HP extra "gratis" cada partida).
 func take_damage(amount: float) -> void:
 	if hp <= 0.0: return
+	# Dash/voltereta/escudo: invulnerable mientras dura.
+	if _invuln_t > 0.0: return
 	Audio.play_sfx("player_hurt", global_position, 0.1)
 	shake(3.0)
 	var remaining := amount
@@ -936,6 +973,114 @@ func sword_level() -> int:
 
 func has_meteors() -> bool:
 	return _has_meteors
+
+# ── Habilidad activa ────────────────────────────────────────────
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
+		use_active_skill()
+		get_viewport().set_input_as_handled()
+
+func skill_ready() -> bool:
+	return _skill_cd <= 0.0
+
+func use_active_skill() -> void:
+	if _skill_cd > 0.0 or hp <= 0.0 or get_tree().paused or active_skill.is_empty():
+		return
+	_skill_cd = active_skill["cooldown"]
+	match active_skill["id"]:
+		"dash":
+			_start_dash(0.19)
+			_invuln_t = maxf(_invuln_t, 0.3)
+			Audio.play_sfx("sword_swing", global_position)
+		"roll":
+			_start_dash(0.16)
+			_invuln_t = maxf(_invuln_t, 1.0)
+			Audio.play_sfx("sword_swing", global_position)
+		"volley":
+			for i in range(VOLLEY_ARROWS):
+				_fire_single_shot(Vector2.RIGHT.rotated(TAU * i / VOLLEY_ARROWS), 1.5)
+			Audio.play_sfx("meteor_whoosh", global_position)
+		"shield":
+			_invuln_t = maxf(_invuln_t, 2.0)
+			_shield_fx_t = 0.0001
+			for m in get_tree().get_nodes_in_group("monster"):
+				if is_instance_valid(m) and global_position.distance_to(m.global_position) <= SHIELD_RADIUS:
+					var away: Vector2 = (m.global_position - global_position).normalized()
+					m.take_damage(SHIELD_DAMAGE * damage_mult, "habilidad")
+					if m.has_method("knockback"):
+						m.knockback(away, 420.0)
+			shake(4.0)
+			Audio.play_sfx("meteor_impact", global_position)
+	skill_cooldown_changed.emit(_skill_cd, active_skill["cooldown"])
+
+func _start_dash(duration: float) -> void:
+	_dash_dir = _last_move_dir.normalized() if _last_move_dir != Vector2.ZERO else Vector2.DOWN
+	_dash_t = duration
+	_dash_hit.clear()
+	_spawn_afterimage()
+
+## Un disparo suelto en `dir` (la ráfaga de KAY) — mismo proyectil que
+## el disparo automático, más fuerte.
+func _fire_single_shot(dir: Vector2, dmg_mult: float) -> void:
+	var shot = SHOT_SCENE.instantiate()
+	get_tree().current_scene.add_child(shot)
+	shot.global_position = global_position + dir * 20.0
+	shot.set_damage(shot.DAMAGE * damage_mult * dmg_mult * (1.0 + ranged_power_level * 0.3))
+	shot.setup(dir, false, maxi(1, ranged_power_level))
+	shot.source = "habilidad"
+
+func _tick_active_skill(delta: float) -> void:
+	if _skill_cd > 0.0:
+		_skill_cd = maxf(0.0, _skill_cd - delta)
+		skill_cooldown_changed.emit(_skill_cd, active_skill.get("cooldown", 1.0))
+	if _invuln_t > 0.0:
+		_invuln_t -= delta
+		# Parpadeo mientras sos invulnerable.
+		_sprite.self_modulate.a = 0.45 if int(_invuln_t * 16.0) % 2 == 0 else 1.0
+		if _invuln_t <= 0.0:
+			_sprite.self_modulate.a = 1.0
+	if _shield_fx_t > 0.0:
+		_shield_fx_t += delta
+		if _shield_fx_t > 2.0:
+			_shield_fx_t = 0.0
+		queue_redraw()
+	if _dash_t > 0.0:
+		_dash_t -= delta
+		velocity = _dash_dir * DASH_SPEED
+		if int(_dash_t * 60.0) % 4 == 0:
+			_spawn_afterimage()
+		if active_skill.get("id", "") == "dash":
+			for m in get_tree().get_nodes_in_group("monster"):
+				if is_instance_valid(m) and not (m in _dash_hit) and global_position.distance_to(m.global_position) < 28.0:
+					_dash_hit.append(m)
+					m.take_damage(DASH_DAMAGE * damage_mult, "habilidad")
+
+## Copia fantasma del sprite que se desvanece — estela del dash.
+func _spawn_afterimage() -> void:
+	var ghost := Sprite2D.new()
+	ghost.texture = _sprite.texture
+	ghost.scale = _sprite.scale
+	ghost.flip_h = _sprite.flip_h
+	ghost.offset = _sprite.offset
+	ghost.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	ghost.modulate = Color(0.6, 0.85, 1.0, 0.55)
+	get_tree().current_scene.add_child(ghost)
+	ghost.global_position = _sprite.global_position
+	var tw := ghost.create_tween()
+	tw.tween_property(ghost, "modulate:a", 0.0, 0.25)
+	tw.tween_callback(ghost.queue_free)
+
+## Burbuja del escudo divino (GAROTH) mientras dura.
+func _draw() -> void:
+	if _shield_fx_t <= 0.0:
+		return
+	var a: float = clampf(1.0 - _shield_fx_t / 2.0, 0.0, 1.0)
+	var ring: float = minf(1.0, _shield_fx_t / 0.25) * SHIELD_RADIUS
+	if _shield_fx_t < 0.3:
+		draw_arc(Vector2.ZERO, ring, 0.0, TAU, 40, Color(1.0, 0.95, 0.6, 1.0 - _shield_fx_t / 0.3), 3.0, false)
+	draw_circle(Vector2(0, -8), 26.0, Color(0.6, 0.85, 1.0, 0.18 * a + 0.05))
+	draw_arc(Vector2(0, -8), 26.0, 0.0, TAU, 32, Color(0.75, 0.92, 1.0, 0.6 * a + 0.2), 2.0, false)
 
 # ── Build: casillas, niveles y evoluciones (ver upgrades.gd) ────────
 

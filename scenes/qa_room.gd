@@ -7,7 +7,7 @@ extends Node2D
 ## Controles teclado:
 ##   WASD          — moverte (o joystick táctil izquierda en móvil)
 ##   Q / E         — zoom out / in
-##   Space         — trigger level-up modal
+##   L             — trigger level-up modal (Espacio = habilidad activa)
 ##   1..6          — spawn 1 monster: rat, imp, lizardman, slime, ghost, beholder
 ##   Shift+1..3    — spawn boss: demon1 / demon2 / demon3
 ##   F / R / M     — unlock flying swords / ranged / meteoros
@@ -128,7 +128,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key == KEY_ESCAPE:
 		_back_to_menu()
 		return
-	if key == KEY_SPACE:
+	if key == KEY_L:
 		_trigger_level_up()
 		return
 	if event.shift_pressed and BOSS_KEYS.has(key):
@@ -221,7 +221,7 @@ func _spawn_monster(kind_id: String, is_boss: bool) -> void:
 func _help_text() -> String:
 	return """[QA ROOM]
 Teclado:
-  WASD  mover · Space  level up
+  WASD  mover · L  level up · Espacio  habilidad
   1..6  spawn · Shift+1..3  boss
   F/R/M  unlock skills · K  matar todos
   C  pollo · G  +500 monedas

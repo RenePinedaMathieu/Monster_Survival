@@ -54,7 +54,7 @@ const PAGES: Array[Dictionary] = [
 	},
 	{
 		"title": "¡A SOBREVIVIR!",
-		"body": "El movimiento es con WASD o las flechas — el ataque es automático. Cada oleada trae más enemigos y, cada tanto, un jefe grande con su propia barra de vida. Suerte, héroe.",
+		"body": "El movimiento es con WASD o las flechas (en el teléfono, el dedo en la mitad izquierda) — el ataque es automático. ESPACIO o el botón redondo usan la habilidad de tu héroe. Sobrevive 20 oleadas y vence al jefe final. Suerte, héroe.",
 		"target": "",
 	},
 ]

@@ -453,6 +453,14 @@ func _physics_process(delta: float) -> void:
 		_elite_t += delta
 		queue_redraw()
 
+	# Empujón (escudo divino de GAROTH): mientras dura no persigue.
+	if _knock_t > 0.0:
+		_knock_t -= delta
+		velocity = _knock_vel
+		move_and_slide()
+		_update_animation(delta)
+		return
+
 	match state:
 		State.IDLE_WANDER: _tick_wander(delta)
 		State.CHASE:       _tick_chase(delta)
@@ -653,6 +661,16 @@ func take_damage(amount: float, source: String = "otro") -> void:
 
 func is_boss() -> bool:
 	return _kind_id in BOSS_KIND_IDS
+
+var _knock_vel := Vector2.ZERO
+var _knock_t := 0.0
+
+## Lo empuja en `dir`. A los jefes casi no los mueve.
+func knockback(dir: Vector2, strength: float) -> void:
+	if _dead:
+		return
+	_knock_vel = dir * strength * (0.25 if is_boss() else 1.0)
+	_knock_t = 0.18
 
 ## Convierte al monstruo en élite — llamar después de set_kind() (que
 ## pisa max_hp/coin_reward con los del KIND_DATA).

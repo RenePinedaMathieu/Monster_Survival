@@ -76,6 +76,9 @@ func _ready() -> void:
 	_player.leveled_up.connect(_on_player_leveled_up)
 	_player.died.connect(_on_player_died)
 	_player.upgrades_changed.connect(_hud.on_upgrades_changed)
+	_player.skill_cooldown_changed.connect(_hud.on_skill_cooldown)
+	_hud.skill_pressed.connect(_player.use_active_skill)
+	_hud.setup_skill(_player.active_skill)
 	_hud.set_portrait(_player.portrait_texture())
 	_update_wave_hud()
 	# Joystick táctil — vive siempre; en desktop no molesta porque

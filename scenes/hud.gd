@@ -30,6 +30,12 @@ const PORTRAIT_BG := Color("7f95dc")
 const PORTRAIT_SIZE := 67
 
 const COLOR_EVOLVED := Color("ffd24a")
+const SKILL_BUTTON_SCRIPT := preload("res://scenes/skill_button.gd")
+
+## Tocar el botón de la habilidad activa (main.gd lo conecta al player).
+signal skill_pressed
+
+var _skill_button: Button
 
 @onready var _portrait: TextureRect = $CharPanel/Portrait
 @onready var _hp_bar: ProgressBar = $CharPanel/HPBar
@@ -84,6 +90,17 @@ func _ready() -> void:
 
 	_coins_label.text = "%d" % GameState.run_currency
 	GameState.currency_changed.connect(_on_currency_changed)
+
+	_skill_button = Button.new()
+	_skill_button.set_script(SKILL_BUTTON_SCRIPT)
+	_skill_button.anchor_left = 1.0
+	_skill_button.anchor_top = 1.0
+	_skill_button.anchor_right = 1.0
+	_skill_button.anchor_bottom = 1.0
+	_skill_button.visible = false
+	_skill_button.pressed.connect(func(): skill_pressed.emit())
+	add_child(_skill_button)
+
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
 
@@ -118,7 +135,27 @@ func _apply_layout(compact: bool) -> void:
 	_boss_panel.offset_right = boss_w / 2.0
 	_boss_panel.offset_top = 218.0 if compact else 72.0
 	_boss_panel.offset_bottom = _boss_panel.offset_top + 60.0
+	# Botón de habilidad: abajo a la derecha; en teléfono más grande y
+	# por encima de la barra de mejoras (que ahí ocupa casi todo el ancho).
+	var side: float = 92.0 if compact else 80.0
+	var bottom: float = -84.0 if compact else -20.0
+	_skill_button.offset_right = -16.0
+	_skill_button.offset_left = -16.0 - side
+	_skill_button.offset_bottom = bottom
+	_skill_button.offset_top = bottom - side
 	_rebuild_upgrade_rows()
+
+# ── Habilidad activa ─────────────────────────────────────────────
+
+func setup_skill(skill: Dictionary) -> void:
+	if skill.is_empty():
+		return
+	var icon: Texture2D = load(skill["icon"]) if ResourceLoader.exists(skill["icon"]) else null
+	_skill_button.setup(icon, "%s (Espacio)\n%s" % [skill["name"], skill.get("desc", "")])
+	_skill_button.visible = true
+
+func on_skill_cooldown(remaining: float, total: float) -> void:
+	_skill_button.set_cooldown(remaining, total)
 
 func _process(delta: float) -> void:
 	if not _running: return
