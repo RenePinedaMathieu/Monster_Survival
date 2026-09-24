@@ -336,6 +336,91 @@ func report_win(hero_id: String, map_id: String, difficulty: String) -> void:
 	check_achievements()
 	_save()
 
+# ── Reto diario + registro de partidas (Supabase, tabla "runs") ──
+## Todos juegan lo mismo cada día (fecha UTC): héroe, mapa y un
+## modificador, 10 oleadas. El puntaje va a un ranking diario. Además
+## TODAS las partidas se registran (sin fecha de reto) para poder ver
+## en qué oleada muere la gente y qué elige — y ajustar el balance.
+## SQL de la tabla: docs/supabase_runs.sql.
+
+const DAILY_WAVES := 10
+const DAILY_HEROES: Array = ["main_char1", "main_char2", "main_char2_female", "swordman"]
+const DAILY_MODIFIERS: Dictionary = {
+	"elites":   {"name": "Noche de élites", "desc": "Cada oleada trae 2 élites (y 2 cofres)"},
+	"veloces":  {"name": "Frenesí", "desc": "Los monstruos son 30% más rápidos"},
+	"meteoros": {"name": "Lluvia de fuego", "desc": "Arrancas con la lluvia de meteoros"},
+	"cristal":  {"name": "Cañón de cristal", "desc": "Mitad de vida, 50% más de daño"},
+	"horda":    {"name": "La horda", "desc": "50% más monstruos por oleada"},
+}
+
+var player_name: String = ""
+## true mientras se juega el reto diario (lo prende daily_menu, lo
+## apaga el menú principal al volver).
+var daily_active: bool = false
+var daily_best: Dictionary = {}   # fecha -> mejor puntaje propio
+
+func daily_date() -> String:
+	return Time.get_date_string_from_system(true)
+
+## El reto de hoy, derivado de la fecha: mismo para todo el mundo.
+func daily_info() -> Dictionary:
+	var date := daily_date()
+	var h: int = absi(hash("one-last-hero-" + date))
+	var mods: Array = DAILY_MODIFIERS.keys()
+	return {
+		"date": date,
+		"seed": h,
+		"hero": DAILY_HEROES[h % DAILY_HEROES.size()],
+		"map": MAP_ORDER[(h / 7) % MAP_ORDER.size()],
+		"modifier": mods[(h / 31) % mods.size()],
+	}
+
+func daily_modifier() -> String:
+	return daily_info()["modifier"] if daily_active else ""
+
+func ensure_player_name() -> String:
+	if player_name == "":
+		player_name = "Héroe%04d" % (randi() % 10000)
+		_save()
+	return player_name
+
+func set_player_name(n: String) -> void:
+	n = n.strip_edges().substr(0, 16)
+	if n != "":
+		player_name = n
+		_save()
+
+## Puntaje del reto: oleadas pesan mucho, bajas desempatan y ganar
+## (sobrevivir las 10) suma un bonus grande.
+static func run_score(wave: int, kills: int, victory: bool) -> int:
+	return wave * 1000 + kills * 2 + (20000 if victory else 0)
+
+## Registra la partida en Supabase (si hay sesión). Devuelve el puntaje.
+func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary) -> int:
+	var kills: int = run_stats.get("total_kills", 0)
+	var score := run_score(wave, kills, victory)
+	var date: Variant = null
+	if daily_active:
+		date = daily_date()
+		if score > int(daily_best.get(date, 0)):
+			daily_best = {date: score}   # sólo guarda el de hoy
+			_save()
+	if Supabase.is_signed_in():
+		Supabase.rest_insert("/runs", {
+			"player_name": ensure_player_name(),
+			"hero": selected_character_id,
+			"map": selected_map,
+			"difficulty": selected_difficulty,
+			"wave": wave,
+			"time_sec": snappedf(time_sec, 0.1),
+			"kills": kills,
+			"victory": victory,
+			"daily_date": date,
+			"score": score,
+			"build": build,
+		})
+	return score
+
 func _ready() -> void:
 	_load()
 
@@ -359,6 +444,8 @@ func _load() -> void:
 		if not cfg.has_section_key("progress", "unlocked_characters") and (best_wave > 0 or total_currency > 0):
 			unlocked_characters = ["main_char1", "main_char2", "main_char2_female", "swordman"]
 		unlocked_maps = cfg.get_value("progress", "unlocked_maps", DEFAULT_MAPS.duplicate())
+		player_name = cfg.get_value("progress", "player_name", "")
+		daily_best = cfg.get_value("progress", "daily_best", {})
 		# Partidas guardadas de antes de los logros: si ya tenías el récord
 		# o las evoluciones, los logros correspondientes se dan al cargar.
 		check_achievements()
@@ -379,6 +466,8 @@ func _save() -> void:
 	cfg.set_value("progress", "achievements_unlocked", achievements_unlocked)
 	cfg.set_value("progress", "unlocked_characters", unlocked_characters)
 	cfg.set_value("progress", "unlocked_maps", unlocked_maps)
+	cfg.set_value("progress", "player_name", player_name)
+	cfg.set_value("progress", "daily_best", daily_best)
 	cfg.save(SAVE_PATH)
 
 ## Se llama cuando termina una run (player muerto). Actualiza los

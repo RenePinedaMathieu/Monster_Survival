@@ -57,8 +57,11 @@ func _apply_layout(compact: bool) -> void:
 	_buttons.columns = 2 if compact else visible_buttons
 	_window.custom_minimum_size.x = minf(640.0, Screen.view_size().x - 16.0)
 
-func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_continue: bool) -> void:
+## daily_score >= 0: partida del reto diario (se muestra el puntaje).
+func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_continue: bool, daily_score: int = -1) -> void:
 	var stats: Dictionary = GameState.run_stats
+	if daily_score >= 0:
+		_add_stat("PUNTAJE DEL RETO", str(daily_score))
 	_title.text = "¡VICTORIA!" if victory else "DERROTA"
 	_subtitle.text = ("%s salvó la región" % hero) if victory else ("%s cayó en la oleada %d" % [hero, wave])
 	var mins := int(time_sec) / 60
@@ -77,6 +80,8 @@ func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_c
 
 	_share_text = ("¡Gané con %s en %s y sobreviví %s! ¿Te atreves?" % [hero, GAME_NAME, time_text]) if victory \
 		else ("Llegué a la oleada %d con %s en %s (%s). ¿Me superas?" % [wave, hero, GAME_NAME, time_text])
+	if daily_score >= 0:
+		_share_text = "Reto diario de %s (%s): %d puntos. ¿Me superas?" % [GAME_NAME, GameState.daily_date(), daily_score]
 	_retry_button.grab_focus()
 
 func _add_stat(label_text: String, value: String) -> void:

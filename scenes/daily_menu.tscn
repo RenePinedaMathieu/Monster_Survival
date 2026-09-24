@@ -1,0 +1,81 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/daily_menu.gd" id="1_daily"]
+
+[node name="DailyMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_daily")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Window" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Window"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/Window/VBox"]
+layout_mode = 2
+text = "RETO DIARIO"
+
+[node name="Main" type="BoxContainer" parent="Center/Window/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Challenge" type="VBoxContainer" parent="Center/Window/VBox/Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Board" type="VBoxContainer" parent="Center/Window/VBox/Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Buttons" type="HBoxContainer" parent="Center/Window/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="BackButton" type="Button" parent="Center/Window/VBox/Buttons"]
+custom_minimum_size = Vector2(150, 52)
+layout_mode = 2
+text = "VOLVER"
+
+[node name="PlayButton" type="Button" parent="Center/Window/VBox/Buttons"]
+custom_minimum_size = Vector2(220, 52)
+layout_mode = 2
+text = "¡JUGAR EL RETO!"

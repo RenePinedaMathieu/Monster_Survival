@@ -11,6 +11,7 @@ const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
 const ACHIEVEMENTS_SCENE := "res://scenes/achievements_menu.tscn"
+const DAILY_SCENE := "res://scenes/daily_menu.tscn"
 const TUTORIAL_SCENE := preload("res://scenes/tutorial_overlay.tscn")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
@@ -29,6 +30,13 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 @onready var _back_button: Button = $OptionsPanel/Content/BackButton
 
 func _ready() -> void:
+	# Volver al menú corta el modo reto diario (daily_menu lo prende).
+	GameState.daily_active = false
+	var daily: Button = $DailyButton
+	RpgTheme.style_button(daily, 17)
+	daily.pressed.connect(func():
+		Audio.play_sfx("ui_click")
+		get_tree().change_scene_to_file(DAILY_SCENE))
 	_background.texture = load(BACKGROUND_TEXTURE)
 	RpgTheme.style_light_label(_record_label, 16)
 	_record_label.modulate.a = 0.9

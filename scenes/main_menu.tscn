@@ -78,6 +78,16 @@ custom_minimum_size = Vector2(240, 48)
 size_flags_horizontal = 4
 text = "SALIR"
 
+[node name="DailyButton" type="Button" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -196.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 66.0
+grow_horizontal = 0
+text = "RETO DIARIO"
+
 [node name="OptionsPanel" type="Panel" parent="."]
 visible = false
 anchor_left = 0.5

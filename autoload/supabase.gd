@@ -16,11 +16,58 @@ var username: String = ""
 
 signal auth_ready
 
+## La sesión anónima se guarda aparte del save del juego y se renueva
+## con el refresh_token — antes cada partida creaba un usuario anónimo
+## nuevo (y el ranking no tenía cómo saber que eras el mismo).
+const SESSION_PATH := "user://session.cfg"
+var _authing: bool = false
+
 func _ready() -> void:
-	# Uncomment when you want to auto-signin on boot. Otherwise call
-	# sign_in_anonymous(name) yourself from a login scene.
-	# sign_in_anonymous("player_" + str(randi() % 10000))
 	pass
+
+func is_signed_in() -> bool:
+	return access_token != ""
+
+## Deja una sesión lista: la ya abierta, la guardada (renovándola) o
+## una anónima nueva si no hay ninguna.
+func ensure_session(name: String) -> void:
+	if is_signed_in():
+		auth_ready.emit()
+		return
+	if _authing:
+		return
+	_authing = true
+	var cfg := ConfigFile.new()
+	if cfg.load(SESSION_PATH) == OK:
+		var saved: String = cfg.get_value("session", "refresh_token", "")
+		if saved != "":
+			_refresh(saved, name)
+			return
+	sign_in_anonymous(name)
+
+func _refresh(token: String, name: String) -> void:
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(func(_r, code, _h, body):
+		http.queue_free()
+		if code >= 200 and code < 300:
+			_on_auth(0, code, [], body, null)
+		else:
+			# Token vencido o borrado: se arranca una sesión nueva.
+			sign_in_anonymous(name))
+	http.request(URL + "/auth/v1/token?grant_type=refresh_token", [
+		"apikey: " + ANON_KEY, "Content-Type: application/json",
+	], HTTPClient.METHOD_POST, JSON.stringify({"refresh_token": token}))
+
+func _save_session() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("session", "refresh_token", refresh_token)
+	cfg.save(SESSION_PATH)
+
+## Bearer para PostgREST: el token de la sesión o, sin sesión, la anon
+## key (alcanza para leer tablas públicas como el ranking).
+func _bearer() -> String:
+	return access_token if access_token != "" else ANON_KEY
 
 ## Anonymous signin with a display name stored in user_metadata.
 ## Requires anonymous auth enabled in dashboard → Authentication →
@@ -42,7 +89,9 @@ func sign_in_anonymous(name: String) -> void:
 		push_error("Supabase HTTPRequest error: " + str(err))
 
 func _on_auth(_r, code, _h, body, http) -> void:
-	http.queue_free()
+	if http != null:
+		http.queue_free()
+	_authing = false
 	var text = body.get_string_from_utf8()
 	if code < 200 or code >= 300:
 		push_error("Supabase auth %d: %s" % [code, text])
@@ -54,6 +103,7 @@ func _on_auth(_r, code, _h, body, http) -> void:
 	access_token  = data.access_token
 	refresh_token = data.get("refresh_token", "")
 	user_id       = data.user.id
+	_save_session()
 	print("[supabase] auth ok, uid=", user_id)
 	emit_signal("auth_ready")
 
@@ -67,9 +117,25 @@ func rest_get(path: String, on_done: Callable) -> void:
 		on_done.call(code, body.get_string_from_utf8()))
 	http.request(URL + "/rest/v1" + path, [
 		"apikey: " + ANON_KEY,
-		"Authorization: Bearer " + access_token,
+		"Authorization: Bearer " + _bearer(),
 		"Accept: application/json",
 	], HTTPClient.METHOD_GET)
+
+## INSERT simple (sin upsert). Necesita sesión: las políticas de la
+## tabla exigen que user_id sea el del token.
+func rest_insert(path: String, body_json: Dictionary, on_done := Callable()) -> void:
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(func(_r, code, _h, body):
+		http.queue_free()
+		if on_done.is_valid():
+			on_done.call(code, body.get_string_from_utf8()))
+	http.request(URL + "/rest/v1" + path, [
+		"apikey: " + ANON_KEY,
+		"Authorization: Bearer " + _bearer(),
+		"Content-Type: application/json",
+		"Prefer: return=minimal",
+	], HTTPClient.METHOD_POST, JSON.stringify(body_json))
 
 ## Postgres upsert (or insert with `Prefer: return=representation`).
 func rest_upsert(path: String, body_json: Dictionary, on_done := Callable()) -> void:

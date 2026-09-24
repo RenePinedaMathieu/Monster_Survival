@@ -55,6 +55,8 @@ var _bosses_spawned: int = 0
 ## true después de ganar y elegir SEGUIR: oleadas sin final.
 var _endless: bool = false
 var _run_over: bool = false
+## FINAL_WAVE salvo en el reto diario (más corto).
+var _final_wave: int = FINAL_WAVE
 ## Umbrales de dificultad. Debajo de MID sólo tier 1 (crías). Entre
 ## MID y HIGH mix de tier 1 y 2. En HIGH sólo tier 2 y 3 (los más
 ## amenazantes). Se siente la escalada de la run sin necesidad de
@@ -65,11 +67,16 @@ const WAVE_HIGH_START := 7
 func _ready() -> void:
 	print("[main] booting…")
 	GameState.start_run()
+	# Reto diario: misma semilla para todos ese día (cartas y oleadas
+	# arrancan igual), 10 oleadas y el modificador del día.
+	if GameState.daily_active:
+		seed(GameState.daily_info()["seed"])
+		_final_wave = GameState.DAILY_WAVES
 	Supabase.auth_ready.connect(_on_auth_ready)
 	Realtime.remote_join.connect(_on_remote_join)
 	Realtime.remote_leave.connect(_on_remote_leave)
 	Realtime.remote_move.connect(_on_remote_move)
-	Supabase.sign_in_anonymous("player_" + str(randi() % 9999))
+	Supabase.ensure_session(GameState.ensure_player_name())
 	_player.hp_changed.connect(_hud.on_hp_changed)
 	_player.defense_changed.connect(_hud.on_defense_changed)
 	_player.xp_changed.connect(_hud.on_xp_changed)
@@ -79,6 +86,14 @@ func _ready() -> void:
 	_player.skill_cooldown_changed.connect(_hud.on_skill_cooldown)
 	_hud.skill_pressed.connect(_player.use_active_skill)
 	_hud.setup_skill(_player.active_skill)
+	match GameState.daily_modifier():
+		"meteoros":
+			_player.apply_upgrade("meteors")
+		"cristal":
+			_player.max_hp *= 0.5
+			_player.hp = _player.max_hp
+			_player.damage_mult *= 1.5
+			_player.emit_signal("hp_changed", _player.hp, _player.max_hp)
 	_hud.set_portrait(_player.portrait_texture())
 	_update_wave_hud()
 	# Joystick táctil — vive siempre; en desktop no molesta porque
@@ -143,6 +158,8 @@ func _start_next_wave() -> void:
 	_current_wave += 1
 	_in_break = false
 	var count := BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE
+	if GameState.daily_modifier() == "horda":
+		count = int(count * 1.5)
 	# Cada 10 waves aparece 1 boss extra, bastante más grande y duro
 	# que el resto (ver KIND_DATA["golem"] en monster.gd).
 	var boss_count: int = 1 if _current_wave % BOSS_EVERY == 0 else 0
@@ -161,6 +178,8 @@ func _start_next_wave() -> void:
 	var elite_count: int = 0
 	if _current_wave % 3 == 0:
 		elite_count = 2 if _current_wave >= 12 else 1
+	if GameState.daily_modifier() == "elites":
+		elite_count = 2
 	for i in range(count):
 		_spawn_monster(false, i < elite_count)
 	for i in range(boss_count):
@@ -240,6 +259,8 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 			m.make_elite()
 	m.coin_reward = maxi(1, int(round(m.coin_reward * _coin_mult())))
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
+	if GameState.daily_modifier() == "veloces":
+		m.speed_mult *= 1.3
 	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
 	# sin necesidad de estar en el radio de detección. Los remote
 	# players quedan fuera del scope (cada cliente maneja los suyos).
@@ -265,14 +286,14 @@ func _on_monster_hit_player(damage: float) -> void:
 	_player.take_damage(damage)
 
 func _update_wave_hud() -> void:
-	_hud.set_wave(_current_wave, _monsters_alive, 0 if _endless else FINAL_WAVE)
+	_hud.set_wave(_current_wave, _monsters_alive, 0 if _endless else _final_wave)
 
 func _on_monster_died() -> void:
 	_monsters_alive = max(0, _monsters_alive - 1)
 	_update_wave_hud()
 	if _monsters_alive == 0 and not _in_break and not _run_over:
 		_in_break = true
-		if _current_wave == FINAL_WAVE and not _endless:
+		if _current_wave == _final_wave and not _endless:
 			_finish_run(true)
 			return
 		Audio.play_sfx("wave_clear")
@@ -307,17 +328,27 @@ func _finish_run(victory: bool) -> void:
 	# Récord de oleada alcanzada y tiempo sobrevivido — independientes
 	# entre sí (ver GameState.report_run_result).
 	GameState.report_run_result(_current_wave, _hud.get_run_time())
-	if victory:
+	# El reto diario (10 oleadas) no cuenta como victoria del mapa para
+	# los logros — sería un atajo para abrir mapas y dificultades.
+	if victory and not GameState.daily_active:
 		GameState.report_win(GameState.selected_character_id, GameState.selected_map, GameState.selected_difficulty)
+	if victory:
 		Audio.play_music("gameplay_chill", 1200)
+	# Ranking diario + analítica de partidas (tabla runs en Supabase).
+	var score := GameState.submit_run(_current_wave, _hud.get_run_time(), victory, {
+		"weapons": _player.weapon_levels, "passives": _player.passive_levels,
+		"evolutions": _player.evolutions, "cards": _player.upgrade_log.size(),
+		"level": _player.level,
+	})
 	# Pequeño delay para que se vea el golpe final / la muerte.
-	get_tree().create_timer(1.0 if victory else 1.2).timeout.connect(_show_results.bind(victory))
+	get_tree().create_timer(1.0 if victory else 1.2).timeout.connect(_show_results.bind(victory, score))
 
-func _show_results(victory: bool) -> void:
+func _show_results(victory: bool, score: int) -> void:
 	var results = RESULTS_SCENE.instantiate()
 	add_child(results)
-	var hero: String = GameState.pending_character.get("name", "El héroe")
-	results.show_results(victory, _current_wave, _hud.get_run_time(), hero, victory and not _endless)
+	var hero: String = GameState.pending_character.get("name", GameState.CHARACTER_NAMES.get(GameState.selected_character_id, "El héroe"))
+	results.show_results(victory, _current_wave, _hud.get_run_time(), hero,
+		victory and not _endless and not GameState.daily_active, score if GameState.daily_active else -1)
 	results.continue_pressed.connect(_on_continue_endless)
 
 ## SEGUIR tras la victoria: oleadas infinitas para estirar el récord.
