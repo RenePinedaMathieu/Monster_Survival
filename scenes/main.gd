@@ -162,7 +162,9 @@ func _start_next_wave() -> void:
 		_spawn_monster(false, i < elite_count)
 	for i in range(boss_count):
 		_spawn_monster(true)
-	_monsters_alive = count + boss_count
+	# += y no =: si quedara alguna cría suelta de la oleada anterior,
+	# no se pierde de la cuenta.
+	_monsters_alive += count + boss_count
 	_update_wave_hud()
 
 ## Anillo alrededor del player, pero reintentando si cae en agua o
@@ -179,22 +181,31 @@ func _pick_spawn_position() -> Vector2:
 	# spawnear algo cerca del player que trabarnos sin spawnear nada.
 	return _player.position + Vector2(SPAWN_INNER, 0)
 
+## Dificultad por oleada: los monstruos tienen más vida y pegan más
+## fuerte a medida que avanza la run (además de ser más y más rápidos).
+const WAVE_HP_STEP := 0.07      # oleada 20 ≈ x2.3 de vida
+const WAVE_POWER_STEP := 0.04   # oleada 20 ≈ x1.76 de daño
+## Vida base de los jefes por tier (x la escala de la oleada) — tienen
+## que aguantar lo suficiente como para ser una pelea, no un trámite.
+const BOSS_BASE_HP := 900.0
+
+func _wave_hp_mult() -> float:
+	return 1.0 + (_current_wave - 1) * WAVE_HP_STEP
+
 func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 	var m = MONSTER_SCENE.instantiate()
 	m.position = _pick_spawn_position()
-	if is_boss:
-		# HP y coin_reward escalan por tier de boss para que cada
-		# encuentro se sienta progresivamente más importante.
-		var tier: int = min(_bosses_spawned, m.BOSS_KIND_IDS.size() - 1)
-		m.max_hp = 80.0 + tier * 40.0
-		m.coin_reward = 25 + tier * 15
 	_monsters_container.add_child(m)
 	# set_kind necesita @onready resuelto — sólo funciona DESPUÉS de
 	# add_child (mismo motivo por el que antes set_sprite iba después).
+	m.power_mult = 1.0 + (_current_wave - 1) * WAVE_POWER_STEP
 	if is_boss:
 		# Boss tier per encounter: 1er boss → demon1, 2do → demon2, 3ro+ → demon3
 		var tier: int = min(_bosses_spawned, m.BOSS_KIND_IDS.size() - 1)
 		m.set_kind(m.BOSS_KIND_IDS[tier])
+		m.max_hp = BOSS_BASE_HP * (1 + tier) * _wave_hp_mult()
+		m.hp = m.max_hp
+		m.coin_reward = 25 + tier * 15
 		_bosses_spawned += 1
 	else:
 		# Pool de spawn depende de la wave — waves altas traen bichos
@@ -207,6 +218,8 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 		else:
 			pool = m.KIND_IDS
 		m.set_kind(pool[randi() % pool.size()])
+		m.max_hp *= _wave_hp_mult()
+		m.hp = m.max_hp
 		if is_elite:
 			m.make_elite()
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
@@ -221,6 +234,15 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 		m.hp_changed.connect(_hud.on_boss_hp_changed)
 		m.died.connect(_hud.hide_boss_bar)
 		m.died.connect(_player.shake.bind(8.0))
+
+## Crías que aparecen a mitad de oleada (slimes partidos, ratas que
+## invoca un jefe): cuentan para cerrar la oleada. Lo llama monster.gd.
+func register_monster(m) -> void:
+	_monsters_alive += 1
+	m.target = _player
+	m.hit_player.connect(_on_monster_hit_player)
+	m.died.connect(_on_monster_died)
+	_update_wave_hud()
 
 func _on_monster_hit_player(damage: float) -> void:
 	_player.take_damage(damage)

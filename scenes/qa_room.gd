@@ -171,6 +171,11 @@ func _unlock(id: String) -> void:
 	if _player.has_method("apply_upgrade"):
 		_player.apply_upgrade(id)
 
+## Crías de slime / ratas invocadas por jefes (ver monster._spawn_minion).
+func register_monster(m) -> void:
+	m.target = _player
+	m.hit_player.connect(func(dmg): _player.take_damage(dmg))
+
 func _spawn_elite() -> void:
 	_spawn_monster("lizardman", false)
 	var ms := _monsters_container.get_children()

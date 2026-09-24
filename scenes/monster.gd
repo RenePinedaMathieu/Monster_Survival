@@ -18,11 +18,30 @@ signal hit_player(damage: float)
 signal hp_changed(current: float, max_hp: float)
 signal died
 
-enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN }
+enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN, CHARGE_WINDUP, CHARGE }
 
 const XP_ORB_SCENE := preload("res://scenes/xp_orb.tscn")
 const DAMAGE_NUMBER := preload("res://scenes/damage_number.gd")
 const CHEST_SCRIPT := preload("res://scenes/chest.gd")
+const ENEMY_SHOT_SCRIPT := preload("res://scenes/enemy_projectile.gd")
+## El propio monster.tscn (para las crías de slime y las ratas que
+## invocan los jefes). load() y no preload(): la escena usa este script.
+const MONSTER_SCENE_PATH := "res://scenes/monster.tscn"
+
+## Comportamientos por familia (ver _behavior_for):
+##   melee     persigue y pega (ratas)
+##   caster    imp: mantiene distancia y tira bolas de fuego
+##   turret    beholder: ráfaga de 3 rayos desde lejos
+##   charger   lizardman: avisa en naranja y embiste
+##   splitter  slime: al morir se parte en 2 slimes chicos
+##   phantom   fantasma: se desvanece y reaparece cerca del player
+##   boss      demonios: anillo de fuego e invocación de ratas
+const CHARGE_WINDUP_TIME := 0.45
+const CHARGE_TIME := 0.38
+const CHARGE_SPEED_MULT := 6.0
+const CHARGE_DAMAGE := 14.0
+const SHOT_DAMAGE := 8.0
+const BOSS_SHOT_DAMAGE := 10.0
 
 ## Élite: versión dorada y más grande de un monstruo común. Mucha más
 ## vida, más recompensa y suelta un cofre (igual que los jefes).
@@ -338,6 +357,18 @@ var _dead := false
 var _last_hit_source := "otro"
 var is_elite := false
 var _elite_t := 0.0
+## Lo setea main.gd según la oleada: multiplica el daño que hace.
+var power_mult: float = 1.0
+var behavior: String = "melee"
+var _behavior_cd: float = 2.0
+var _charge_dir := Vector2.ZERO
+var _strafe_sign: float = 1.0
+var _boss_cycle: int = 0
+## Crías (slime partido / ratas invocadas): no se vuelven a partir.
+var _is_minion := false
+## Setup diferido para crías creadas en pleno callback de física
+## (ver _spawn_minion): se aplica en _ready.
+var _pending_setup: Dictionary = {}
 
 var _base_sprite_scale := Vector2.ONE
 var _kind_id := ""
@@ -360,6 +391,8 @@ var _anim_frame := 0
 func _ready() -> void:
 	add_to_group("monster")
 	hp = max_hp
+	if not _pending_setup.is_empty():
+		_apply_pending_setup.call_deferred()
 	_detection.body_entered.connect(_on_body_entered)
 	_detection.body_exited.connect(_on_body_exited)
 	_pick_new_wander()
@@ -371,6 +404,9 @@ func _ready() -> void:
 ## resuelto). Sin esto el monstruo queda con el sprite en blanco.
 func set_kind(kind_id: String) -> void:
 	_kind_id = kind_id
+	behavior = _behavior_for(kind_id)
+	_behavior_cd = randf_range(1.2, 2.6)
+	_strafe_sign = 1.0 if randf() < 0.5 else -1.0
 	var data: Dictionary = KIND_DATA.get(kind_id, KIND_DATA[KIND_IDS[0]])
 	var frame_size: Vector2 = data.get("frame_size", Vector2(64, 64))
 	var cols: int = data.get("cols", 4)
@@ -453,6 +489,11 @@ func _physics_process(delta: float) -> void:
 		_elite_t += delta
 		queue_redraw()
 
+	# El cooldown de disparo/embestida/anillo corre en TODOS los estados:
+	# un jefe pegado al player vive en windup→strike→cooldown y pasaba
+	# por chase un solo frame por ciclo — nunca llegaba a atacar.
+	_behavior_cd -= delta
+
 	# Empujón (escudo divino de GAROTH): mientras dura no persigue.
 	if _knock_t > 0.0:
 		_knock_t -= delta
@@ -467,6 +508,8 @@ func _physics_process(delta: float) -> void:
 		State.WINDUP:      _tick_windup(delta)
 		State.STRIKE:      _tick_strike(delta)
 		State.COOLDOWN:    _tick_cooldown(delta)
+		State.CHARGE_WINDUP: _tick_charge_windup(delta)
+		State.CHARGE:        _tick_charge(delta)
 
 	move_and_slide()
 	_update_animation(delta)
@@ -481,21 +524,48 @@ func _tick_wander(_delta: float) -> void:
 		_pick_new_wander()
 	velocity = _wander_dir * WANDER_SPEED * speed_mult
 
-func _tick_chase(_delta: float) -> void:
+func _tick_chase(delta: float) -> void:
 	if target == null:
 		_enter_wander()
 		return
 	var to_player: Vector2 = target.global_position - global_position
 	var d := to_player.length()
+	var dir := to_player.normalized()
+	match behavior:
+		"caster", "turret":
+			# Se mantienen a distancia y disparan; si el player se les
+			# pega igual, pegan cuerpo a cuerpo como el resto.
+			var near: float = 140.0 if behavior == "caster" else 170.0
+			var far: float = 210.0 if behavior == "caster" else 250.0
+			if d < _attack_range:
+				_enter_windup()
+				return
+			if _behavior_cd <= 0.0 and d < far + 70.0:
+				_shoot_at_player(dir)
+			if d > far:
+				velocity = dir * CHASE_SPEED * speed_mult
+			elif d < near:
+				velocity = -dir * CHASE_SPEED * 0.8 * speed_mult
+			else:
+				velocity = dir.orthogonal() * CHASE_SPEED * 0.5 * speed_mult * _strafe_sign
+			_update_facing(dir)
+			return
+		"charger":
+			if _behavior_cd <= 0.0 and d > 60.0 and d < 200.0:
+				_enter_charge_windup(dir)
+				return
+		"phantom":
+			if _behavior_cd <= 0.0 and d > 150.0:
+				_phase_teleport()
+		"boss":
+			if _behavior_cd <= 0.0:
+				_boss_attack()
 	if d < _attack_range:
 		_enter_windup()
 		return
 	# Sin techo de distancia — persigue eternamente al player.
-	var dir := to_player.normalized()
 	velocity = dir * CHASE_SPEED * speed_mult
 	# Actualiza el _facing por eje dominante del vector velocity.
-	# Con esto los sprites _back / _front / _left / _right se usan
-	# correctamente en vez de mostrar siempre el _front.
 	_update_facing(dir)
 
 func _tick_windup(delta: float) -> void:
@@ -511,7 +581,7 @@ func _tick_strike(delta: float) -> void:
 	if not _did_hit_this_strike and target \
 			and global_position.distance_to(target.global_position) < _attack_range + 12.0:
 		_did_hit_this_strike = true
-		emit_signal("hit_player", HIT_DAMAGE)
+		emit_signal("hit_player", HIT_DAMAGE * power_mult)
 	if _state_timer >= STRIKE_TIME:
 		_enter_cooldown()
 
@@ -523,6 +593,117 @@ func _tick_cooldown(delta: float) -> void:
 			_enter_chase()
 		else:
 			_enter_wander()
+
+func _tick_charge_windup(delta: float) -> void:
+	velocity = Vector2.ZERO
+	_state_timer += delta
+	if _state_timer >= CHARGE_WINDUP_TIME:
+		state = State.CHARGE
+		_state_timer = 0.0
+		_set_animation("run", ANIM_FPS * 2.0)
+
+func _tick_charge(delta: float) -> void:
+	velocity = _charge_dir * CHASE_SPEED * CHARGE_SPEED_MULT * speed_mult
+	_state_timer += delta
+	if not _did_hit_this_strike and target != null \
+			and global_position.distance_to(target.global_position) < _attack_range + 8.0:
+		_did_hit_this_strike = true
+		emit_signal("hit_player", CHARGE_DAMAGE * power_mult)
+	if _state_timer >= CHARGE_TIME:
+		_behavior_cd = 2.8
+		_enter_cooldown()
+
+# ── Comportamientos ─────────────────────────────────────────────
+
+static func _behavior_for(kind: String) -> String:
+	if kind.begins_with("demon"): return "boss"
+	if kind.begins_with("imp"): return "caster"
+	if kind.begins_with("beholder"): return "turret"
+	if kind.begins_with("lizardman"): return "charger"
+	if kind.begins_with("slime"): return "splitter"
+	if kind.begins_with("ghost"): return "phantom"
+	return "melee"
+
+func _enter_charge_windup(dir: Vector2) -> void:
+	state = State.CHARGE_WINDUP
+	_state_timer = 0.0
+	_charge_dir = dir
+	_did_hit_this_strike = false
+	velocity = Vector2.ZERO
+	# Naranja = "va a embestir" (el rojo es el golpe normal).
+	_sprite.modulate = Color(1.6, 1.1, 0.4)
+	_set_animation("idle")
+
+func _shoot_at_player(dir: Vector2) -> void:
+	if behavior == "caster":
+		_behavior_cd = 2.6
+		_spawn_enemy_shot(dir, 170.0, SHOT_DAMAGE, Color("ff7a2e"))
+	else:
+		_behavior_cd = 3.2
+		for a in [-0.26, 0.0, 0.26]:
+			_spawn_enemy_shot(dir.rotated(a), 150.0, SHOT_DAMAGE * 0.85, Color("b36bff"))
+
+func _spawn_enemy_shot(dir: Vector2, speed: float, dmg: float, color: Color) -> void:
+	var shot := Area2D.new()
+	shot.set_script(ENEMY_SHOT_SCRIPT)
+	get_tree().current_scene.add_child(shot)
+	shot.setup(global_position + dir * 12.0, dir, speed, dmg * power_mult, color)
+
+## Fantasma: se desvanece y reaparece a un costado del player.
+func _phase_teleport() -> void:
+	_behavior_cd = 5.0
+	var ang := randf() * TAU
+	var tw := create_tween()
+	tw.tween_property(_sprite, "modulate:a", 0.0, 0.25)
+	tw.tween_callback(_teleport_near_target.bind(ang))
+	tw.tween_property(_sprite, "modulate:a", 1.0, 0.25)
+
+func _teleport_near_target(ang: float) -> void:
+	if not _dead and target != null and is_instance_valid(target):
+		global_position = target.global_position + Vector2(cos(ang), sin(ang)) * randf_range(95.0, 125.0)
+
+## Jefe: dos anillos de fuego y a la tercera invoca 3 ratas.
+func _boss_attack() -> void:
+	_behavior_cd = 3.4
+	_boss_cycle += 1
+	if _boss_cycle % 3 == 0:
+		for i in range(3):
+			_spawn_minion("rat", global_position + Vector2.RIGHT.rotated(TAU * i / 3.0) * 44.0, 1.0, 1.0)
+	else:
+		var n: int = 10 + maxi(0, BOSS_KIND_IDS.find(_kind_id)) * 2
+		for i in range(n):
+			_spawn_enemy_shot(Vector2.RIGHT.rotated(TAU * i / n + _boss_cycle * 0.3), 125.0, BOSS_SHOT_DAMAGE, Color("ff4d2e"))
+
+## Crea una cría (slime partido / rata invocada). Se registra en la
+## escena YA (así main.gd la cuenta antes de que este monstruo avise
+## que murió y no se cierre la oleada con crías vivas) y se agrega al
+## árbol diferido (puede estar pasando en pleno callback de física).
+func _spawn_minion(kind: String, pos: Vector2, hp_frac: float, scale_mult: float) -> void:
+	var m = load(MONSTER_SCENE_PATH).instantiate()
+	m.position = pos
+	m.power_mult = power_mult
+	m.speed_mult = speed_mult
+	m._is_minion = true
+	m._pending_setup = {"kind": kind, "hp_frac": hp_frac, "scale": scale_mult}
+	var scene := get_tree().current_scene
+	if scene.has_method("register_monster"):
+		scene.register_monster(m)
+	else:
+		m.target = target
+	scene.add_child.call_deferred(m)
+
+func _apply_pending_setup() -> void:
+	var setup: Dictionary = _pending_setup
+	_pending_setup = {}
+	set_kind(setup["kind"])
+	max_hp *= setup["hp_frac"]
+	hp = max_hp
+	xp_reward = 1
+	coin_reward = 0
+	_base_sprite_scale *= setup["scale"]
+	_sprite.scale = _base_sprite_scale
+	if target != null:
+		_enter_chase()
 
 # ── State transitions ────────────────────────────────────────────
 
@@ -706,6 +887,9 @@ func _die() -> void:
 	GameState.record_kill(_last_hit_source, is_boss())
 	if is_elite or is_boss():
 		_drop_chest()
+	if behavior == "splitter" and not _is_minion:
+		for side in [-1.0, 1.0]:
+			_spawn_minion(_kind_id, global_position + Vector2(14.0 * side, 0.0), 0.3, 0.65)
 	queue_redraw()
 	# Boss suena distinto — más grave y grande. Cualquier demon (tier)
 	# cuenta como boss.
