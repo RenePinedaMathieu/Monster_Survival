@@ -1,200 +1,283 @@
 extends Control
 
-## Tienda de mejoras permanentes — comprás con la moneda ganada en
-## runs anteriores (GameState.total_currency). Las filas se arman por
-## código a partir de GameState.SHOP_ITEMS en vez de a mano en la
-## escena, así agregar un ítem nuevo es sólo tocar game_state.gd.
+## Tienda — todo se compra con la moneda banqueada de runs anteriores
+## (GameState.total_currency). Tres pestañas:
+##   MEJORAS       bonos permanentes por nivel (GameState.SHOP_ITEMS),
+##                 player.gd los aplica al arrancar cada run.
+##   PODERES       compra única que habilita que la carta del poder
+##                 salga en los level-ups (GameState.SHOP_POWERS).
+##   ACOMPAÑANTES  mascotas que te siguen y atacan; se compran una vez
+##                 y se lleva una equipada (GameState.COMPANIONS).
 ##
-## Los bonos comprados los aplica player.gd al arrancar cada run (ver
-## GameState.get_bonus_*()) — esta pantalla sólo gasta moneda y guarda.
-##
-## Cada fila es una "tarjeta" con: ícono pixel-art + borde de color
-## propios por categoría (ver ITEM_STYLE), una barra de nivel (no sólo
-## el texto "Nivel X/Y"), y el botón de compra cambia de estilo según
-## el estado — máximo / no alcanza la moneda / listo para comprar —
-## en vez de ser siempre el mismo botón dorado con el texto cambiado.
+## Las tarjetas se arman por código desde los dicts de GameState, así
+## sumar un ítem es tocar game_state.gd + su ícono acá. Estilo del pack
+## pergamino/verde, ver rpg_theme.gd.
 
-const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const PixelIconScript := preload("res://scenes/pixel_icon.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
+const COIN_TEXTURE := "res://assets/ui/rpg/coin.png"
 
-## Identidad visual por ítem — no vive en GameState porque es
-## puramente cosmético de esta pantalla, GameState.SHOP_ITEMS sólo
-## tiene los datos de balance (costo, nombre, etc).
+enum Tab { UPGRADES, POWERS, COMPANIONS }
+
+const TAB_HINTS: Dictionary = {
+	Tab.UPGRADES: "Bonos permanentes: se aplican al arrancar cada partida.",
+	Tab.POWERS: "Compra única: el poder empieza a salir como carta al subir de nivel durante las oleadas.",
+	Tab.COMPANIONS: "Te acompañan en cada partida y atacan solos. Podés llevar uno a la vez.",
+}
+
+## Identidad visual — puramente cosmética de esta pantalla, por eso no
+## vive en GameState (que sólo tiene datos de balance).
 const ITEM_STYLE: Dictionary = {
 	"armor":  {"icon": "shield", "color": Color("6fa8dc")},
 	"max_hp": {"icon": "heart",  "color": Color("e0645a")},
 	"damage": {"icon": "fist",   "color": Color("e0a94c")},
 	"regen":  {"icon": "spark",  "color": Color("6bcf6b")},
 }
-
-const COLOR_MAXED := Color(0.5, 0.5, 0.5)
-const COLOR_LOCKED := Color(0.6, 0.35, 0.32)
+## Mismos íconos que las cartas de level-up que desbloquean.
+const POWER_ICONS: Dictionary = {
+	"meteors": "res://assets/ui/skill_icons/skill_22.png",
+	"flying_swords": "res://assets/ui/skill_icons/skill_5.png",
+}
+## Primer frame del idle de frente, recortado al bicho (el frame de
+## 32x32 trae mucho aire alrededor).
+const COMPANION_ICONS: Dictionary = {
+	"chicken": {"sheet": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png", "region": Rect2(6, 9, 20, 20)},
+}
 
 @onready var _background: TextureRect = $Background
-@onready var _title_label: Label = $Layout/Title
-@onready var _currency_label: Label = $Layout/CurrencyRow/Currency
-@onready var _currency_icon: Control = $Layout/CurrencyRow/CoinIcon
-@onready var _item_list: VBoxContainer = $Layout/ItemList
-@onready var _back_button: Button = $Layout/BackButton
+@onready var _window: Panel = $Window
+@onready var _title_label: Label = $Window/Title
+@onready var _tab_buttons: Dictionary = {
+	Tab.UPGRADES: $Window/Body/TopRow/Tabs/UpgradesTab,
+	Tab.POWERS: $Window/Body/TopRow/Tabs/PowersTab,
+	Tab.COMPANIONS: $Window/Body/TopRow/Tabs/CompanionsTab,
+}
+@onready var _currency_box: PanelContainer = $Window/Body/TopRow/CurrencyBox
+@onready var _coin_icon: TextureRect = $Window/Body/TopRow/CurrencyBox/Row/CoinIcon
+@onready var _currency_label: Label = $Window/Body/TopRow/CurrencyBox/Row/Currency
+@onready var _hint_label: Label = $Window/Body/TabHint
+@onready var _grid: GridContainer = $Window/Body/Scroll/Grid
+@onready var _back_button: Button = $Window/Body/BackButton
 
-var _row_refs: Dictionary = {}   # id -> {level_label, level_bar, buy_button, card_style}
+var _tab: int = Tab.UPGRADES
+var _coin: Texture2D
 
 func _ready() -> void:
 	_background.texture = load(BACKGROUND_TEXTURE)
-	UITheme.style_label(_title_label, 36, true)
-	UITheme.style_label(_currency_label, 22, true)
-	_currency_icon.queue_redraw()
-	UITheme.style_button(_back_button)
-	_back_button.mouse_entered.connect(UITheme.pulse.bind(_back_button, 1.05, 0.08))
-	_back_button.mouse_exited.connect(UITheme.pulse.bind(_back_button, 1.0, 0.08))
+	_coin = load(COIN_TEXTURE)
+	_window.add_theme_stylebox_override("panel", RpgTheme.window_box())
+	RpgTheme.style_light_label(_title_label, 26)
+	_currency_box.add_theme_stylebox_override("panel", RpgTheme.slot_box(true, 8.0))
+	_coin_icon.texture = _coin
+	RpgTheme.style_light_label(_currency_label, 22)
+	RpgTheme.style_ink_label(_hint_label, 14, false, true)
+	RpgTheme.style_button(_back_button, 18)
 	_back_button.pressed.connect(_on_back_pressed)
-
-	_build_items()
-	_refresh()
+	for tab in _tab_buttons:
+		var b: Button = _tab_buttons[tab]
+		b.pressed.connect(_select_tab.bind(tab))
+		b.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
+	_select_tab(Tab.UPGRADES)
 	_back_button.grab_focus()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_on_back_pressed()
 
-func _build_items() -> void:
-	for id in GameState.SHOP_ITEMS:
-		var item: Dictionary = GameState.SHOP_ITEMS[id]
-		var style: Dictionary = ITEM_STYLE.get(id, {"icon": "spark", "color": UITheme.COLOR_BORDER})
-		var accent: Color = style["color"]
+func _select_tab(tab: int) -> void:
+	if tab != _tab:
+		Audio.play_sfx("ui_click")
+	_tab = tab
+	for t in _tab_buttons:
+		RpgTheme.style_tab(_tab_buttons[t], t == tab, 16)
+	_hint_label.text = TAB_HINTS[tab]
+	_rebuild()
 
-		var card := PanelContainer.new()
-		var card_style := UITheme.make_box(Color(0.09, 0.07, 0.06, 0.88), accent, 0.0, 3)
-		card.add_theme_stylebox_override("panel", card_style)
-		card.mouse_entered.connect(UITheme.pulse.bind(card, 1.015, 0.1))
-		card.mouse_exited.connect(UITheme.pulse.bind(card, 1.0, 0.1))
-		_item_list.add_child(card)
-
-		var hbox := HBoxContainer.new()
-		hbox.add_theme_constant_override("separation", 18)
-		card.add_child(hbox)
-
-		# Insignia del ícono: un cuadrito oscuro teñido con el color de
-		# la categoría, con el ícono pixel-art adentro.
-		var badge := PanelContainer.new()
-		var badge_style := UITheme.make_box(Color(accent, 0.16), Color(accent, 0.7), 0.0, 2)
-		badge_style.content_margin_left = 0.0
-		badge_style.content_margin_right = 0.0
-		badge_style.content_margin_top = 0.0
-		badge_style.content_margin_bottom = 0.0
-		badge.add_theme_stylebox_override("panel", badge_style)
-		badge.custom_minimum_size = Vector2(56, 56)
-		badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		hbox.add_child(badge)
-
-		# Sin tipo explícito a propósito: el script del ícono se pega en
-		# runtime con set_script(), y tiparlo como Control rompería la
-		# build (warnings-as-errors) al asignarle icon_id/color, que no
-		# existen en la clase base — mismo motivo que _swords_rig en
-		# player.gd.
-		var icon = Control.new()
-		icon.set_script(PixelIconScript)
-		icon.custom_minimum_size = Vector2(PixelIconScript.BOX, PixelIconScript.BOX)
-		# Sin esto, el PanelContainer estira el ícono a los 56x56 de la
-		# insignia entera y el dibujo (centrado para un box de 40x40)
-		# queda pegado a la esquina en vez de centrado.
-		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		icon.icon_id = style["icon"]
-		icon.color = accent
-		badge.add_child(icon)
-
-		var info := VBoxContainer.new()
-		info.add_theme_constant_override("separation", 4)
-		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		hbox.add_child(info)
-
-		var name_label := Label.new()
-		name_label.text = item["name"]
-		UITheme.style_label(name_label, 20, true)
-		name_label.add_theme_color_override("font_color", accent.lightened(0.15))
-		info.add_child(name_label)
-
-		var desc_label := Label.new()
-		desc_label.text = item["desc"]
-		UITheme.style_label(desc_label, 13)
-		desc_label.modulate.a = 0.8
-		info.add_child(desc_label)
-
-		var level_row := HBoxContainer.new()
-		level_row.add_theme_constant_override("separation", 10)
-		info.add_child(level_row)
-
-		var level_bar := ProgressBar.new()
-		level_bar.min_value = 0
-		level_bar.max_value = item["max_level"]
-		level_bar.show_percentage = false
-		level_bar.custom_minimum_size = Vector2(140, 12)
-		level_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		UITheme.style_progress_bar(level_bar, accent)
-		level_row.add_child(level_bar)
-
-		var level_label := Label.new()
-		UITheme.style_label(level_label, 13)
-		level_label.modulate.a = 0.85
-		level_row.add_child(level_label)
-
-		var buy_button := Button.new()
-		buy_button.custom_minimum_size = Vector2(150, 58)
-		UITheme.style_button(buy_button, 15)
-		buy_button.pressed.connect(_on_buy_pressed.bind(id))
-		hbox.add_child(buy_button)
-
-		_row_refs[id] = {
-			"level_label": level_label, "level_bar": level_bar,
-			"buy_button": buy_button, "card_style": card_style, "accent": accent,
-		}
-
-func _refresh() -> void:
+## Rearma todas las tarjetas de la pestaña actual — son pocas, así
+## que después de cada compra es más simple rearmar que parchear.
+func _rebuild() -> void:
 	_currency_label.text = "%d" % GameState.total_currency
+	for child in _grid.get_children():
+		_grid.remove_child(child)
+		child.queue_free()
+	match _tab:
+		Tab.UPGRADES: _build_upgrades()
+		Tab.POWERS: _build_powers()
+		Tab.COMPANIONS: _build_companions()
+
+func _build_upgrades() -> void:
 	for id in GameState.SHOP_ITEMS:
 		var item: Dictionary = GameState.SHOP_ITEMS[id]
+		var style: Dictionary = ITEM_STYLE.get(id, {"icon": "spark", "color": RpgTheme.COLOR_INK_GOOD})
+		var card := _make_card(_pixel_icon(style), item["name"], item["desc"])
 		var level: int = GameState.get_shop_level(id)
-		var refs: Dictionary = _row_refs[id]
-		var maxed: bool = level >= item["max_level"]
-		var accent: Color = refs["accent"]
 
-		refs["level_bar"].value = level
-		refs["level_label"].text = "%d / %d" % [level, item["max_level"]]
+		var bar := ProgressBar.new()
+		bar.max_value = item["max_level"]
+		bar.value = level
+		bar.show_percentage = false
+		bar.custom_minimum_size = Vector2(140, 12)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		RpgTheme.style_level_bar(bar, style["color"])
+		card["status"].add_child(bar)
+		card["status"].add_child(_status_label("%d / %d" % [level, item["max_level"]], false))
 
-		var buy_button: Button = refs["buy_button"]
-		var card_style: StyleBoxFlat = refs["card_style"]
-		if maxed:
-			buy_button.text = "MÁXIMO"
-			buy_button.disabled = true
-			card_style.border_color = COLOR_MAXED
-			_style_buy_button(buy_button, COLOR_MAXED, false)
+		var button: Button = card["button"]
+		if level >= item["max_level"]:
+			_set_plain(button, "MÁXIMO", false)
 		else:
-			var affordable: bool = GameState.can_afford(id)
-			buy_button.text = "COMPRAR\n%d monedas" % GameState.get_shop_cost(id)
-			buy_button.disabled = not affordable
-			card_style.border_color = accent if affordable else Color(accent, 0.35)
-			_style_buy_button(buy_button, accent if affordable else COLOR_LOCKED, affordable)
+			_set_price(button, GameState.get_shop_cost(id), GameState.can_afford(id))
+		button.pressed.connect(_on_buy_upgrade.bind(id))
 
-## El mismo botón cambia de "personalidad" según si de verdad se
-## puede comprar ahora — dorado y listo para hacer clic, apagado en
-## gris si ya está al máximo, o con un borde apagado (se ve el costo
-## pero no invita a tocarlo) si todavía no alcanza la moneda.
-func _style_buy_button(button: Button, border: Color, ready_to_buy: bool) -> void:
-	var fill: Color = UITheme.COLOR_FILL if ready_to_buy else Color(0.08, 0.07, 0.06)
-	button.add_theme_stylebox_override("normal", UITheme.make_box(fill, border))
-	button.add_theme_stylebox_override("disabled", UITheme.make_box(fill, border))
-	if ready_to_buy:
-		button.add_theme_stylebox_override("hover", UITheme.make_box(UITheme.COLOR_FILL_HOVER, UITheme.COLOR_BORDER_HOVER))
-		button.add_theme_stylebox_override("pressed", UITheme.make_box(UITheme.COLOR_FILL_PRESSED, UITheme.COLOR_BORDER_HOVER, 3.0))
-	button.add_theme_color_override("font_color", UITheme.COLOR_TEXT if ready_to_buy else Color(border, 0.9))
-	button.add_theme_color_override("font_disabled_color", Color(border, 0.9))
+func _build_powers() -> void:
+	for id in GameState.SHOP_POWERS:
+		var power: Dictionary = GameState.SHOP_POWERS[id]
+		var card := _make_card(_texture_icon(load(POWER_ICONS[id]), true), power["name"], power["desc"])
+		var owned: bool = GameState.is_power_unlocked(id)
+		card["status"].add_child(_status_label("DESBLOQUEADO" if owned else "BLOQUEADO", owned))
+		var button: Button = card["button"]
+		if owned:
+			_set_plain(button, "COMPRADO", false)
+		else:
+			_set_price(button, power["cost"], GameState.total_currency >= power["cost"])
+		button.pressed.connect(_on_buy_power.bind(id))
 
-func _on_buy_pressed(id: String) -> void:
+func _build_companions() -> void:
+	for id in GameState.COMPANIONS:
+		var comp: Dictionary = GameState.COMPANIONS[id]
+		var icon_data: Dictionary = COMPANION_ICONS[id]
+		var atlas := AtlasTexture.new()
+		atlas.atlas = load(icon_data["sheet"])
+		atlas.region = icon_data["region"]
+		var card := _make_card(_texture_icon(atlas, false), comp["name"], comp["desc"])
+		var owned: bool = GameState.owns_companion(id)
+		var equipped: bool = GameState.equipped_companion == id
+		var button: Button = card["button"]
+		if equipped:
+			card["status"].add_child(_status_label("EQUIPADO", true))
+			_set_plain(button, "QUITAR", true)
+		elif owned:
+			card["status"].add_child(_status_label("EN RESERVA", false))
+			_set_plain(button, "EQUIPAR", true)
+		else:
+			_set_price(button, comp["cost"], GameState.total_currency >= comp["cost"])
+		button.pressed.connect(_on_companion_pressed.bind(id))
+
+# ── Piezas de tarjeta ────────────────────────────────────────────
+
+## Tarjeta: [insignia con ícono] [nombre / descripción / fila de estado] [botón]
+func _make_card(icon: Control, title: String, desc: String) -> Dictionary:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", RpgTheme.slot_box(false, 12.0))
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.custom_minimum_size = Vector2(0, 108)
+	_grid.add_child(card)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 14)
+	card.add_child(hbox)
+
+	var badge := PanelContainer.new()
+	badge.add_theme_stylebox_override("panel", RpgTheme.slot_box(true, 6.0))
+	badge.custom_minimum_size = Vector2(76, 76)
+	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hbox.add_child(badge)
+	badge.add_child(icon)
+
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 4)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hbox.add_child(info)
+
+	var name_label := Label.new()
+	name_label.text = title
+	RpgTheme.style_ink_label(name_label, 19, true)
+	info.add_child(name_label)
+
+	var desc_label := Label.new()
+	desc_label.text = desc
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	RpgTheme.style_ink_label(desc_label, 13, false, true)
+	info.add_child(desc_label)
+
+	var status := HBoxContainer.new()
+	status.add_theme_constant_override("separation", 10)
+	info.add_child(status)
+
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(160, 54)
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	RpgTheme.style_button(button, 15)
+	button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
+	hbox.add_child(button)
+
+	return {"status": status, "button": button}
+
+func _pixel_icon(style: Dictionary) -> Control:
+	# Sin tipo explícito: el script se pega en runtime (ver pixel_icon.gd)
+	# y tiparlo como Control rompe al asignarle icon_id/color.
+	var icon = Control.new()
+	icon.set_script(PixelIconScript)
+	icon.custom_minimum_size = Vector2(PixelIconScript.BOX, PixelIconScript.BOX)
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.icon_id = style["icon"]
+	icon.color = style["color"]
+	return icon
+
+## smooth: los skill_icons son ilustraciones de 256px achicadas — con
+## filtro nearest (el default del proyecto) quedan con serrucho.
+func _texture_icon(tex: Texture2D, smooth: bool) -> TextureRect:
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.custom_minimum_size = Vector2(62, 62)
+	rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if smooth else CanvasItem.TEXTURE_FILTER_NEAREST
+	return rect
+
+func _status_label(text: String, good: bool) -> Label:
+	var label := Label.new()
+	label.text = text
+	RpgTheme.style_ink_label(label, 13, good, not good)
+	if good:
+		label.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)
+	return label
+
+func _set_price(button: Button, cost: int, affordable: bool) -> void:
+	button.text = "COMPRAR %d" % cost
+	button.icon = _coin
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	button.add_theme_constant_override("icon_max_width", 20)
+	button.disabled = not affordable
+
+func _set_plain(button: Button, text: String, enabled: bool) -> void:
+	button.text = text
+	button.icon = null
+	button.disabled = not enabled
+
+# ── Acciones ─────────────────────────────────────────────────────
+
+func _on_buy_upgrade(id: String) -> void:
 	if GameState.buy_shop_item(id):
 		Audio.play_sfx("card_selected")
-		_refresh()
+		_rebuild()
+
+func _on_buy_power(id: String) -> void:
+	if GameState.buy_power(id):
+		Audio.play_sfx("card_selected")
+		_rebuild()
+
+func _on_companion_pressed(id: String) -> void:
+	if GameState.owns_companion(id):
+		GameState.toggle_companion(id)
+		Audio.play_sfx("ui_click")
+	elif GameState.buy_companion(id):
+		Audio.play_sfx("card_selected")
+	_rebuild()
 
 func _on_back_pressed() -> void:
 	# La tienda es accesible desde el menú principal Y desde la barra

@@ -159,6 +159,14 @@ text = "Ranged"
 custom_minimum_size = Vector2(0, 36)
 text = "Meteors"
 
+[node name="ChickenBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 36)
+text = "Pollo"
+
+[node name="CoinsBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 36)
+text = "+500 monedas"
+
 [node name="HPLbl" type="Label" parent="UI/TouchPanel/Content"]
 theme_override_font_sizes/font_size = 11
 text = "HP"

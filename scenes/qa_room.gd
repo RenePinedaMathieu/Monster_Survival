@@ -11,6 +11,8 @@ extends Node2D
 ##   1..6          — spawn 1 monster: rat, imp, lizardman, slime, ghost, beholder
 ##   Shift+1..3    — spawn boss: demon1 / demon2 / demon3
 ##   F / R / M     — unlock flying swords / ranged / meteoros
+##   C             — spawnear el pollo acompañante (sin comprarlo)
+##   G             — +500 monedas para probar la tienda
 ##   K             — kill all monsters
 ##   +/-           — ±10 hp al player
 ##   Esc           — volver al menú
@@ -80,6 +82,8 @@ func _wire_touch_buttons() -> void:
 	root.get_node("Unlocks/SwordsBtn").pressed.connect(_unlock.bind("flying_swords"))
 	root.get_node("Unlocks/RangedBtn").pressed.connect(_unlock.bind("ranged_bonus"))
 	root.get_node("Unlocks/MeteorsBtn").pressed.connect(_unlock.bind("meteors"))
+	root.get_node("Unlocks/ChickenBtn").pressed.connect(_player.spawn_companion.bind("chicken"))
+	root.get_node("Unlocks/CoinsBtn").pressed.connect(GameState.grant_currency.bind(500))
 
 	root.get_node("HP/HealBtn").pressed.connect(func(): _player.heal(10.0))
 	root.get_node("HP/DamageBtn").pressed.connect(func(): _player.take_damage(10.0))
@@ -107,6 +111,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_unlock("ranged_bonus")
 	elif key == KEY_M:
 		_unlock("meteors")
+	elif key == KEY_C:
+		_player.spawn_companion("chicken")
+	elif key == KEY_G:
+		GameState.grant_currency(500)
 	elif key == KEY_K:
 		_kill_all()
 	elif key == KEY_EQUAL or key == KEY_PLUS:
@@ -152,6 +160,7 @@ Teclado:
   WASD  mover · Space  level up
   1..6  spawn · Shift+1..3  boss
   F/R/M  unlock skills · K  matar todos
+  C  pollo · G  +500 monedas
   +/-  ±10 hp · Esc  volver
 
 Móvil: joystick izq. + panel dcha."""

@@ -61,7 +61,7 @@ text = "JUGAR"
 [node name="ShopButton" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(240, 58)
 size_flags_horizontal = 4
-text = "MEJORAS"
+text = "TIENDA"
 
 [node name="OptionsButton" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(240, 58)

@@ -1,9 +1,10 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scenes/shop_menu.gd" id="1_shop"]
-[ext_resource type="Script" path="res://scenes/pixel_icon.gd" id="2_icon"]
 
 [node name="ShopMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -11,6 +12,8 @@ grow_vertical = 2
 script = ExtResource("1_shop")
 
 [node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -20,59 +23,117 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.55)
+color = Color(0, 0, 0, 0.45)
 
-[node name="Layout" type="VBoxContainer" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 60.0
-offset_top = 28.0
-offset_right = -60.0
-offset_bottom = -24.0
+[node name="Window" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -560.0
+offset_top = -340.0
+offset_right = 560.0
+offset_bottom = 340.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Layout"]
-layout_mode = 2
+[node name="Title" type="Label" parent="Window"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+text = "TIENDA"
 horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Body" type="VBoxContainer" parent="Window"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 30.0
+offset_top = 60.0
+offset_right = -30.0
+offset_bottom = -22.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="TopRow" type="HBoxContainer" parent="Window/Body"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Tabs" type="HBoxContainer" parent="Window/Body/TopRow"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="UpgradesTab" type="Button" parent="Window/Body/TopRow/Tabs"]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
 text = "MEJORAS"
 
-[node name="CurrencyRow" type="HBoxContainer" parent="Layout"]
+[node name="PowersTab" type="Button" parent="Window/Body/TopRow/Tabs"]
+custom_minimum_size = Vector2(180, 48)
 layout_mode = 2
-size_flags_horizontal = 4
+text = "PODERES"
+
+[node name="CompanionsTab" type="Button" parent="Window/Body/TopRow/Tabs"]
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+text = "ACOMPAÑANTES"
+
+[node name="Spacer" type="Control" parent="Window/Body/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CurrencyBox" type="PanelContainer" parent="Window/Body/TopRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="Window/Body/TopRow/CurrencyBox"]
+layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="CoinIcon" type="Control" parent="Layout/CurrencyRow"]
-custom_minimum_size = Vector2(40, 40)
+[node name="CoinIcon" type="TextureRect" parent="Window/Body/TopRow/CurrencyBox/Row"]
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 size_flags_vertical = 4
-script = ExtResource("2_icon")
-icon_id = "coin"
-color = Color(0.878, 0.663, 0.298, 1)
+expand_mode = 1
+stretch_mode = 5
 
-[node name="Currency" type="Label" parent="Layout/CurrencyRow"]
+[node name="Currency" type="Label" parent="Window/Body/TopRow/CurrencyBox/Row"]
 layout_mode = 2
 text = "0"
 
-[node name="Divider" type="ColorRect" parent="Layout"]
+[node name="TabHint" type="Label" parent="Window/Body"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 3)
-color = Color(0.878, 0.663, 0.298, 0.6)
+autowrap_mode = 3
 
-[node name="ItemList" type="VBoxContainer" parent="Layout"]
+[node name="Scroll" type="ScrollContainer" parent="Window/Body"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+horizontal_scroll_mode = 0
 
-[node name="BackButton" type="Button" parent="Layout"]
+[node name="Grid" type="GridContainer" parent="Window/Body/Scroll"]
 layout_mode = 2
-custom_minimum_size = Vector2(180, 50)
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
+columns = 2
+
+[node name="BackButton" type="Button" parent="Window/Body"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
 size_flags_horizontal = 4
 text = "VOLVER"

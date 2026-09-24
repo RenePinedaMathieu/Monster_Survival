@@ -19,6 +19,7 @@ signal died
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
 const FLYING_SWORDS_RIG_SCRIPT := preload("res://scenes/flying_swords_rig.gd")
+const COMPANION_SCRIPT := preload("res://scenes/companion.gd")
 
 const BASE_SCALE := 0.5
 const BASE_SPEED := 175.0             # bajado de 220 — se sentía muy rápido/patinoso
@@ -162,6 +163,9 @@ var _meteor_cd: float = 3.0
 ## tiparlo como Node2D rompería la build (warnings-as-errors) al
 ## llamar .setup()/.buff(), que no existen en la clase base.
 var _swords_rig = null
+## Acompañante equipado en la tienda (companion.gd) — sin tipo por el
+## mismo motivo que _swords_rig.
+var _companion = null
 
 # Armadura (compra permanente en la tienda) — una barra de defensa
 # que absorbe daño ANTES que la vida. No regenera durante la run.
@@ -285,6 +289,18 @@ func _ready() -> void:
 	emit_signal("hp_changed", hp, max_hp)
 	emit_signal("defense_changed", defense, max_defense)
 	emit_signal("xp_changed", xp, xp_to_next, level)
+	# Deferred: durante el _ready del player la escena nueva todavía no
+	# es current_scene, y el acompañante se cuelga de ahí.
+	if GameState.equipped_companion != "":
+		spawn_companion.call_deferred(GameState.equipped_companion)
+
+func spawn_companion(id: String) -> void:
+	if _companion != null and is_instance_valid(_companion):
+		_companion.queue_free()
+	_companion = Node2D.new()
+	_companion.set_script(COMPANION_SCRIPT)
+	get_tree().current_scene.add_child(_companion)
+	_companion.setup(self, id)
 
 ## Los sheets son un archivo por dirección con N frames en fila, a
 ## diferencia del sprite "Man" que trae un archivo por frame. Se

@@ -64,6 +64,30 @@ const SHOP_ITEMS: Dictionary = {
 	},
 }
 
+## Poderes: compra ÚNICA en la tienda. No dan nada directo — habilitan
+## que la carta del poder pueda salir en los level-ups durante las
+## oleadas (ver level_up_menu.gd _is_eligible). El id es el mismo que
+## el de la carta que desbloquean.
+const SHOP_POWERS: Dictionary = {
+	"meteors": {
+		"name": "Lluvia de meteoros", "cost": 60,
+		"desc": "Desbloquea la carta: meteoritos caen solos sobre los enemigos",
+	},
+	"flying_swords": {
+		"name": "Espadas voladoras", "cost": 80,
+		"desc": "Desbloquea la carta: 5 espadas te escoltan y atacan solas",
+	},
+}
+
+## Acompañantes: se compran una vez y se lleva UNO equipado por run
+## (player.gd lo spawnea al arrancar, comportamiento en companion.gd).
+const COMPANIONS: Dictionary = {
+	"chicken": {
+		"name": "Pollo", "cost": 120,
+		"desc": "Te sigue a todos lados y le tira huevos al bicho más cercano",
+	},
+}
+
 var total_currency: int = 0
 ## Lo ganado DURANTE la run en curso — se banca a total_currency (y
 ## se guarda a disco) recién cuando la run termina, ver
@@ -71,6 +95,9 @@ var total_currency: int = 0
 ## sin que ya cuente como gastable hasta terminar.
 var run_currency: int = 0
 var shop_levels: Dictionary = {}   # id -> nivel comprado (int), default 0
+var unlocked_powers: Array = []
+var owned_companions: Array = []
+var equipped_companion: String = ""
 
 func _ready() -> void:
 	_load()
@@ -83,6 +110,9 @@ func _load() -> void:
 		tutorial_seen = cfg.get_value("progress", "tutorial_seen", false)
 		best_wave = cfg.get_value("progress", "best_wave", 0)
 		best_time = cfg.get_value("progress", "best_time", 0.0)
+		unlocked_powers = cfg.get_value("progress", "unlocked_powers", [])
+		owned_companions = cfg.get_value("progress", "owned_companions", [])
+		equipped_companion = cfg.get_value("progress", "equipped_companion", "")
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
@@ -91,6 +121,9 @@ func _save() -> void:
 	cfg.set_value("progress", "tutorial_seen", tutorial_seen)
 	cfg.set_value("progress", "best_wave", best_wave)
 	cfg.set_value("progress", "best_time", best_time)
+	cfg.set_value("progress", "unlocked_powers", unlocked_powers)
+	cfg.set_value("progress", "owned_companions", owned_companions)
+	cfg.set_value("progress", "equipped_companion", equipped_companion)
 	cfg.save(SAVE_PATH)
 
 ## Se llama cuando termina una run (player muerto). Actualiza los
@@ -119,6 +152,11 @@ func add_run_currency(amount: int) -> void:
 	run_currency += amount
 	currency_changed.emit(run_currency)
 
+## Moneda directo al total gastable — sólo para la sala QA.
+func grant_currency(amount: int) -> void:
+	total_currency += amount
+	_save()
+
 ## Se llama al terminar la run (main.gd, cuando el player muere) —
 ## banca lo ganado al total persistente y lo guarda a disco.
 func bank_run_currency() -> void:
@@ -146,6 +184,44 @@ func buy_shop_item(id: String) -> bool:
 	shop_levels[id] = get_shop_level(id) + 1
 	_save()
 	return true
+
+# ── Poderes ──────────────────────────────────────────────────────
+
+func is_power_unlocked(id: String) -> bool:
+	return id in unlocked_powers
+
+func buy_power(id: String) -> bool:
+	var cost: int = SHOP_POWERS[id]["cost"]
+	if is_power_unlocked(id) or total_currency < cost:
+		return false
+	total_currency -= cost
+	unlocked_powers.append(id)
+	_save()
+	return true
+
+# ── Acompañantes ─────────────────────────────────────────────────
+
+func owns_companion(id: String) -> bool:
+	return id in owned_companions
+
+## Al comprar queda equipado directo — es lo que el jugador quiere en
+## el 99% de los casos, y se ahorra un clic.
+func buy_companion(id: String) -> bool:
+	var cost: int = COMPANIONS[id]["cost"]
+	if owns_companion(id) or total_currency < cost:
+		return false
+	total_currency -= cost
+	owned_companions.append(id)
+	equipped_companion = id
+	_save()
+	return true
+
+## Equipa el acompañante, o lo desequipa si ya era el equipado.
+func toggle_companion(id: String) -> void:
+	if not owns_companion(id):
+		return
+	equipped_companion = "" if equipped_companion == id else id
+	_save()
 
 # ── Bonos permanentes — player.gd los aplica al arrancar cada run ──
 

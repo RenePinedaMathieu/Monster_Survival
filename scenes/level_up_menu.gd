@@ -189,8 +189,12 @@ func _is_eligible(u: Dictionary) -> bool:
 			return _player.ranged_power_level > 0 and _player.ranged_power_level < _player.RANGED_MAX_POWER_LEVEL
 		"ranged_count":
 			return _player.ranged_power_level > 0 and _player.ranged_bonus_shots < _player.RANGED_MAX_BONUS_SHOTS
+		# Poderes de la tienda: la carta sólo sale si se compró el
+		# desbloqueo (GameState.SHOP_POWERS).
 		"flying_swords":
-			return not _player.has_flying_swords()
+			return GameState.is_power_unlocked("flying_swords") and not _player.has_flying_swords()
+		"meteors":
+			return GameState.is_power_unlocked("meteors")
 		"flying_swords_power":
 			return _player.has_flying_swords() and _player.sword_level() < 5
 		"flying_swords_count":
