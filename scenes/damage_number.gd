@@ -21,6 +21,14 @@ var _color: Color = COLOR_NORMAL
 var _t: float = 0.0
 var _start: Vector2
 
+## Enteros sin decimales ("5", no "5.0"); los golpes chicos con uno
+## ("0.7") para que no se vean como 0 o 1.
+static func _format(amount: float) -> String:
+	var r: float = snappedf(amount, 0.1)
+	if r >= 10.0 or is_equal_approx(r, roundf(r)):
+		return str(int(roundf(r)))
+	return String.num(r, 1)
+
 ## Crea el número colgado de `parent` en `pos`. Golpes grandes (>= 20)
 ## salen dorados y un poco más grandes.
 static func spawn(script: Script, parent: Node, pos: Vector2, amount: float, crit: bool = false) -> void:
@@ -28,7 +36,7 @@ static func spawn(script: Script, parent: Node, pos: Vector2, amount: float, cri
 	if (_alive >= MAX_ALIVE and not crit) or parent == null:
 		return
 	var n = script.new()
-	n._text = String.num(amount, 0 if amount >= 10.0 else 1) + ("!" if crit else "")
+	n._text = _format(amount) + ("!" if crit else "")
 	n._color = COLOR_CRIT if crit else (COLOR_BIG if amount >= 20.0 else COLOR_NORMAL)
 	if crit:
 		n.scale = Vector2(1.5, 1.5)
