@@ -70,6 +70,7 @@ func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_c
 	_add_stat("Jefes derrotados", str(stats.get("bosses", 0)))
 	_add_stat("Monedas ganadas", str(stats.get("coins", 0)))
 	_build_damage_rows(stats.get("damage", {}))
+	_build_new_achievements()
 	_continue_button.visible = can_continue
 	_apply_layout(Screen.compact)
 	Audio.play_sfx("wave_clear" if victory else "player_death")
@@ -144,6 +145,27 @@ func _build_damage_rows(damage: Dictionary) -> void:
 		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		RpgTheme.style_ink_label(value, 13, false, true)
 		row.add_child(value)
+
+## Logros conseguidos en esta partida (con su premio) — es lo que hace
+## que perder igual se sienta como avanzar.
+func _build_new_achievements() -> void:
+	var list: Array = GameState.run_new_achievements
+	if list.is_empty():
+		return
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	var title := Label.new()
+	title.text = "LOGROS NUEVOS"
+	RpgTheme.style_ink_label(title, 15, true)
+	box.add_child(title)
+	for a in list.slice(0, 5):
+		var l := Label.new()
+		l.text = "• %s — %s" % [a["name"], GameState.reward_text(a["reward"])]
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		RpgTheme.style_ink_label(l, 14, true)
+		l.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)
+		box.add_child(l)
+	_damage_list.add_sibling(box)
 
 # ── Botones ──────────────────────────────────────────────────────
 

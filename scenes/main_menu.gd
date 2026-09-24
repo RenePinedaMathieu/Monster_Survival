@@ -10,6 +10,7 @@ const RpgTheme := preload("res://scenes/rpg_theme.gd")
 
 const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
+const ACHIEVEMENTS_SCENE := "res://scenes/achievements_menu.tscn"
 const TUTORIAL_SCENE := preload("res://scenes/tutorial_overlay.tscn")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
@@ -17,6 +18,7 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 @onready var _record_label: Label = $RecordLabel
 @onready var _play_button: Button = $MenuButtons/PlayButton
 @onready var _shop_button: Button = $MenuButtons/ShopButton
+@onready var _achievements_button: Button = $MenuButtons/AchievementsButton
 @onready var _options_button: Button = $MenuButtons/OptionsButton
 @onready var _quit_button: Button = $MenuButtons/QuitButton
 @onready var _options_panel: Panel = $OptionsPanel
@@ -37,11 +39,12 @@ func _ready() -> void:
 	else:
 		_record_label.text = ""
 
-	for button in [_play_button, _shop_button, _options_button, _quit_button]:
-		RpgTheme.style_button(button, 24)
+	for button in [_play_button, _shop_button, _achievements_button, _options_button, _quit_button]:
+		RpgTheme.style_button(button, 20)
 	for button in [_back_button, _tutorial_button, _qa_room_button]:
 		RpgTheme.style_button(button, 16)
-	for button in [_play_button, _shop_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
+	_achievements_button.pressed.connect(func(): get_tree().change_scene_to_file(ACHIEVEMENTS_SCENE))
+	for button in [_play_button, _shop_button, _achievements_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
 		button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
 		button.mouse_exited.connect(UITheme.pulse.bind(button, 1.0, 0.08))

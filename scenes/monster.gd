@@ -884,7 +884,7 @@ func _die() -> void:
 	_detection.set_deferred("monitoring", false)
 	_drop_xp_orb()
 	GameState.add_run_currency(coin_reward)
-	GameState.record_kill(_last_hit_source, is_boss())
+	GameState.record_kill(_last_hit_source, is_boss(), is_elite)
 	if is_elite or is_boss():
 		_drop_chest()
 	if behavior == "splitter" and not _is_minion:

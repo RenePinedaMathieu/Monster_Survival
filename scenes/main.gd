@@ -137,6 +137,9 @@ func _on_remote_move(uid: String, x: float, y: float, facing: int, dir: int) -> 
 func _start_next_wave() -> void:
 	if _run_over:
 		return
+	# Logro "Intocable": oleadas completas sin recibir daño.
+	if _current_wave > 0 and not _player.took_damage:
+		GameState.report_max("no_hit_wave", _current_wave)
 	_current_wave += 1
 	_in_break = false
 	var count := BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE
@@ -291,6 +294,7 @@ func _finish_run(victory: bool) -> void:
 	# entre sí (ver GameState.report_run_result).
 	GameState.report_run_result(_current_wave, _hud.get_run_time())
 	if victory:
+		GameState.report_win(GameState.selected_character_id, GameState.selected_map, GameState.selected_difficulty)
 		Audio.play_music("gameplay_chill", 1200)
 	# Pequeño delay para que se vea el golpe final / la muerte.
 	get_tree().create_timer(1.0 if victory else 1.2).timeout.connect(_show_results.bind(victory))

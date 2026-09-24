@@ -101,8 +101,70 @@ func _ready() -> void:
 	_skill_button.pressed.connect(func(): skill_pressed.emit())
 	add_child(_skill_button)
 
+	GameState.achievement_unlocked.connect(_on_achievement_unlocked)
+
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
+
+# ── Aviso de logro ───────────────────────────────────────────────
+
+var _toast_queue: Array = []
+var _toast_busy: bool = false
+
+func _on_achievement_unlocked(a: Dictionary) -> void:
+	_toast_queue.append(a)
+	if not _toast_busy:
+		_show_next_toast()
+
+## Cartel de madera arriba al centro: "¡LOGRO! nombre" + el premio.
+## Si llegan varios juntos, salen de a uno.
+func _show_next_toast() -> void:
+	if _toast_queue.is_empty():
+		_toast_busy = false
+		return
+	_toast_busy = true
+	var a: Dictionary = _toast_queue.pop_front()
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", RpgTheme.wood_box(14.0, 8.0))
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	panel.add_child(row)
+	var icon := TextureRect.new()
+	icon.texture = load("res://assets/ui/rpg/trophy.png")
+	icon.custom_minimum_size = Vector2(32, 32)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.modulate = Color(1.6, 1.3, 0.5)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(icon)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	row.add_child(col)
+	var title := Label.new()
+	title.text = "¡LOGRO! " + a["name"]
+	RpgTheme.style_light_label(title, 17)
+	col.add_child(title)
+	var reward := Label.new()
+	reward.text = GameState.reward_text(a["reward"])
+	RpgTheme.style_light_label(reward, 13)
+	reward.add_theme_color_override("font_color", COLOR_EVOLVED)
+	col.add_child(reward)
+	add_child(panel)
+	# Centrado arriba, debajo del timer/jefe según el layout.
+	panel.reset_size()
+	var vp := Screen.view_size()
+	var y: float = 300.0 if Screen.compact else 140.0
+	panel.position = Vector2((vp.x - panel.size.x) / 2.0, y - 30.0)
+	panel.modulate.a = 0.0
+	Audio.play_sfx("wave_clear")
+	var tw := panel.create_tween()
+	tw.tween_property(panel, "modulate:a", 1.0, 0.25)
+	tw.parallel().tween_property(panel, "position:y", y, 0.25)
+	tw.tween_interval(2.4)
+	tw.tween_property(panel, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(panel.queue_free)
+	tw.tween_callback(_show_next_toast)
 
 ## Teléfono vertical: el panel de personaje y el minimapa ocupan todo el
 ## ancho de arriba, así que el timer baja debajo del minimapa y la

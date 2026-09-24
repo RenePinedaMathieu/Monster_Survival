@@ -34,6 +34,8 @@ const ACTIVE_SKILLS: Dictionary = {
 		"desc": "Ruedas lejos y eres invulnerable un instante"},
 	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_76.png",
 		"desc": "2 s invulnerable y empujas a los enemigos cercanos"},
+	"chicken": {"id": "roll", "name": "Aleteo", "cooldown": 3.0, "icon": SKILL_ICON + "skill_15.png",
+		"desc": "Aleteas lejos y nadie te puede tocar un instante"},
 }
 const DASH_SPEED := 900.0
 const DASH_DAMAGE := 8.0
@@ -154,7 +156,24 @@ const RANGED_SKINS := {
 			"right_down": "Walk/walk_Right_Down.png", "right_up": "Walk/walk_Right_Up.png",
 		},
 	},
+	# Personaje secreto (logro "Coleccionista"): el pollo. Sus hojas son
+	# de 4 direcciones, 6 frames de 32x32 — las diagonales usan el lado.
+	"chicken": {
+		"base_path": "res://assets/sprites/Chicken/",
+		"frame_size": Vector2(32, 32), "frame_count": 6, "scale": 2.2,
+		"idle_files": {
+			"down": "Idle/Chicken_front_Idle.png", "up": "Idle/Chicken_back_Idle.png",
+			"left_down": "Idle/Chicken_left_Idle.png", "left_up": "Idle/Chicken_left_Idle.png",
+			"right_down": "Idle/Chicken_right_Idle.png", "right_up": "Idle/Chicken_right_Idle.png",
+		},
+		"run_files": {
+			"down": "Walk/Chicken_front_Walk.png", "up": "Walk/Chicken_back_Walk.png",
+			"left_down": "Walk/Chicken_left_Walk.png", "left_up": "Walk/Chicken_left_Walk.png",
+			"right_down": "Walk/Chicken_right_Walk.png", "right_up": "Walk/Chicken_right_Walk.png",
+		},
+	},
 }
+const EGG_SCRIPT := preload("res://scenes/egg_projectile.gd")
 
 # Stats — se modifican con upgrades
 var max_hp: float = 100.0
@@ -211,6 +230,8 @@ var evolutions: Array[String] = []
 var _arrow_pierce: int = 0
 var _meteors_evolved: bool = false
 
+var took_damage: bool = false
+var _is_chicken: bool = false
 var active_skill: Dictionary = {}
 var _skill_cd: float = 0.0
 var _invuln_t: float = 0.0
@@ -330,7 +351,8 @@ func _ready() -> void:
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_load_axel_textures()
 	elif _is_ranged_skin:
-		_sprite.scale = Vector2.ONE * RANGED_SCALE
+		_sprite.scale = Vector2.ONE * float(RANGED_SKINS[skin_id].get("scale", RANGED_SCALE))
+		_is_chicken = skin_id == "chicken"
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_load_ranged_textures(skin_id)
 	else:
@@ -432,9 +454,9 @@ func _load_ranged_textures(skin_id: String) -> void:
 	var data: Dictionary = RANGED_SKINS[skin_id]
 	var base: String = data["base_path"]
 	for dir_key in data["idle_files"]:
-		_ranged_idle[dir_key] = _slice_sheet(base + data["idle_files"][dir_key], RANGED_FRAME_SIZE, RANGED_FRAME_COUNT)
+		_ranged_idle[dir_key] = _slice_sheet(base + data["idle_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
 	for dir_key in data["run_files"]:
-		_ranged_run[dir_key] = _slice_sheet(base + data["run_files"][dir_key], RANGED_FRAME_SIZE, RANGED_FRAME_COUNT)
+		_ranged_run[dir_key] = _slice_sheet(base + data["run_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
 
 ## AXEL sólo tiene 4 direcciones — el facing se resuelve por el eje
 ## dominante del vector en vez de los 8 pasos de _vec_to_dir().
@@ -596,7 +618,8 @@ func _physics_process(delta: float) -> void:
 			_sprite.texture = _swordman_run[_swordman_facing][_run_frame % SWORDMAN_RUN_FRAMES]
 		elif _is_ranged_skin:
 			_ranged_facing = _side_dir_key(input)
-			_sprite.texture = _ranged_run[_ranged_facing][_run_frame]
+			var run_frames: Array = _ranged_run[_ranged_facing]
+			_sprite.texture = run_frames[_run_frame % run_frames.size()]
 		else:
 			_sprite.texture = _run_textures[current_dir][_run_frame]
 	else:
@@ -685,6 +708,10 @@ func _fire_shot(to_target: Vector2, count: int) -> void:
 	for i in range(count):
 		var offset := (i - (count - 1) / 2.0) * AUTO_FIRE_SPREAD
 		var dir := to_target.rotated(offset)
+		# El pollo (personaje secreto) tira huevos en vez de flechas.
+		if _is_chicken:
+			_fire_egg(dir, 2.4 * damage_mult * (1.0 + ranged_power_level * 0.3) * (2.0 if charged and i == 0 else 1.0))
+			continue
 		var shot = SHOT_SCENE.instantiate()
 		get_tree().current_scene.add_child(shot)
 		shot.global_position = global_position + dir * 24.0
@@ -696,6 +723,21 @@ func _fire_shot(to_target: Vector2, count: int) -> void:
 		if _arrow_pierce > 0:
 			shot.pierce = _arrow_pierce
 			shot.source = "lluvia_flechas"
+
+func _fire_egg(dir: Vector2, dmg: float) -> void:
+	var egg := Area2D.new()
+	egg.set_script(EGG_SCRIPT)
+	egg.collision_layer = 0
+	egg.collision_mask = 2
+	var shape := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = 6.0
+	shape.shape = circle
+	egg.add_child(shape)
+	get_tree().current_scene.add_child(egg)
+	egg.global_position = global_position + dir * 14.0
+	egg.setup(dir, dmg)
+	egg.source = "huevos"
 
 func _spawn_meteor() -> void:
 	# Evolución "apocalipsis": 3 meteoros por tanda, más grandes y fuertes.
@@ -829,6 +871,7 @@ func _level_up() -> void:
 	# El próximo disparo sale cargado — el "premio" visual de subir de
 	# nivel, estilo buster cargado de Mega Man.
 	_charged_shot_pending = true
+	GameState.report_max("best_level", level)
 	emit_signal("leveled_up", level)
 
 func apply_upgrade(id: String) -> void:
@@ -894,6 +937,7 @@ func apply_upgrade(id: String) -> void:
 			GameState.add_run_currency(25)
 		"heal":
 			heal(max_hp * 0.3)
+	GameState.report_max("max_weapons", weapons_owned())
 	upgrades_changed.emit(build_summary())
 
 ## Crea el arma la primera vez (como hijo del player si sigue su
@@ -921,6 +965,8 @@ func take_damage(amount: float) -> void:
 	if hp <= 0.0: return
 	# Dash/voltereta/escudo: invulnerable mientras dura.
 	if _invuln_t > 0.0: return
+	## Para el logro "Intocable" (main.gd lo mira al empezar cada oleada).
+	took_damage = true
 	Audio.play_sfx("player_hurt", global_position, 0.1)
 	shake(3.0)
 	var remaining := amount
@@ -1189,7 +1235,7 @@ func _apply_idle(delta: float = 0.0) -> void:
 		_idle_time += delta
 		if _idle_time >= 1.0 / IDLE_ANIM_FPS:
 			_idle_time = 0.0
-			_idle_frame = (_idle_frame + 1) % RANGED_FRAME_COUNT
+			_idle_frame = (_idle_frame + 1) % _ranged_idle[_ranged_facing].size()
 		_sprite.texture = _ranged_idle[_ranged_facing][_idle_frame]
 	elif current_dir < _idle_textures.size():
 		_sprite.texture = _idle_textures[current_dir]

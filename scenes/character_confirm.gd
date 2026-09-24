@@ -17,6 +17,7 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 const STAT_COLOR := Color("57c767")
 ## La habilidad activa de cada héroe vive en player.gd (ACTIVE_SKILLS).
 const PLAYER_SCRIPT := preload("res://scenes/player.gd")
+const SELECT_SCRIPT := preload("res://scenes/character_select.gd")
 const STAT_MAX := 5
 
 @onready var _portrait_frame: PanelContainer = $Layout/Left/PortraitFrame
@@ -39,7 +40,7 @@ func _ready() -> void:
 		return
 
 	$Background.texture = load(BACKGROUND_TEXTURE)
-	_portrait.texture = load(data["portrait"])
+	_portrait.texture = SELECT_SCRIPT.portrait_texture(data)
 	_portrait_frame.add_theme_stylebox_override("panel", RpgTheme.slot_box(true, 12.0))
 	_panel.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(28.0, 24.0))
 

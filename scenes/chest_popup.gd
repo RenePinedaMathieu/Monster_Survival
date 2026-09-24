@@ -37,6 +37,7 @@ func _ready() -> void:
 	_ok.grab_focus()
 
 func open(player) -> void:
+	GameState.bump_stat("chests")
 	var extra: Array = []
 	var evo := Upgrades.next_evolution(player)
 	if evo != "":

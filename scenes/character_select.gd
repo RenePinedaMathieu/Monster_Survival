@@ -74,6 +74,20 @@ const CHARACTERS: Array[Dictionary] = [
 		"blurb": "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final.",
 		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
 	},
+	# Secreto: se desbloquea con el logro "Coleccionista" (las 7
+	# evoluciones). Mientras tanto se ve como silueta "???".
+	{
+		"id": "chicken",
+		"name": "POLLO",
+		"portrait": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
+		"portrait_region": Rect2(6, 9, 20, 20),
+		"idle_sheet": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
+		"idle_frames": 6,
+		"accent": Color("ffd24a"),
+		"role": "A DISTANCIA · SECRETO",
+		"blurb": "Nadie lo tomaba en serio. Tira huevos, esquiva aleteando y no le teme a nada.",
+		"stats": {"Daño": 2, "Velocidad": 5, "Alcance": 3, "Dificultad": 5},
+	},
 ]
 
 @onready var _title: Label = $Layout/Title
@@ -81,37 +95,24 @@ const CHARACTERS: Array[Dictionary] = [
 @onready var _back_button: Button = $BackButton
 @onready var _shop_button: Button = $ShopButton
 
-@onready var _card_roots: Array[Control] = [
-	$Layout/CardsRow/Card1, $Layout/CardsRow/Card2, $Layout/CardsRow/Card3, $Layout/CardsRow/Card4,
-]
-@onready var _frames: Array[Panel] = [
-	$Layout/CardsRow/Card1/Frame, $Layout/CardsRow/Card2/Frame, $Layout/CardsRow/Card3/Frame, $Layout/CardsRow/Card4/Frame,
-]
-@onready var _glows: Array[Panel] = [
-	$Layout/CardsRow/Card1/Glow, $Layout/CardsRow/Card2/Glow, $Layout/CardsRow/Card3/Glow, $Layout/CardsRow/Card4/Glow,
-]
-@onready var _tunnel_lines: Array[Control] = [
-	$Layout/CardsRow/Card1/Frame/PortraitBg/Lines, $Layout/CardsRow/Card2/Frame/PortraitBg/Lines, $Layout/CardsRow/Card3/Frame/PortraitBg/Lines, $Layout/CardsRow/Card4/Frame/PortraitBg/Lines,
-]
-@onready var _portraits: Array[TextureRect] = [
-	$Layout/CardsRow/Card1/Frame/Portrait, $Layout/CardsRow/Card2/Frame/Portrait, $Layout/CardsRow/Card3/Frame/Portrait, $Layout/CardsRow/Card4/Frame/Portrait,
-]
-@onready var _idle_previews: Array[TextureRect] = [
-	$Layout/CardsRow/Card1/Frame/IdlePreview, $Layout/CardsRow/Card2/Frame/IdlePreview, $Layout/CardsRow/Card3/Frame/IdlePreview, $Layout/CardsRow/Card4/Frame/IdlePreview,
-]
-@onready var _name_labels: Array[Label] = [
-	$Layout/CardsRow/Card1/Frame/NameLabel, $Layout/CardsRow/Card2/Frame/NameLabel, $Layout/CardsRow/Card3/Frame/NameLabel, $Layout/CardsRow/Card4/Frame/NameLabel,
-]
-@onready var _hit_buttons: Array[Button] = [
-	$Layout/CardsRow/Card1/HitButton, $Layout/CardsRow/Card2/HitButton, $Layout/CardsRow/Card3/HitButton, $Layout/CardsRow/Card4/HitButton,
-]
+## Una carta por personaje de CHARACTERS: la escena trae 4 y las que
+## falten (el secreto) se clonan de la última en _build_cards().
+var _card_roots: Array[Control] = []
+var _frames: Array[Panel] = []
+var _glows: Array[Panel] = []
+var _tunnel_lines: Array[Control] = []
+var _portraits: Array[TextureRect] = []
+var _idle_previews: Array[TextureRect] = []
+var _name_labels: Array[Label] = []
+var _hit_buttons: Array[Button] = []
+var _lock_hints: Array[Label] = []
 
 var _glow_styles: Array[StyleBoxFlat] = []
 var _idle_atlases: Array[AtlasTexture] = []
 var _idle_frame_widths: Array[float] = []
 var _idle_timers: Array[float] = []
 var _idle_frame_index: Array[int] = []
-var _was_active: Array[bool] = [false, false, false, false]
+var _was_active: Array[bool] = []
 ## Frame count del idle sheet por card. Se usa para animar el preview
 ## (algunos packs traen 8 frames, otros 12 — swordman).
 var _idle_frame_counts: Array[int] = []
@@ -140,6 +141,7 @@ func _ready() -> void:
 	_shop_button.mouse_exited.connect(UITheme.pulse.bind(_shop_button, 1.0, 0.08))
 	_shop_button.pressed.connect(_on_shop_pressed)
 
+	_build_cards()
 	for i in range(CHARACTERS.size()):
 		_setup_card(i)
 
@@ -156,17 +158,52 @@ func _ready() -> void:
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
 
+func _build_cards() -> void:
+	var row: GridContainer = $Layout/CardsRow
+	while row.get_child_count() < CHARACTERS.size():
+		row.add_child(row.get_child(row.get_child_count() - 1).duplicate())
+	for card in row.get_children():
+		_card_roots.append(card)
+		_frames.append(card.get_node("Frame"))
+		_glows.append(card.get_node("Glow"))
+		_tunnel_lines.append(card.get_node("Frame/PortraitBg/Lines"))
+		_portraits.append(card.get_node("Frame/Portrait"))
+		_idle_previews.append(card.get_node("Frame/IdlePreview"))
+		_name_labels.append(card.get_node("Frame/NameLabel"))
+		_hit_buttons.append(card.get_node("HitButton"))
+		_was_active.append(false)
+		# Texto del candado: qué logro desbloquea al personaje.
+		var hint := Label.new()
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hint.anchor_right = 1.0
+		hint.visible = false
+		card.get_node("Frame").add_child(hint)
+		_lock_hints.append(hint)
+
 ## Teléfono: grilla de 2x2 con cartas más angostas, título más chico y
 ## más abajo (arriba van VOLVER/TIENDA) y la ayuda de teclado se cambia
 ## por una de toque. PC: 4 en fila como siempre.
 func _apply_layout(compact: bool) -> void:
 	var grid: GridContainer = $Layout/CardsRow
-	grid.columns = 2 if compact else 4
-	grid.add_theme_constant_override("h_separation", 16 if compact else 46)
+	var n: int = _card_roots.size()
+	# PC: todas en una fila. Teléfono: 2 columnas con 4 cartas, 3 con 5.
+	grid.columns = (2 if n <= 4 else 3) if compact else n
+	grid.add_theme_constant_override("h_separation", 16 if compact else (46 if n <= 4 else 16))
+	var card_w: float = 250.0 if n <= 4 else 210.0
+	if compact:
+		card_w = 186.0 if n <= 4 else 124.0
 	# En vertical 2 filas de 400 no entran en la altura: cartas más bajas
 	# y el retrato/preview reubicados adentro (sus offsets son absolutos).
 	for i in range(_card_roots.size()):
-		_card_roots[i].custom_minimum_size = Vector2(186, 330) if compact else Vector2(250, 400)
+		_card_roots[i].custom_minimum_size = Vector2(card_w, 330.0 if compact else 400.0)
+		_name_labels[i].add_theme_font_size_override("font_size", 18 if compact and n > 4 else 24)
+		_lock_hints[i].offset_left = 10.0
+		_lock_hints[i].offset_right = -10.0
+		_lock_hints[i].offset_top = 240.0 if compact else 284.0
+		_lock_hints[i].offset_bottom = 318.0 if compact else 382.0
 		var portrait_bottom: float = 236.0 if compact else 276.0
 		_frames[i].get_node("PortraitBg").offset_bottom = portrait_bottom
 		_portraits[i].offset_bottom = portrait_bottom
@@ -206,9 +243,20 @@ func _setup_card(i: int) -> void:
 	# El túnel de neón no va con el estilo pergamino del resto de la UI
 	# — el retrato va sobre el fondo azul de los retratos del pack.
 	_tunnel_lines[i].visible = false
-	_portraits[i].texture = load(data["portrait"])
+	_portraits[i].texture = portrait_texture(data)
 	_name_labels[i].text = data["name"]
 	RpgTheme.style_light_label(_name_labels[i], 24)
+	# Bloqueado: silueta oscura + qué logro lo desbloquea. El secreto ni
+	# siquiera muestra el nombre.
+	if not GameState.is_character_unlocked(data["id"]):
+		_portraits[i].modulate = Color(0.05, 0.05, 0.08, 0.9)
+		_idle_previews[i].visible = false
+		if data["id"] == "chicken":
+			_name_labels[i].text = "???"
+		var hint: Label = _lock_hints[i]
+		hint.text = "BLOQUEADO\n" + GameState.unlock_hint_for_character(data["id"])
+		RpgTheme.style_ink_label(hint, 13, true)
+		hint.visible = true
 
 	var idle_tex: Texture2D = load(data["idle_sheet"])
 	var frame_count: int = data.get("idle_frames", DEFAULT_IDLE_FRAME_COUNT)
@@ -278,8 +326,27 @@ func _update_card_glow(i: int, active: bool) -> void:
 
 # ── Selección ────────────────────────────────────────────────────
 
+## Textura del retrato (con recorte si es un frame de sprite, el pollo).
+static func portrait_texture(data: Dictionary) -> Texture2D:
+	var tex: Texture2D = load(data["portrait"])
+	if data.has("portrait_region"):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = tex
+		atlas.region = data["portrait_region"]
+		return atlas
+	return tex
+
 func _on_card_selected(i: int) -> void:
 	if _confirmed:
+		return
+	if not GameState.is_character_unlocked(CHARACTERS[i]["id"]):
+		# Bloqueado: sacudón y nada más.
+		Audio.play_sfx("player_hurt")
+		var card := _card_roots[i]
+		var x0: float = card.position.x
+		var tw := create_tween()
+		for dx in [8.0, -8.0, 5.0, -5.0, 0.0]:
+			tw.tween_property(card, "position:x", x0 + dx, 0.04)
 		return
 	_confirmed = true
 	GameState.selected_character_id = CHARACTERS[i]["id"]

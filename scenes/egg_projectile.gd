@@ -15,6 +15,9 @@ var _velocity: Vector2 = Vector2.ZERO
 var _damage: float = 2.0
 var _age: float = 0.0
 var _golden: bool = false
+## Id del daño para las estadísticas (weapons.gd): el pollo acompañante
+## o el pollo jugable ("huevos").
+var source: String = "pollo"
 var _shell: Color = COLOR_SHELL
 var _shade: Color = COLOR_SHADE
 
@@ -49,7 +52,7 @@ func _draw() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.has_method("take_damage"):
-		body.take_damage(_damage, "gallina_dorada" if _golden else "pollo")
+		body.take_damage(_damage, "gallina_dorada" if _golden else source)
 		if _golden:
 			GameState.add_run_currency(1)
 		queue_free()
