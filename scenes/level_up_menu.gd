@@ -24,18 +24,34 @@ const Upgrades := preload("res://scenes/upgrades.gd")
 var _player: Node = null
 var _current_choices: Array = []
 
+var _reroll_button: Button
+
 func _ready() -> void:
 	add_to_group("modal")
 	$Center/Window.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(28.0, 26.0))
 	RpgTheme.style_header_title($Center/Window/VBox/Title, 24)
+	# "Suerte" del árbol de habilidades: una 4ª carta.
+	var row: Node = $Center/Window/VBox/HBox
+	for i in range(GameState.get_extra_cards()):
+		var extra: Button = row.get_child(row.get_child_count() - 1).duplicate()
+		extra.name = "Card%d" % (row.get_child_count() + 1)
+		row.add_child(extra)
 	for card in _cards():
 		RpgTheme.style_card_button(card, 16)
 		card.text = ""
 		_build_card_content(card)
 		card.mouse_entered.connect(UITheme.pulse.bind(card, 1.04, 0.08))
 		card.mouse_exited.connect(UITheme.pulse.bind(card, 1.0, 0.08))
-	for i in range(3):
+	for i in range(_cards().size()):
 		_cards()[i].pressed.connect(_pick.bind(i))
+	# "Relanzar" del árbol: vuelve a sortear las cartas (N veces por run).
+	_reroll_button = Button.new()
+	_reroll_button.custom_minimum_size = Vector2(220, 46)
+	_reroll_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_reroll_button.visible = false
+	RpgTheme.style_button(_reroll_button, 16)
+	_reroll_button.pressed.connect(_on_reroll)
+	$Center/Window/VBox.add_child(_reroll_button)
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
 
@@ -111,25 +127,34 @@ func _apply_layout(compact: bool) -> void:
 			text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 func _cards() -> Array:
-	return [
-		$Center/Window/VBox/HBox/Card1,
-		$Center/Window/VBox/HBox/Card2,
-		$Center/Window/VBox/HBox/Card3,
-	]
+	return $Center/Window/VBox/HBox.get_children()
 
 func show_for(player: Node) -> void:
 	_player = player
-	_current_choices = _random_three()
+	_fill_cards()
+	Audio.play_sfx("level_up")
+	get_tree().paused = true
+
+func _fill_cards() -> void:
 	var cards := _cards()
-	for i in range(3):
+	_current_choices = _random_choices(cards.size())
+	var left: int = _player.rerolls_left if _player != null and "rerolls_left" in _player else 0
+	_reroll_button.visible = left > 0
+	_reroll_button.text = "RELANZAR (%d)" % left
+	for i in range(cards.size()):
 		var u = _current_choices[i]
 		var text: Node = cards[i].get_node("Content/Text")
 		text.get_node("Title").text = _title_for(u)
 		text.get_node("Desc").text = Upgrades.desc_for(_player, u["id"])
 		var icon: TextureRect = cards[i].get_node("Content/Icon")
 		icon.texture = load(u["icon"]) if u.has("icon") and ResourceLoader.exists(u["icon"]) else null
-	Audio.play_sfx("level_up")
-	get_tree().paused = true
+
+func _on_reroll() -> void:
+	if _player == null or _player.rerolls_left <= 0:
+		return
+	_player.rerolls_left -= 1
+	Audio.play_sfx("ui_click")
+	_fill_cards()
 
 func _pick(idx: int) -> void:
 	var u = _current_choices[idx]
@@ -144,6 +169,7 @@ func _pick(idx: int) -> void:
 	queue_free()
 
 ## Arma las 3 opciones:
+## (3, o 4 con "Suerte"):
 ##   1. Sólo cartas que hoy harían algo (upgrades.gd is_eligible: tope
 ##      de nivel, casillas libres, poderes comprados en la tienda).
 ##   2. Si hay un arma para desbloquear todavía no tomada, GARANTIZA
@@ -151,7 +177,7 @@ func _pick(idx: int) -> void:
 ##      entera sin ver "espadas"/"meteoritos" por mala suerte.
 ##   3. El resto al azar; si no alcanzan (todo al máximo), relleno con
 ##      monedas / poción.
-func _random_three() -> Array:
+func _random_choices(n: int) -> Array:
 	var eligible: Array = Upgrades.CARDS.filter(
 		func(c): return _player == null or Upgrades.is_eligible(_player, c["id"])
 	)
@@ -163,13 +189,13 @@ func _random_three() -> Array:
 		eligible.erase(forced)
 	eligible.shuffle()
 	for c in eligible:
-		if chosen.size() >= 3:
+		if chosen.size() >= n:
 			break
 		chosen.append(c)
 	for filler in ["coins", "heal"]:
-		if chosen.size() < 3:
+		if chosen.size() < n:
 			chosen.append(Upgrades.card(filler))
-	while chosen.size() < 3:
+	while chosen.size() < n:
 		chosen.append(Upgrades.card("coins"))
 	chosen.shuffle()   # que la carta forzada no quede siempre en Card1
 	return chosen

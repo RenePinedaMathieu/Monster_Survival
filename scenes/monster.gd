@@ -829,10 +829,16 @@ func _on_body_exited(_body: Node) -> void:
 ## después de matar no cuenta.
 func take_damage(amount: float, source: String = "otro") -> void:
 	if _dead: return
+	# Árbol de habilidades: "Cazador" (jefes/élites) y "Crítico" (x2).
+	if is_elite or is_boss():
+		amount *= 1.0 + GameState.run_hunter_bonus
+	var crit: bool = GameState.run_crit_chance > 0.0 and randf() < GameState.run_crit_chance
+	if crit:
+		amount *= 2.0
 	GameState.record_damage(source, minf(amount, hp))
 	_last_hit_source = source
 	hp -= amount
-	DAMAGE_NUMBER.spawn(DAMAGE_NUMBER, get_tree().current_scene, global_position, amount)
+	DAMAGE_NUMBER.spawn(DAMAGE_NUMBER, get_tree().current_scene, global_position, amount, crit)
 	emit_signal("hp_changed", max(0.0, hp), max_hp)
 	_sprite.modulate = Color(2.0, 2.0, 2.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)

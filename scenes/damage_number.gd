@@ -11,6 +11,7 @@ const MAX_ALIVE := 36
 
 const COLOR_NORMAL := Color("fff3d6")
 const COLOR_BIG := Color("ffd24a")
+const COLOR_CRIT := Color("ff6a3d")
 const COLOR_OUTLINE := Color("2a1510")
 
 static var _alive: int = 0
@@ -22,13 +23,16 @@ var _start: Vector2
 
 ## Crea el número colgado de `parent` en `pos`. Golpes grandes (>= 20)
 ## salen dorados y un poco más grandes.
-static func spawn(script: Script, parent: Node, pos: Vector2, amount: float) -> void:
-	if _alive >= MAX_ALIVE or parent == null:
+static func spawn(script: Script, parent: Node, pos: Vector2, amount: float, crit: bool = false) -> void:
+	# Los críticos siempre se muestran, aunque haya muchos números.
+	if (_alive >= MAX_ALIVE and not crit) or parent == null:
 		return
 	var n = script.new()
-	n._text = String.num(amount, 0 if amount >= 10.0 else 1)
-	n._color = COLOR_BIG if amount >= 20.0 else COLOR_NORMAL
-	if amount >= 20.0:
+	n._text = String.num(amount, 0 if amount >= 10.0 else 1) + ("!" if crit else "")
+	n._color = COLOR_CRIT if crit else (COLOR_BIG if amount >= 20.0 else COLOR_NORMAL)
+	if crit:
+		n.scale = Vector2(1.5, 1.5)
+	elif amount >= 20.0:
 		n.scale = Vector2(1.3, 1.3)
 	parent.add_child(n)
 	n.global_position = pos + Vector2(randf_range(-6.0, 6.0), -14.0)

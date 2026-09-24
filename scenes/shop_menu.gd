@@ -2,8 +2,9 @@ extends Control
 
 ## Tienda — todo se compra con la moneda banqueada de runs anteriores
 ## (GameState.total_currency). Tres pestañas:
-##   MEJORAS       bonos permanentes por nivel (GameState.SHOP_ITEMS),
-##                 player.gd los aplica al arrancar cada run.
+##   MEJORAS       árbol de habilidades permanentes en 3 ramas
+##                 (GameState.SKILL_TREE); player.gd aplica los bonos
+##                 al arrancar cada run.
 ##   PODERES       compra única que habilita que la carta del poder
 ##                 salga en los level-ups (GameState.SHOP_POWERS).
 ##   ACOMPAÑANTES  mascotas que te siguen y atacan; se compran una vez
@@ -14,26 +15,17 @@ extends Control
 ## pergamino/verde, ver rpg_theme.gd.
 
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
-const PixelIconScript := preload("res://scenes/pixel_icon.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 const COIN_TEXTURE := "res://assets/ui/rpg/coin.png"
 
 enum Tab { UPGRADES, POWERS, COMPANIONS }
 
 const TAB_HINTS: Dictionary = {
-	Tab.UPGRADES: "Bonos permanentes: se aplican al arrancar cada partida.",
+	Tab.UPGRADES: "Árbol de habilidades permanentes: cada rama se abre mejorando el nodo anterior.",
 	Tab.POWERS: "Compra única: el poder empieza a salir como carta al subir de nivel durante las oleadas.",
 	Tab.COMPANIONS: "Te acompañan en cada partida y atacan solos. Podés llevar uno a la vez.",
 }
 
-## Identidad visual — puramente cosmética de esta pantalla, por eso no
-## vive en GameState (que sólo tiene datos de balance).
-const ITEM_STYLE: Dictionary = {
-	"armor":  {"icon": "shield", "color": Color("6fa8dc")},
-	"max_hp": {"icon": "heart",  "color": Color("e0645a")},
-	"damage": {"icon": "fist",   "color": Color("e0a94c")},
-	"regen":  {"icon": "spark",  "color": Color("6bcf6b")},
-}
 ## Mismos íconos que las cartas de level-up que desbloquean.
 const POWER_ICONS: Dictionary = {
 	"meteors": "res://assets/ui/skill_icons/skill_22.png",
@@ -138,34 +130,120 @@ func _rebuild() -> void:
 	for child in _grid.get_children():
 		_grid.remove_child(child)
 		child.queue_free()
+	# El árbol usa una columna por rama; las otras pestañas, 2 tarjetas
+	# por fila (1 en teléfono).
+	if _tab == Tab.UPGRADES:
+		_grid.columns = 1 if _compact else GameState.SKILL_BRANCHES.size()
+	else:
+		_grid.columns = 1 if _compact else 2
 	match _tab:
 		Tab.UPGRADES: _build_upgrades()
 		Tab.POWERS: _build_powers()
 		Tab.COMPANIONS: _build_companions()
 
+## Árbol de habilidades: una columna por rama (ATAQUE / DEFENSA /
+## UTILIDAD) con sus nodos en orden, unidos por un conector que se
+## pinta del color de la rama cuando el siguiente ya está disponible.
 func _build_upgrades() -> void:
-	for id in GameState.SHOP_ITEMS:
-		var item: Dictionary = GameState.SHOP_ITEMS[id]
-		var style: Dictionary = ITEM_STYLE.get(id, {"icon": "spark", "color": RpgTheme.COLOR_INK_GOOD})
-		var card := _make_card(_pixel_icon(style), item["name"], item["desc"])
-		var level: int = GameState.get_shop_level(id)
+	for branch in GameState.SKILL_BRANCHES:
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override("separation", 0)
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_grid.add_child(col)
+		var header := Label.new()
+		header.text = branch["name"]
+		header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		RpgTheme.style_ink_label(header, 17, true)
+		header.add_theme_color_override("font_color", Color(branch["color"]).darkened(0.25))
+		col.add_child(header)
+		var ids: Array = GameState.SKILL_TREE.keys().filter(
+			func(k): return GameState.SKILL_TREE[k]["branch"] == branch["id"])
+		ids.sort_custom(func(a, b): return GameState.SKILL_TREE[a]["tier"] < GameState.SKILL_TREE[b]["tier"])
+		for i in range(ids.size()):
+			if i > 0:
+				col.add_child(_connector(GameState.is_skill_available(ids[i]), branch["color"]))
+			col.add_child(_skill_node(ids[i], branch["color"]))
 
-		var bar := ProgressBar.new()
-		bar.max_value = item["max_level"]
-		bar.value = level
-		bar.show_percentage = false
-		bar.custom_minimum_size = Vector2(100 if _compact else 140, 12)
-		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		RpgTheme.style_level_bar(bar, style["color"])
-		card["status"].add_child(bar)
-		card["status"].add_child(_status_label("%d / %d" % [level, item["max_level"]], false))
+func _connector(active: bool, color: Color) -> Control:
+	var holder := CenterContainer.new()
+	holder.custom_minimum_size = Vector2(0, 14)
+	var line := ColorRect.new()
+	line.custom_minimum_size = Vector2(6, 14)
+	line.color = color if active else Color("70492a")
+	holder.add_child(line)
+	return holder
 
-		var button: Button = card["button"]
-		if level >= item["max_level"]:
-			_set_plain(button, "MÁXIMO", false)
-		else:
-			_set_price(button, GameState.get_shop_cost(id), GameState.can_afford(id))
-		button.pressed.connect(_on_buy_upgrade.bind(id))
+func _skill_node(id: String, color: Color) -> Control:
+	var item: Dictionary = GameState.SKILL_TREE[id]
+	var level: int = GameState.get_shop_level(id)
+	var available: bool = GameState.is_skill_available(id)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", RpgTheme.slot_box(false, 10.0))
+	if not available:
+		card.modulate = Color(0.75, 0.72, 0.7)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	card.add_child(vbox)
+
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	vbox.add_child(top)
+	var badge := PanelContainer.new()
+	badge.add_theme_stylebox_override("panel", RpgTheme.slot_box(true, 4.0))
+	badge.custom_minimum_size = Vector2(52, 52)
+	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(badge)
+	var path: String = item["icon"]
+	var icon := _texture_icon(load(path), not path.contains("/rpg/"))
+	icon.custom_minimum_size = Vector2(42, 42)
+	badge.add_child(icon)
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 1)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(info)
+	var name_label := Label.new()
+	name_label.text = item["name"]
+	RpgTheme.style_ink_label(name_label, 16, true)
+	info.add_child(name_label)
+	var desc := Label.new()
+	desc.text = item["desc"]
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	RpgTheme.style_ink_label(desc, 12, false, true)
+	info.add_child(desc)
+
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", 8)
+	vbox.add_child(bottom)
+	var bar := ProgressBar.new()
+	bar.max_value = item["max_level"]
+	bar.value = level
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(60, 12)
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	RpgTheme.style_level_bar(bar, color)
+	bottom.add_child(bar)
+	bottom.add_child(_status_label("%d/%d" % [level, item["max_level"]], false))
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(128, 40)
+	RpgTheme.style_button(button, 13)
+	button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
+	bottom.add_child(button)
+	if level >= item["max_level"]:
+		_set_plain(button, "MÁXIMO", false)
+	elif not available:
+		_set_plain(button, "BLOQUEADO", false)
+		var req: Dictionary = GameState.SKILL_TREE[item["requires"]]
+		var req_label := Label.new()
+		req_label.text = "Requiere %s nivel %d" % [req["name"], item["req_level"]]
+		RpgTheme.style_ink_label(req_label, 12, true)
+		info.add_child(req_label)
+	else:
+		_set_price(button, GameState.get_shop_cost(id), GameState.can_afford(id))
+		button.text = str(GameState.get_shop_cost(id))
+	button.pressed.connect(_on_buy_upgrade.bind(id))
+	return card
 
 func _build_powers() -> void:
 	for id in GameState.SHOP_POWERS:
@@ -263,18 +341,6 @@ func _make_card(icon: Control, title: String, desc: String) -> Dictionary:
 		hbox.add_child(button)
 
 	return {"status": status, "button": button}
-
-func _pixel_icon(style: Dictionary) -> Control:
-	# Sin tipo explícito: el script se pega en runtime (ver pixel_icon.gd)
-	# y tiparlo como Control rompe al asignarle icon_id/color.
-	var icon = Control.new()
-	icon.set_script(PixelIconScript)
-	icon.custom_minimum_size = Vector2(PixelIconScript.BOX, PixelIconScript.BOX)
-	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.icon_id = style["icon"]
-	icon.color = style["color"]
-	return icon
 
 ## smooth: los skill_icons son ilustraciones de 256px achicadas — con
 ## filtro nearest (el default del proyecto) quedan con serrucho.

@@ -45,28 +45,50 @@ signal currency_changed(amount: int)
 
 const SAVE_PATH := "user://save.cfg"
 
-## Cada item: nombre, descripción, costo base, cuánto sube el costo
-## por nivel comprado, y tope de niveles. Los bonos reales que dan
-## están en get_bonus_*() más abajo — player.gd los lee al arrancar
-## cada run.
-const SHOP_ITEMS: Dictionary = {
-	"armor": {
-		"name": "Armadura", "desc": "+8 de defensa — absorbe daño antes que la vida",
-		"base_cost": 20, "cost_step": 15, "max_level": 10,
-	},
-	"max_hp": {
-		"name": "Vitalidad", "desc": "+15 vida máxima inicial",
-		"base_cost": 15, "cost_step": 10, "max_level": 10,
-	},
-	"damage": {
-		"name": "Fuerza", "desc": "+5% daño inicial",
-		"base_cost": 18, "cost_step": 12, "max_level": 10,
-	},
-	"regen": {
-		"name": "Vigor", "desc": "+0.3 HP/s de regeneración inicial",
-		"base_cost": 25, "cost_step": 18, "max_level": 5,
-	},
+## Árbol de habilidades permanentes (pestaña MEJORAS de la tienda): 3
+## ramas con nodos en orden — cada nodo pide su anterior a cierto nivel
+## ("requires"/"req_level"). Cada nivel sale "base_cost + nivel *
+## cost_step" monedas. Los bonos que dan están en get_bonus_*() más
+## abajo; player.gd los aplica al arrancar cada run. Los ids de las 4
+## mejoras originales (armor/max_hp/damage/regen) se mantienen para no
+## perder lo ya comprado.
+const SKILL_ICON := "res://assets/ui/skill_icons/"
+const SKILL_TREE: Dictionary = {
+	# ── Ataque ──
+	"damage":    {"branch": "attack", "tier": 1, "name": "Fuerza", "desc": "+5% daño",
+		"base_cost": 18, "cost_step": 12, "max_level": 10, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_96.png"},
+	"atk_speed_t": {"branch": "attack", "tier": 2, "name": "Celeridad", "desc": "+4% velocidad de ataque",
+		"base_cost": 40, "cost_step": 25, "max_level": 5, "requires": "damage", "req_level": 3, "icon": SKILL_ICON + "skill_99.png"},
+	"crit":      {"branch": "attack", "tier": 3, "name": "Crítico", "desc": "+3% de golpe crítico (doble daño)",
+		"base_cost": 60, "cost_step": 40, "max_level": 5, "requires": "atk_speed_t", "req_level": 2, "icon": SKILL_ICON + "skill_88.png"},
+	"hunter":    {"branch": "attack", "tier": 4, "name": "Cazador", "desc": "+10% daño a jefes y élites",
+		"base_cost": 80, "cost_step": 60, "max_level": 3, "requires": "crit", "req_level": 3, "icon": SKILL_ICON + "skill_38.png"},
+	# ── Defensa ──
+	"max_hp":    {"branch": "defense", "tier": 1, "name": "Vitalidad", "desc": "+15 vida máxima",
+		"base_cost": 15, "cost_step": 10, "max_level": 10, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_83.png"},
+	"armor":     {"branch": "defense", "tier": 2, "name": "Armadura", "desc": "+8 de defensa (absorbe daño antes que la vida)",
+		"base_cost": 20, "cost_step": 15, "max_level": 10, "requires": "max_hp", "req_level": 3, "icon": SKILL_ICON + "skill_76.png"},
+	"regen":     {"branch": "defense", "tier": 3, "name": "Vigor", "desc": "+0.3 vida por segundo",
+		"base_cost": 25, "cost_step": 18, "max_level": 5, "requires": "armor", "req_level": 3, "icon": SKILL_ICON + "skill_79.png"},
+	"revive":    {"branch": "defense", "tier": 4, "name": "Segunda vida", "desc": "Revives una vez por partida con media vida",
+		"base_cost": 400, "cost_step": 0, "max_level": 1, "requires": "regen", "req_level": 3, "icon": SKILL_ICON + "skill_44.png"},
+	# ── Utilidad ──
+	"magnet_t":  {"branch": "utility", "tier": 1, "name": "Imán", "desc": "+10% radio para juntar experiencia",
+		"base_cost": 25, "cost_step": 15, "max_level": 5, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_30.png"},
+	"greed":     {"branch": "utility", "tier": 2, "name": "Codicia", "desc": "+10% monedas",
+		"base_cost": 50, "cost_step": 40, "max_level": 5, "requires": "magnet_t", "req_level": 2, "icon": "res://assets/ui/rpg/coin.png"},
+	"wisdom":    {"branch": "utility", "tier": 3, "name": "Sabiduría", "desc": "+8% experiencia",
+		"base_cost": 60, "cost_step": 45, "max_level": 5, "requires": "greed", "req_level": 2, "icon": SKILL_ICON + "skill_72.png"},
+	"reroll":    {"branch": "utility", "tier": 4, "name": "Relanzar", "desc": "+1 relanzamiento de cartas por partida",
+		"base_cost": 120, "cost_step": 100, "max_level": 3, "requires": "wisdom", "req_level": 2, "icon": SKILL_ICON + "skill_41.png"},
+	"luck":      {"branch": "utility", "tier": 5, "name": "Suerte", "desc": "Una 4ª carta en cada subida de nivel",
+		"base_cost": 500, "cost_step": 0, "max_level": 1, "requires": "reroll", "req_level": 1, "icon": SKILL_ICON + "skill_7.png"},
 }
+const SKILL_BRANCHES: Array = [
+	{"id": "attack", "name": "ATAQUE", "color": Color("d74427")},
+	{"id": "defense", "name": "DEFENSA", "color": Color("37a0df")},
+	{"id": "utility", "name": "UTILIDAD", "color": Color("44a13b")},
+]
 
 ## Poderes: compra ÚNICA en la tienda. No dan nada directo — habilitan
 ## que la carta del poder pueda salir en los level-ups durante las
@@ -333,6 +355,7 @@ var run_stats: Dictionary = {}
 func start_run() -> void:
 	run_currency = 0
 	run_new_achievements.clear()
+	_compute_run_bonuses()
 	run_stats = {"damage": {}, "kills": {}, "total_kills": 0, "bosses": 0}
 	currency_changed.emit(0)
 
@@ -360,6 +383,12 @@ func record_kill(source: String, is_boss: bool, is_elite: bool = false) -> void:
 ## Se llama por cada monstruo que muere durante la run (ver
 ## monster.gd). No toca total_currency todavía.
 func add_run_currency(amount: int) -> void:
+	# "Codicia" del árbol: multiplica la moneda; se acumulan las
+	# fracciones para que +10% sobre monstruos de 1 moneda también cuente.
+	_coin_frac += amount * run_coin_mult
+	var whole: int = floori(_coin_frac)
+	_coin_frac -= whole
+	amount = whole
 	run_currency += amount
 	if not run_stats.is_empty():
 		run_stats["coins"] = run_stats.get("coins", 0) + amount
@@ -381,12 +410,17 @@ func get_shop_level(id: String) -> int:
 	return shop_levels.get(id, 0)
 
 func get_shop_cost(id: String) -> int:
-	var item: Dictionary = SHOP_ITEMS[id]
+	var item: Dictionary = SKILL_TREE[id]
 	return item["base_cost"] + get_shop_level(id) * item["cost_step"]
 
+## ¿Está desbloqueado el nodo? (su anterior en la rama al nivel pedido)
+func is_skill_available(id: String) -> bool:
+	var item: Dictionary = SKILL_TREE[id]
+	return item["requires"] == "" or get_shop_level(item["requires"]) >= item["req_level"]
+
 func can_afford(id: String) -> bool:
-	var item: Dictionary = SHOP_ITEMS[id]
-	if get_shop_level(id) >= item["max_level"]:
+	var item: Dictionary = SKILL_TREE[id]
+	if get_shop_level(id) >= item["max_level"] or not is_skill_available(id):
 		return false
 	return total_currency >= get_shop_cost(id)
 
@@ -463,3 +497,33 @@ func get_bonus_max_defense() -> float:
 
 func get_bonus_regen() -> float:
 	return get_shop_level("regen") * 0.3
+
+func get_bonus_atk_speed() -> float:
+	return get_shop_level("atk_speed_t") * 0.04
+
+func get_bonus_magnet() -> float:
+	return get_shop_level("magnet_t") * 0.10
+
+func get_revives() -> int:
+	return get_shop_level("revive")
+
+func get_rerolls() -> int:
+	return get_shop_level("reroll")
+
+func get_extra_cards() -> int:
+	return get_shop_level("luck")
+
+## Valores fijos durante la partida (se calculan en start_run): los
+## usa monster.gd en cada golpe, así no recalcula nada por impacto.
+var run_crit_chance: float = 0.0
+var run_hunter_bonus: float = 0.0
+var run_coin_mult: float = 1.0
+var run_xp_mult: float = 1.0
+var _coin_frac: float = 0.0
+
+func _compute_run_bonuses() -> void:
+	run_crit_chance = get_shop_level("crit") * 0.03
+	run_hunter_bonus = get_shop_level("hunter") * 0.10
+	run_coin_mult = 1.0 + get_shop_level("greed") * 0.10
+	run_xp_mult = 1.0 + get_shop_level("wisdom") * 0.08
+	_coin_frac = 0.0

@@ -232,6 +232,12 @@ var _meteors_evolved: bool = false
 
 var took_damage: bool = false
 var _is_chicken: bool = false
+var _xp_frac: float = 0.0
+## "Segunda vida" del árbol de habilidades.
+var _revives_left: int = 0
+## "Relanzar" del árbol: cuántas veces se pueden re-sortear las cartas
+## del level-up en esta partida (lo gasta level_up_menu.gd).
+var rerolls_left: int = 0
 var active_skill: Dictionary = {}
 var _skill_cd: float = 0.0
 var _invuln_t: float = 0.0
@@ -332,6 +338,10 @@ func _ready() -> void:
 	max_hp += GameState.get_bonus_max_hp()
 	damage_mult += GameState.get_bonus_damage_mult()
 	hp_regen_per_sec += GameState.get_bonus_regen()
+	atk_speed_mult += GameState.get_bonus_atk_speed()
+	magnet_radius *= 1.0 + GameState.get_bonus_magnet()
+	_revives_left = GameState.get_revives()
+	rerolls_left = GameState.get_rerolls()
 	max_defense = GameState.get_bonus_max_defense()
 	defense = max_defense
 	hp = max_hp
@@ -854,6 +864,11 @@ func _magnet_orbs() -> void:
 # ── XP + Level ──────────────────────────────────────────────────
 
 func gain_xp(amount: int) -> void:
+	# "Sabiduría" del árbol: más experiencia; las fracciones se acumulan
+	# (orbes de 1 XP con +8% también suman con el tiempo).
+	_xp_frac += amount * GameState.run_xp_mult
+	amount = floori(_xp_frac)
+	_xp_frac -= amount
 	xp += amount
 	while xp >= xp_to_next:
 		xp -= xp_to_next
@@ -984,8 +999,26 @@ func take_damage(amount: float) -> void:
 		_sprite.modulate = Color(1.6, 0.5, 0.5)
 		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.2)
 	if hp <= 0.0:
+		if _revives_left > 0:
+			_revive()
+			return
 		Audio.play_sfx("player_death", global_position)
 		emit_signal("died")
+
+## "Segunda vida" (árbol de habilidades): vuelve con media vida, un
+## instante invulnerable y una onda que aleja a los que lo rodeaban.
+func _revive() -> void:
+	_revives_left -= 1
+	hp = max_hp * 0.5
+	emit_signal("hp_changed", hp, max_hp)
+	_invuln_t = 2.5
+	_shield_fx_t = 0.0001
+	for m in get_tree().get_nodes_in_group("monster"):
+		if is_instance_valid(m) and global_position.distance_to(m.global_position) < SHIELD_RADIUS * 1.5:
+			if m.has_method("knockback"):
+				m.knockback((m.global_position - global_position).normalized(), 520.0)
+	shake(8.0)
+	Audio.play_sfx("level_up", global_position)
 
 func heal(amount: float) -> void:
 	hp = min(max_hp, hp + amount)
