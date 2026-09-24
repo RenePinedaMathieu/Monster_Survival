@@ -151,8 +151,12 @@ func _start_next_wave() -> void:
 	# Cuando la intensidad sube (wave 5+), pasamos a track más agresivo
 	elif _current_wave == 5:
 		Audio.play_music("gameplay_intense", 1500)
+	# Élites (sueltan cofre): uno cada 3 oleadas, dos desde la 12.
+	var elite_count: int = 0
+	if _current_wave % 3 == 0:
+		elite_count = 2 if _current_wave >= 12 else 1
 	for i in range(count):
-		_spawn_monster(false)
+		_spawn_monster(false, i < elite_count)
 	for i in range(boss_count):
 		_spawn_monster(true)
 	_monsters_alive = count + boss_count
@@ -172,7 +176,7 @@ func _pick_spawn_position() -> Vector2:
 	# spawnear algo cerca del player que trabarnos sin spawnear nada.
 	return _player.position + Vector2(SPAWN_INNER, 0)
 
-func _spawn_monster(is_boss: bool) -> void:
+func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 	var m = MONSTER_SCENE.instantiate()
 	m.position = _pick_spawn_position()
 	if is_boss:
@@ -200,6 +204,8 @@ func _spawn_monster(is_boss: bool) -> void:
 		else:
 			pool = m.KIND_IDS
 		m.set_kind(pool[randi() % pool.size()])
+		if is_elite:
+			m.make_elite()
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
 	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
 	# sin necesidad de estar en el radio de detección. Los remote

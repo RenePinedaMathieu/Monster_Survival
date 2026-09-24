@@ -22,6 +22,13 @@ enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN }
 
 const XP_ORB_SCENE := preload("res://scenes/xp_orb.tscn")
 const DAMAGE_NUMBER := preload("res://scenes/damage_number.gd")
+const CHEST_SCRIPT := preload("res://scenes/chest.gd")
+
+## Élite: versión dorada y más grande de un monstruo común. Mucha más
+## vida, más recompensa y suelta un cofre (igual que los jefes).
+const ELITE_HP_MULT := 7.0
+const ELITE_SCALE := 1.35
+const ELITE_COLOR := Color(1.0, 0.82, 0.3)
 
 ## Bajado de 30/90 (y de nuevo de 20/62) — seguía sintiéndose
 ## demasiado rápido apenas arranca la wave 1, antes de que el
@@ -329,6 +336,8 @@ var _state_timer := 0.0
 var _did_hit_this_strike := false
 var _dead := false
 var _last_hit_source := "otro"
+var is_elite := false
+var _elite_t := 0.0
 
 var _base_sprite_scale := Vector2.ONE
 var _kind_id := ""
@@ -439,6 +448,10 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		_update_animation(delta)
 		return
+
+	if is_elite:
+		_elite_t += delta
+		queue_redraw()
 
 	match state:
 		State.IDLE_WANDER: _tick_wander(delta)
@@ -641,6 +654,26 @@ func take_damage(amount: float, source: String = "otro") -> void:
 func is_boss() -> bool:
 	return _kind_id in BOSS_KIND_IDS
 
+## Convierte al monstruo en élite — llamar después de set_kind() (que
+## pisa max_hp/coin_reward con los del KIND_DATA).
+func make_elite() -> void:
+	is_elite = true
+	max_hp *= ELITE_HP_MULT
+	hp = max_hp
+	coin_reward *= 4
+	xp_reward *= 5
+	_base_sprite_scale *= ELITE_SCALE
+	_sprite.scale = _base_sprite_scale
+	_sprite.self_modulate = ELITE_COLOR
+
+## Aro dorado que late a los pies del élite (se dibuja debajo del sprite).
+func _draw() -> void:
+	if not is_elite or _dead:
+		return
+	var r: float = 15.0 * _base_sprite_scale.x
+	var a: float = 0.55 + 0.3 * sin(_elite_t * 6.0)
+	draw_arc(Vector2(0, 6), r, 0.0, TAU, 28, Color(ELITE_COLOR, a), 2.0, false)
+
 ## A diferencia de antes (queue_free inmediato), ahora deja correr la
 ## animación de death antes de desaparecer — pero el signal/XP/wave
 ## count se resuelven al toque, no hay delay en la progresión de wave.
@@ -653,6 +686,9 @@ func _die() -> void:
 	_drop_xp_orb()
 	GameState.add_run_currency(coin_reward)
 	GameState.record_kill(_last_hit_source, is_boss())
+	if is_elite or is_boss():
+		_drop_chest()
+	queue_redraw()
 	# Boss suena distinto — más grave y grande. Cualquier demon (tier)
 	# cuenta como boss.
 	if _kind_id in BOSS_KIND_IDS:
@@ -667,6 +703,13 @@ func _die() -> void:
 		return
 	_sprite.modulate = Color.WHITE
 	_set_animation("death", DEATH_FPS)
+
+## Diferido por el mismo motivo que el orbe de XP (ver _drop_xp_orb).
+func _drop_chest() -> void:
+	var chest := Area2D.new()
+	chest.set_script(CHEST_SCRIPT)
+	chest.global_position = global_position
+	get_tree().current_scene.add_child.call_deferred(chest)
 
 func _drop_xp_orb() -> void:
 	var orb = XP_ORB_SCENE.instantiate()

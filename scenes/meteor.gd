@@ -9,11 +9,13 @@ extends Node2D
 ## entero es _draw()) y le setea `damage` antes de soltarlo al mundo.
 
 const FALL_TIME := 0.7
-const IMPACT_RADIUS := 70.0
 const SHOCKWAVE_TIME := 0.35
 const PIXEL := 4.0
 
 var damage: float = 16.0
+## La evolución "apocalipsis" agranda el radio (ver player._spawn_meteor).
+var impact_radius: float = 70.0
+var source: String = "meteoros"
 var _t := 0.0
 var _phase := "falling"   # falling → shockwave → (queue_free)
 var _shock_t := 0.0
@@ -39,9 +41,9 @@ func _impact() -> void:
 	_phase = "shockwave"
 	for m in get_tree().get_nodes_in_group("monster"):
 		if not is_instance_valid(m): continue
-		if global_position.distance_to(m.global_position) <= IMPACT_RADIUS:
+		if global_position.distance_to(m.global_position) <= impact_radius:
 			if m.has_method("take_damage"):
-				m.take_damage(damage, "meteoros")
+				m.take_damage(damage, source)
 	for p in get_tree().get_nodes_in_group("player"):
 		if p.has_method("shake") and global_position.distance_to(p.global_position) < 260.0:
 			p.shake(2.0)
@@ -51,7 +53,7 @@ func _draw() -> void:
 		"falling":
 			var t: float = _t / FALL_TIME
 			# Sombra en el piso, creciendo — telegraph de dónde va a pegar.
-			var shadow_r: float = lerp(6.0, IMPACT_RADIUS * 0.55, t)
+			var shadow_r: float = lerp(6.0, impact_radius * 0.55, t)
 			draw_circle(Vector2.ZERO, shadow_r, Color(0, 0, 0, 0.35 * t))
 			# La roca cae desde arriba de la pantalla.
 			var fall_h: float = lerp(-260.0, 0.0, ease(t, 2.0))
@@ -59,7 +61,7 @@ func _draw() -> void:
 		"shockwave":
 			var t: float = _shock_t / SHOCKWAVE_TIME
 			_draw_rock(Vector2.ZERO, 1.0 - t)
-			var ring_r: float = lerp(6.0, IMPACT_RADIUS, t)
+			var ring_r: float = lerp(6.0, impact_radius, t)
 			var alpha: float = 1.0 - t
 			draw_arc(Vector2.ZERO, ring_r, 0.0, TAU, 32, Color(1.0, 0.7, 0.2, alpha), PIXEL, false)
 			draw_arc(Vector2.ZERO, ring_r * 0.7, 0.0, TAU, 32, Color(1.0, 0.9, 0.5, alpha * 0.8), PIXEL * 0.7, false)

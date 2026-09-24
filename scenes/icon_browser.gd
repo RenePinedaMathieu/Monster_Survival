@@ -8,9 +8,9 @@ extends Node2D
 ## en verde. Los NO asignados salen en gris.
 ##
 ## Cuando veas un icono mal asignado a una carta, decime el ID del
-## icono nuevo (ej. "damage → 55") y lo cambio en level_up_menu.gd.
+## icono nuevo (ej. "damage → 55") y lo cambio en upgrades.gd.
 
-const LEVEL_UP_MENU := preload("res://scenes/level_up_menu.gd")
+const Upgrades := preload("res://scenes/upgrades.gd")
 
 const COLS := 10
 const ICON_TILE := 96      # 32 * 3
@@ -19,7 +19,7 @@ const CELL_H := 130         # extra room for labels
 func _ready() -> void:
 	# Invertir mapping: path → carta_id
 	var path_to_upgrade: Dictionary = {}
-	for u in LEVEL_UP_MENU.UPGRADES:
+	for u in Upgrades.CARDS:
 		if u.has("icon"):
 			path_to_upgrade[u["icon"]] = u["id"]
 

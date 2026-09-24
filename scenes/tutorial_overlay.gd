@@ -86,7 +86,7 @@ const BUBBLE_TARGET_MARGIN := 20.0
 @onready var _spot_right: ColorRect = $Spotlight/Right
 @onready var _spot_guard: ColorRect = $Spotlight/Guard
 @onready var _highlight: Panel = $Spotlight/Highlight
-@onready var _arrow: Label = $Spotlight/Arrow
+@onready var _arrow: TextureRect = $Spotlight/Arrow
 
 var _page: int = 0
 var _highlight_style: StyleBoxFlat
@@ -121,10 +121,11 @@ func _ready() -> void:
 	create_tween().set_loops().tween_property(_highlight_style, "border_color:a", 0.35, 0.5) \
 		.from(1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	_arrow.add_theme_font_size_override("font_size", 26)
-	_arrow.add_theme_color_override("font_color", COLOR_HIGHLIGHT)
-	_arrow.add_theme_color_override("font_outline_color", RpgTheme.COLOR_LIGHT_OUTLINE)
-	_arrow.add_theme_constant_override("outline_size", 4)
+	# Flecha del pack de UI (la fuente por defecto no trae "▶" y en web
+	# no hay fuentes del sistema de respaldo: se veía un cuadrado).
+	_arrow.texture = load("res://assets/ui/rpg/arrow_right.png")
+	_arrow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_arrow.modulate = Color(1.4, 1.6, 1.0)
 
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)

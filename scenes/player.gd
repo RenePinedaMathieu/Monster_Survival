@@ -15,14 +15,18 @@ signal defense_changed(current: float, max_defense: float)
 signal xp_changed(current: int, needed: int, level: int)
 signal leveled_up(new_level: int)
 signal died
-## Cada vez que se aplica una carta de level-up — el HUD arma con esto
-## la barra de mejoras activas.
-signal upgrades_changed(upgrade_log: Array)
+## Cada vez que cambia la build (carta o evolución) — lleva
+## build_summary(), con lo que el HUD arma la barra de mejoras activas.
+signal upgrades_changed(summary: Array)
 
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
 const FLYING_SWORDS_RIG_SCRIPT := preload("res://scenes/flying_swords_rig.gd")
 const COMPANION_SCRIPT := preload("res://scenes/companion.gd")
+const Upgrades := preload("res://scenes/upgrades.gd")
+const AURA_SCRIPT := preload("res://scenes/aura_weapon.gd")
+const AXE_SCRIPT := preload("res://scenes/axe_weapon.gd")
+const LIGHTNING_SCRIPT := preload("res://scenes/lightning_weapon.gd")
 
 const BASE_SCALE := 0.5
 const BASE_SPEED := 175.0             # bajado de 220 — se sentía muy rápido/patinoso
@@ -169,6 +173,21 @@ var _swords_rig = null
 ## Acompañante equipado en la tienda (companion.gd) — sin tipo por el
 ## mismo motivo que _swords_rig.
 var _companion = null
+var _companion_id: String = ""
+## Armas nuevas (aura/hacha/rayo) — mismo patrón que _swords_rig.
+var _aura = null
+var _axes = null
+var _lightning = null
+
+## Build de la run (ver upgrades.gd): nivel de cada arma y pasiva que
+## se tiene, y evoluciones conseguidas. Las casillas (máximo de armas/
+## pasivas) y las evoluciones se calculan a partir de esto.
+var weapon_levels: Dictionary = {}
+var passive_levels: Dictionary = {}
+var evolutions: Array[String] = []
+## Evolución "lluvia de flechas": cuántos enemigos atraviesa cada flecha.
+var _arrow_pierce: int = 0
+var _meteors_evolved: bool = false
 
 # Armadura (compra permanente en la tienda) — una barra de defensa
 # que absorbe daño ANTES que la vida. No regenera durante la run.
@@ -305,6 +324,7 @@ func spawn_companion(id: String) -> void:
 	_companion.set_script(COMPANION_SCRIPT)
 	get_tree().current_scene.add_child(_companion)
 	_companion.setup(self, id)
+	_companion_id = id
 
 ## Los sheets son un archivo por dirección con N frames en fila, a
 ## diferencia del sprite "Man" que trae un archivo por frame. Se
@@ -638,22 +658,30 @@ func _fire_shot(to_target: Vector2, count: int) -> void:
 		if shot.has_method("set_damage"):
 			shot.set_damage(shot.DAMAGE * damage_mult * (1.0 + ranged_power_level * 0.3))
 		shot.setup(dir, charged and i == 0, ranged_power_level)
+		if _arrow_pierce > 0:
+			shot.pierce = _arrow_pierce
+			shot.source = "lluvia_flechas"
 
 func _spawn_meteor() -> void:
-	var monsters := get_tree().get_nodes_in_group("monster")
-	var target_pos: Vector2
-	if monsters.is_empty():
-		target_pos = global_position + Vector2(randf_range(-200.0, 200.0), randf_range(-200.0, 200.0))
-	else:
-		var m = monsters[randi() % monsters.size()]
-		target_pos = m.global_position + Vector2(randf_range(-40.0, 40.0), randf_range(-40.0, 40.0))
-	# Sin tipo explícito (mismo motivo que _swords_rig más arriba):
-	# .damage no existe en Node2D, sólo en el script que le pegamos.
-	var meteor = Node2D.new()
-	meteor.set_script(METEOR_SCRIPT)
-	get_tree().current_scene.add_child(meteor)
-	meteor.global_position = target_pos
-	meteor.damage = METEOR_DAMAGE * damage_mult
+	# Evolución "apocalipsis": 3 meteoros por tanda, más grandes y fuertes.
+	for i in range(3 if _meteors_evolved else 1):
+		var monsters := get_tree().get_nodes_in_group("monster")
+		var target_pos: Vector2
+		if monsters.is_empty():
+			target_pos = global_position + Vector2(randf_range(-200.0, 200.0), randf_range(-200.0, 200.0))
+		else:
+			var m = monsters[randi() % monsters.size()]
+			target_pos = m.global_position + Vector2(randf_range(-40.0, 40.0), randf_range(-40.0, 40.0))
+		# Sin tipo explícito (mismo motivo que _swords_rig más arriba):
+		# .damage no existe en Node2D, sólo en el script que le pegamos.
+		var meteor = Node2D.new()
+		meteor.set_script(METEOR_SCRIPT)
+		get_tree().current_scene.add_child(meteor)
+		meteor.global_position = target_pos
+		meteor.damage = METEOR_DAMAGE * damage_mult * (1.5 if _meteors_evolved else 1.0)
+		if _meteors_evolved:
+			meteor.impact_radius = 105.0
+			meteor.source = "apocalipsis"
 
 # ── AXEL: ataque melee ────────────────────────────────────────────
 
@@ -770,6 +798,8 @@ func _level_up() -> void:
 
 func apply_upgrade(id: String) -> void:
 	upgrade_log.append(id)
+	if Upgrades.PASSIVES.has(id):
+		passive_levels[id] = passive_level(id) + 1
 	match id:
 		"damage":     damage_mult *= 1.25
 		"atk_speed":  atk_speed_mult *= 1.20
@@ -785,8 +815,11 @@ func apply_upgrade(id: String) -> void:
 		"ranged_bonus":
 			ranged_power_level = 1
 			ranged_bonus_shots = max(ranged_bonus_shots, 1)
+			weapon_levels["disparo"] = ranged_power_level
 		# Camino "más fuerte": sube potencia + color del disparo.
-		"ranged_power": ranged_power_level = min(RANGED_MAX_POWER_LEVEL, ranged_power_level + 1)
+		"ranged_power":
+			ranged_power_level = min(RANGED_MAX_POWER_LEVEL, ranged_power_level + 1)
+			weapon_levels["disparo"] = ranged_power_level
 		# Camino "más cantidad": suma otro disparo a la ráfaga.
 		"ranged_count": ranged_bonus_shots = min(RANGED_MAX_BONUS_SHOTS, ranged_bonus_shots + 1)
 		"level_damage": _damage_scales_with_level = true
@@ -795,6 +828,7 @@ func apply_upgrade(id: String) -> void:
 				_has_meteors = true
 			else:
 				_meteor_interval = max(2.0, _meteor_interval - 0.7)
+			weapon_levels["meteoros"] = mini(Upgrades.MAX_LEVEL, weapon_level("meteoros") + 1)
 		# Desbloqueo — crea el rig la primera vez.
 		"flying_swords":
 			if _swords_rig == null:
@@ -802,15 +836,46 @@ func apply_upgrade(id: String) -> void:
 				_swords_rig.set_script(FLYING_SWORDS_RIG_SCRIPT)
 				get_tree().current_scene.add_child(_swords_rig)
 				_swords_rig.setup(self)
+			weapon_levels["espadas"] = _swords_rig.level
 		# Camino "más fuerte": sube nivel/color/daño de cada espada.
 		"flying_swords_power":
 			if _swords_rig != null:
 				_swords_rig.buff()
+				weapon_levels["espadas"] = _swords_rig.level
 		# Camino "más cantidad": más espadas atacan a la vez por ciclo.
 		"flying_swords_count":
 			if _swords_rig != null:
 				_swords_rig.buff_count()
-	upgrades_changed.emit(upgrade_log)
+		# Armas nuevas: la primera carta la crea, las siguientes le suben
+		# el nivel.
+		"aura":
+			_aura = _level_weapon(_aura, AURA_SCRIPT, "aura", true)
+		"hacha":
+			_axes = _level_weapon(_axes, AXE_SCRIPT, "hacha", false)
+		"rayo":
+			_lightning = _level_weapon(_lightning, LIGHTNING_SCRIPT, "rayo", false)
+		# Relleno cuando ya no queda nada por mejorar.
+		"coins":
+			GameState.add_run_currency(25)
+		"heal":
+			heal(max_hp * 0.3)
+	upgrades_changed.emit(build_summary())
+
+## Crea el arma la primera vez (como hijo del player si sigue su
+## posición — el aura — o de la escena si no) o le sube el nivel.
+func _level_weapon(node, script: Script, id: String, attach_to_player: bool):
+	var lvl: int = mini(Upgrades.MAX_LEVEL, weapon_level(id) + 1)
+	weapon_levels[id] = lvl
+	if node == null:
+		node = Node2D.new()
+		node.set_script(script)
+		if attach_to_player:
+			add_child(node)
+		else:
+			get_tree().current_scene.add_child(node)
+		node.setup(self)
+	node.set_level(lvl)
+	return node
 
 # ── HP ──────────────────────────────────────────────────────────
 
@@ -871,6 +936,69 @@ func sword_level() -> int:
 
 func has_meteors() -> bool:
 	return _has_meteors
+
+# ── Build: casillas, niveles y evoluciones (ver upgrades.gd) ────────
+
+func weapon_level(id: String) -> int:
+	return weapon_levels.get(id, 0)
+
+func passive_level(id: String) -> int:
+	return passive_levels.get(id, 0)
+
+func weapons_owned() -> int:
+	return weapon_levels.size()
+
+func passives_owned() -> int:
+	return passive_levels.size()
+
+func has_evolution(id: String) -> bool:
+	return id in evolutions
+
+func has_companion(id: String) -> bool:
+	return _companion != null and is_instance_valid(_companion) and _companion_id == id
+
+## Aplica una evolución (la da el cofre, ver chest_popup.gd).
+func evolve(evo_id: String) -> void:
+	if evo_id in evolutions:
+		return
+	evolutions.append(evo_id)
+	match evo_id:
+		"lluvia_flechas":
+			_arrow_pierce = 3
+			ranged_bonus_shots += 2
+		"tormenta_espadas":
+			if _swords_rig != null:
+				_swords_rig.evolve()
+		"apocalipsis":
+			_meteors_evolved = true
+		"santuario":
+			if _aura != null:
+				_aura.evolve()
+		"torbellino":
+			if _axes != null:
+				_axes.evolve()
+		"tormenta_electrica":
+			if _lightning != null:
+				_lightning.evolve()
+		"gallina_dorada":
+			if _companion != null and is_instance_valid(_companion):
+				_companion.evolve()
+	upgrades_changed.emit(build_summary())
+
+## Casillas para la barra de mejoras del HUD: primero armas (con el
+## ícono de su evolución si evolucionó), después pasivas.
+func build_summary() -> Array:
+	var out: Array = []
+	for w in weapon_levels:
+		var evo := Upgrades.evolution_of(self, w)
+		var icon: String = Upgrades.EVOLUTIONS[evo]["icon"] if evo != "" \
+			else Upgrades.card(Upgrades.WEAPONS[w]["unlock"]).get("icon", "")
+		out.append({"icon": icon, "level": weapon_levels[w], "evolved": evo != ""})
+	for p in passive_levels:
+		out.append({"icon": Upgrades.card(p).get("icon", ""), "level": passive_levels[p], "evolved": false})
+	if has_evolution("gallina_dorada"):
+		out.append({"icon": Upgrades.EVOLUTIONS["gallina_dorada"]["icon"], "level": 0, "evolved": true})
+	return out
 
 ## Primer frame del idle mirando a cámara — el HUD lo usa de retrato.
 ## Para el swordman refleja el tier actual (evoluciona con el nivel).

@@ -35,6 +35,12 @@ const SLOT_OFFSETS: Array = [
 const FORMATION_LERP := 10.0   # qué tan rápido "alcanzan" su lugar en la V
 
 var player = null   # sin tipo: ver nota en player.gd sobre set_script
+## Evolución "Tormenta de espadas": en vez de la V, las espadas giran
+## en círculo alrededor del player y cortan lo que tocan al pasar.
+const ORBIT_RADIUS := 58.0
+const ORBIT_SPEED := 2.6
+var _orbit: bool = false
+var _orbit_angle: float = 0.0
 var _slots: Array = []          # cada elemento: blade o null
 var _regen_timers: Array = []
 var _attack_cd: float = 0.6
@@ -69,6 +75,12 @@ func buff() -> void:
 func buff_count() -> void:
 	attacks_per_cycle = min(MAX_ATTACKS_PER_CYCLE, attacks_per_cycle + 1)
 
+func evolve() -> void:
+	_orbit = true
+	for blade in _slots:
+		if blade != null and is_instance_valid(blade):
+			blade.set_orbit(true)
+
 func _spawn_blade(i: int) -> void:
 	var blade = Area2D.new()
 	blade.set_script(BLADE_SCRIPT)
@@ -84,6 +96,8 @@ func _spawn_blade(i: int) -> void:
 	blade.set_level(level)
 	blade.consumed.connect(_on_blade_consumed.bind(i))
 	blade.global_position = player.global_position + SLOT_OFFSETS[i].rotated(_facing.angle() + PI)
+	if _orbit:
+		blade.set_orbit(true)
 	_slots[i] = blade
 
 func _on_blade_consumed(i: int) -> void:
@@ -97,16 +111,26 @@ func _process(delta: float) -> void:
 	if player.velocity.length() > 5.0:
 		_facing = player.velocity.normalized()
 	var behind_angle := _facing.angle() + PI
+	_orbit_angle += ORBIT_SPEED * delta
 
 	for i in range(MAX_SWORDS):
 		var blade = _slots[i]
 		if blade != null and is_instance_valid(blade):
 			if blade.state == BLADE_SCRIPT.State.FORMATION:
-				var target: Vector2 = player.global_position + SLOT_OFFSETS[i].rotated(behind_angle)
-				blade.global_position = blade.global_position.lerp(target, FORMATION_LERP * delta)
-				blade.rotation = behind_angle
+				if _orbit:
+					var a: float = _orbit_angle + TAU * i / MAX_SWORDS
+					var target_o: Vector2 = player.global_position + Vector2(cos(a), sin(a)) * ORBIT_RADIUS
+					blade.global_position = blade.global_position.lerp(target_o, FORMATION_LERP * 2.0 * delta)
+					# Tangente al círculo: la hoja "corta" en el sentido del giro
+					# (el sprite apunta a rotation - PI en formación, ver
+					# SWORD_ROT_OFFSET en flying_sword.gd).
+					blade.rotation = a + PI * 1.5
+				else:
+					var target: Vector2 = player.global_position + SLOT_OFFSETS[i].rotated(behind_angle)
+					blade.global_position = blade.global_position.lerp(target, FORMATION_LERP * delta)
+					blade.rotation = behind_angle
 		else:
-			_regen_timers[i] -= delta
+			_regen_timers[i] -= delta * (2.0 if _orbit else 1.0)
 			if _regen_timers[i] <= 0.0:
 				_spawn_blade(i)
 

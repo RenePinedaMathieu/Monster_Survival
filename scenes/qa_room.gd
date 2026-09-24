@@ -25,6 +25,8 @@ const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const MONSTER_SCENE := preload("res://scenes/monster.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
+const Upgrades := preload("res://scenes/upgrades.gd")
+const CHEST_SCRIPT := preload("res://scenes/chest.gd")
 
 const SPAWN_KEYS: Dictionary = {
 	KEY_1: "rat",
@@ -72,9 +74,13 @@ func _style_panels() -> void:
 	_touch_panel.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 9.0))
 	$UI/HelpBg.color = Color(0.227, 0.157, 0.114, 0.85)
 	RpgTheme.style_light_label(_help_label, 12)
+	$UI/TouchPanel/Content.add_theme_constant_override("separation", 4)
 	for node in _touch_panel.find_children("*", "", true, false):
 		if node is Button:
-			RpgTheme.style_button(node, 14)
+			RpgTheme.style_button(node, 13)
+			# Bajitos: con todos los botones de prueba el panel no entraba
+			# en 720 de alto.
+			node.custom_minimum_size.y = 29.0
 		elif node is Label:
 			RpgTheme.style_light_label(node, 12)
 
@@ -104,6 +110,12 @@ func _wire_touch_buttons() -> void:
 	root.get_node("Unlocks/MeteorsBtn").pressed.connect(_unlock.bind("meteors"))
 	root.get_node("Unlocks/ChickenBtn").pressed.connect(_player.spawn_companion.bind("chicken"))
 	root.get_node("Unlocks/CoinsBtn").pressed.connect(GameState.grant_currency.bind(500))
+	root.get_node("Unlocks/AuraBtn").pressed.connect(_unlock.bind("aura"))
+	root.get_node("Unlocks/AxeBtn").pressed.connect(_unlock.bind("hacha"))
+	root.get_node("Unlocks/BoltBtn").pressed.connect(_unlock.bind("rayo"))
+	root.get_node("Unlocks/EliteBtn").pressed.connect(_spawn_elite)
+	root.get_node("Unlocks/ChestBtn").pressed.connect(_spawn_chest)
+	root.get_node("Unlocks/MaxBtn").pressed.connect(_max_weapons)
 
 	root.get_node("HP/HealBtn").pressed.connect(func(): _player.heal(10.0))
 	root.get_node("HP/DamageBtn").pressed.connect(func(): _player.take_damage(10.0))
@@ -133,6 +145,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_unlock("meteors")
 	elif key == KEY_C:
 		_player.spawn_companion("chicken")
+	elif key == KEY_V:
+		_spawn_chest()
+	elif key == KEY_B:
+		_spawn_elite()
+	elif key == KEY_N:
+		_max_weapons()
 	elif key == KEY_G:
 		GameState.grant_currency(500)
 	elif key == KEY_K:
@@ -152,6 +170,32 @@ func _trigger_level_up() -> void:
 func _unlock(id: String) -> void:
 	if _player.has_method("apply_upgrade"):
 		_player.apply_upgrade(id)
+
+func _spawn_elite() -> void:
+	_spawn_monster("lizardman", false)
+	var ms := _monsters_container.get_children()
+	if not ms.is_empty():
+		ms[-1].make_elite()
+
+func _spawn_chest() -> void:
+	var chest := Area2D.new()
+	chest.set_script(CHEST_SCRIPT)
+	add_child(chest)
+	chest.global_position = _player.global_position + Vector2(60, 0)
+
+## Sube al máximo las armas que tengas y te da la pasiva compañera de
+## cada una — así el próximo cofre ya evoluciona.
+func _max_weapons() -> void:
+	for w in Upgrades.WEAPONS:
+		var guard := 10
+		while _player.weapon_level(w) > 0 and _player.weapon_level(w) < Upgrades.MAX_LEVEL and guard > 0:
+			_player.apply_upgrade(Upgrades.WEAPONS[w]["level"])
+			guard -= 1
+	for evo in Upgrades.EVOLUTIONS:
+		var e: Dictionary = Upgrades.EVOLUTIONS[evo]
+		var owned: bool = _player.has_companion("chicken") if e["weapon"] == "pollo" else _player.weapon_level(e["weapon"]) > 0
+		if owned and _player.passive_level(e["passive"]) == 0:
+			_player.apply_upgrade(e["passive"])
 
 func _kill_all() -> void:
 	for m in get_tree().get_nodes_in_group("monster"):
@@ -181,6 +225,7 @@ Teclado:
   1..6  spawn · Shift+1..3  boss
   F/R/M  unlock skills · K  matar todos
   C  pollo · G  +500 monedas
+  V  cofre · B  élite · N  armas al máximo
   +/-  ±10 hp · Esc  volver
 
 Móvil: joystick izq. + panel dcha."""

@@ -77,6 +77,18 @@ const SHOP_POWERS: Dictionary = {
 		"name": "Espadas voladoras", "cost": 80,
 		"desc": "Desbloquea la carta: 5 espadas te escoltan y atacan solas",
 	},
+	"aura": {
+		"name": "Aura sagrada", "cost": 100,
+		"desc": "Desbloquea la carta: un aura que quema a los enemigos cercanos",
+	},
+	"hacha": {
+		"name": "Hacha giratoria", "cost": 150,
+		"desc": "Desbloquea la carta: hachas que van y vuelven atravesando todo",
+	},
+	"rayo": {
+		"name": "Rayo en cadena", "cost": 200,
+		"desc": "Desbloquea la carta: un rayo que salta entre enemigos",
+	},
 }
 
 ## Acompañantes: se compran una vez y se lleva UNO equipado por run
@@ -98,6 +110,9 @@ var shop_levels: Dictionary = {}   # id -> nivel comprado (int), default 0
 var unlocked_powers: Array = []
 var owned_companions: Array = []
 var equipped_companion: String = ""
+## Evoluciones que el jugador ya consiguió alguna vez — a partir de ahí
+## las cartas muestran la pista "• Evoluciona en ..." (upgrades.gd).
+var discovered_evolutions: Array = []
 
 func _ready() -> void:
 	_load()
@@ -113,6 +128,7 @@ func _load() -> void:
 		unlocked_powers = cfg.get_value("progress", "unlocked_powers", [])
 		owned_companions = cfg.get_value("progress", "owned_companions", [])
 		equipped_companion = cfg.get_value("progress", "equipped_companion", "")
+		discovered_evolutions = cfg.get_value("progress", "discovered_evolutions", [])
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
@@ -124,6 +140,7 @@ func _save() -> void:
 	cfg.set_value("progress", "unlocked_powers", unlocked_powers)
 	cfg.set_value("progress", "owned_companions", owned_companions)
 	cfg.set_value("progress", "equipped_companion", equipped_companion)
+	cfg.set_value("progress", "discovered_evolutions", discovered_evolutions)
 	cfg.save(SAVE_PATH)
 
 ## Se llama cuando termina una run (player muerto). Actualiza los
@@ -225,6 +242,19 @@ func buy_power(id: String) -> bool:
 		return false
 	total_currency -= cost
 	unlocked_powers.append(id)
+	_save()
+	return true
+
+# ── Evoluciones ──────────────────────────────────────────────────
+
+func is_evolution_discovered(id: String) -> bool:
+	return id in discovered_evolutions
+
+## Devuelve true si es la primera vez que se consigue.
+func discover_evolution(id: String) -> bool:
+	if id in discovered_evolutions:
+		return false
+	discovered_evolutions.append(id)
 	_save()
 	return true
 

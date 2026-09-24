@@ -15,71 +15,23 @@ const RpgTheme := preload("res://scenes/rpg_theme.gd")
 
 signal upgrade_chosen(id: String)
 
-# Cada upgrade: id, título, descripción corta, icon.
-# icon es opcional — apunta a un PNG de assets/ui/weapon_icons/ (32x32
-# craftpix). Los números elegidos son placeholders semi-lógicos (ej.
-# damage → icon_01 asumiendo que es una espada). Cuando probemos y
-# algún icon no coincida con la carta lo cambiamos acá.
-#
-# "Disparo a distancia" y "espadas voladoras" son primero un
-# desbloqueo y después se RAMIFICAN en dos caminos independientes
-# que el jugador elige por separado en cada level-up:
-#   _power  → más fuerte / más nivel / más efecto visual
-#   _count  → más cantidad (más disparos por ráfaga / más espadas
-#             atacando a la vez)
-## Todas las 15 cartas de level-up usan skill_icons (256x256 fantasy).
-## Los weapon_icons se usan aparte para los sprites in-game (flecha
-## para proyectiles disparados, espada para flying swords orbitando).
-const ICON_BASE := "res://assets/ui/skill_icons/"
-const UPGRADES: Array = [
-	{ "id": "damage",       "title": "+25% DAÑO",         "desc": "El disparo pega más",
-		"icon": ICON_BASE + "skill_96.png" },
-	{ "id": "atk_speed",    "title": "+20% ATK SPEED",    "desc": "Auto-disparo más rápido",
-		"icon": ICON_BASE + "skill_99.png" },
-	{ "id": "move_speed",   "title": "+12% MOVE SPEED",   "desc": "Corres más rápido",
-		"icon": ICON_BASE + "skill_80.png" },
-	{ "id": "max_hp",       "title": "+25% MAX HP",       "desc": "Aguantas más golpes",
-		"icon": ICON_BASE + "skill_83.png" },
-	{ "id": "hp_regen",     "title": "+1 HP/S",           "desc": "Regen pasivo",
-		"icon": ICON_BASE + "skill_79.png" },
-	{ "id": "magnet",       "title": "+40% MAGNET",       "desc": "Absorbes XP desde más lejos",
-		"icon": ICON_BASE + "skill_30.png" },
-	{ "id": "multishot",    "title": "+1 PROYECTIL",      "desc": "Un disparo extra por ráfaga (hasta 4)",
-		"icon": ICON_BASE + "skill_63.png" },
-	{ "id": "ranged_bonus", "title": "DISPARO A DISTANCIA", "desc": "Desbloqueas un disparo automático en tu ataque normal",
-		"icon": ICON_BASE + "skill_55.png" },
-	{ "id": "ranged_power", "title": "DISPARO A DISTANCIA", "desc": "Más fuerte y más brillante",
-		"icon": ICON_BASE + "skill_67.png" },
-	{ "id": "ranged_count", "title": "DISPARO A DISTANCIA", "desc": "Sumas otro disparo a la ráfaga",
-		"icon": ICON_BASE + "skill_63.png" },
-	{ "id": "level_damage", "title": "INSTINTO ASESINO",  "desc": "+10% de daño automático en cada nivel futuro",
-		"icon": ICON_BASE + "skill_53.png" },
-	{ "id": "meteors",      "title": "LLUVIA DE METEOROS", "desc": "Meteoritos caen solos cerca de los enemigos",
-		"icon": ICON_BASE + "skill_22.png" },
-	{ "id": "flying_swords",       "title": "ESPADAS VOLADORAS", "desc": "5 espadas te rodean y atacan solas",
-		"icon": ICON_BASE + "skill_5.png" },
-	{ "id": "flying_swords_power", "title": "ESPADAS VOLADORAS", "desc": "Más fuertes y más brillantes",
-		"icon": ICON_BASE + "skill_65.png" },
-	{ "id": "flying_swords_count", "title": "ESPADAS VOLADORAS", "desc": "Más espadas atacan a la vez",
-		"icon": ICON_BASE + "skill_65.png" },
-]
+const Upgrades := preload("res://scenes/upgrades.gd")
 
-## Cartas que "desbloquean" una mecánica nueva — mientras no las
-## tengamos todavía, se prioriza que aparezcan entre las 3 opciones
-## en vez de dejarlo librado al azar puro.
-const UNLOCK_IDS := ["ranged_bonus", "flying_swords", "meteors"]
+## Las cartas, sus íconos y las reglas de qué puede salir (casillas de
+## armas/pasivas, niveles máximos, poderes de la tienda) viven en
+## upgrades.gd — este menú sólo arma las 3 opciones y las muestra.
 
 var _player: Node = null
 var _current_choices: Array = []
 
 func _ready() -> void:
+	add_to_group("modal")
 	$Center/Window.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(28.0, 26.0))
 	RpgTheme.style_header_title($Center/Window/VBox/Title, 24)
 	for card in _cards():
 		RpgTheme.style_card_button(card, 16)
-		# Los skill_icons son ilustraciones de 256px achicadas a 96 — con
-		# el filtro nearest del proyecto quedan con serrucho.
-		card.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		card.text = ""
+		_build_card_content(card)
 		card.mouse_entered.connect(UITheme.pulse.bind(card, 1.04, 0.08))
 		card.mouse_exited.connect(UITheme.pulse.bind(card, 1.0, 0.08))
 	for i in range(3):
@@ -87,29 +39,76 @@ func _ready() -> void:
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
 
+## El botón sólo pone el fondo/hover/click; el contenido es un layout
+## propio (ícono + título + descripción). Con el ícono y el texto del
+## propio Button, un texto largo se montaba encima del ícono.
+func _build_card_content(card: Button) -> void:
+	var box := BoxContainer.new()
+	box.name = "Content"
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = 14.0
+	box.offset_top = 14.0
+	box.offset_right = -14.0
+	box.offset_bottom = -14.0
+	box.add_theme_constant_override("separation", 10)
+	card.add_child(box)
+
+	var icon := TextureRect.new()
+	icon.name = "Icon"
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# Los skill_icons son ilustraciones de 256px achicadas — con el
+	# filtro nearest del proyecto quedan con serrucho.
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	box.add_child(icon)
+
+	var text := VBoxContainer.new()
+	text.name = "Text"
+	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_theme_constant_override("separation", 4)
+	box.add_child(text)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	RpgTheme.style_ink_label(title, 16, true)
+	text.add_child(title)
+
+	var desc := Label.new()
+	desc.name = "Desc"
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	RpgTheme.style_ink_label(desc, 14, false, true)
+	text.add_child(desc)
+
 ## Teléfono: las 3 cartas apiladas, cada una con el ícono a la
 ## izquierda y el texto al lado. PC: 3 cartas en fila, ícono arriba.
-## icon_max_width acota el ícono — sin eso se expandía a todo el botón
-## y tapaba el texto.
 func _apply_layout(compact: bool) -> void:
 	var vp := Screen.view_size()
 	($Center/Window/VBox/HBox as BoxContainer).vertical = compact
 	for card in _cards():
 		var b: Button = card
-		b.expand_icon = true
+		var box: BoxContainer = b.get_node("Content")
+		var icon: TextureRect = box.get_node("Icon")
+		var text: VBoxContainer = box.get_node("Text")
+		box.vertical = not compact
+		box.alignment = BoxContainer.ALIGNMENT_BEGIN if compact else BoxContainer.ALIGNMENT_CENTER
+		text.alignment = BoxContainer.ALIGNMENT_CENTER
+		var align := HORIZONTAL_ALIGNMENT_LEFT if compact else HORIZONTAL_ALIGNMENT_CENTER
+		for l in [text.get_node("Title"), text.get_node("Desc")]:
+			(l as Label).horizontal_alignment = align
 		if compact:
-			b.custom_minimum_size = Vector2(vp.x - 90.0, 104.0)
-			b.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
-			b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			b.add_theme_constant_override("icon_max_width", 68)
-			b.add_theme_constant_override("h_separation", 14)
+			b.custom_minimum_size = Vector2(vp.x - 90.0, 110.0)
+			icon.custom_minimum_size = Vector2(64, 64)
+			icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		else:
-			b.custom_minimum_size = Vector2(260.0, 220.0)
-			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-			b.alignment = HORIZONTAL_ALIGNMENT_CENTER
-			b.add_theme_constant_override("icon_max_width", 96)
+			b.custom_minimum_size = Vector2(260.0, 250.0)
+			icon.custom_minimum_size = Vector2(84, 84)
+			icon.size_flags_vertical = Control.SIZE_FILL
+			text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 func _cards() -> Array:
 	return [
@@ -124,13 +123,11 @@ func show_for(player: Node) -> void:
 	var cards := _cards()
 	for i in range(3):
 		var u = _current_choices[i]
-		var sep := "\n" if Screen.compact else "\n\n"
-		cards[i].text = _title_for(u) + sep + u.desc
-		# Alineación y tamaño del ícono los fija _apply_layout.
-		if u.has("icon") and ResourceLoader.exists(u["icon"]):
-			cards[i].icon = load(u["icon"])
-		else:
-			cards[i].icon = null
+		var text: Node = cards[i].get_node("Content/Text")
+		text.get_node("Title").text = _title_for(u)
+		text.get_node("Desc").text = Upgrades.desc_for(_player, u["id"])
+		var icon: TextureRect = cards[i].get_node("Content/Icon")
+		icon.texture = load(u["icon"]) if u.has("icon") and ResourceLoader.exists(u["icon"]) else null
 	Audio.play_sfx("level_up")
 	get_tree().paused = true
 
@@ -140,90 +137,42 @@ func _pick(idx: int) -> void:
 		_player.apply_upgrade(u.id)
 	Audio.play_sfx("card_selected")
 	emit_signal("upgrade_chosen", u.id)
-	get_tree().paused = false
+	remove_from_group("modal")
+	# Si justo quedó abierto otro modal (un cofre), la pausa sigue.
+	if get_tree().get_nodes_in_group("modal").is_empty():
+		get_tree().paused = false
 	queue_free()
 
 ## Arma las 3 opciones:
-##   1. Filtra cartas que hoy no harían nada (ej: la rama "más
-##      cantidad" del disparo antes de desbloquear el disparo, o
-##      cualquier rama ya al tope de su nivel).
-##   2. Si hay una carta de desbloqueo todavía no tomada, GARANTIZA
-##      que aparezca entre las 3 — evita pasar la run entera sin ver
-##      "espadas"/"meteoritos" sólo por mala suerte del sorteo.
-##   3. El resto de los slots se llena al azar del pool elegible.
+##   1. Sólo cartas que hoy harían algo (upgrades.gd is_eligible: tope
+##      de nivel, casillas libres, poderes comprados en la tienda).
+##   2. Si hay un arma para desbloquear todavía no tomada, GARANTIZA
+##      que aparezca una entre las 3 — si no, se podía pasar la run
+##      entera sin ver "espadas"/"meteoritos" por mala suerte.
+##   3. El resto al azar; si no alcanzan (todo al máximo), relleno con
+##      monedas / poción.
 func _random_three() -> Array:
-	var eligible: Array = UPGRADES.filter(_is_eligible)
-
-	var chosen: Array = []
-	var pending_unlocks: Array = eligible.filter(
-		func(u): return u["id"] in UNLOCK_IDS and not _already_unlocked(u["id"])
+	var eligible: Array = Upgrades.CARDS.filter(
+		func(c): return _player == null or Upgrades.is_eligible(_player, c["id"])
 	)
-	if not pending_unlocks.is_empty():
-		var forced = pending_unlocks[randi() % pending_unlocks.size()]
+	var chosen: Array = []
+	var unlocks: Array = eligible.filter(func(c): return c["id"] in Upgrades.UNLOCK_IDS)
+	if not unlocks.is_empty():
+		var forced = unlocks[randi() % unlocks.size()]
 		chosen.append(forced)
 		eligible.erase(forced)
-
 	eligible.shuffle()
-	for u in eligible:
+	for c in eligible:
 		if chosen.size() >= 3:
 			break
-		chosen.append(u)
-
+		chosen.append(c)
+	for filler in ["coins", "heal"]:
+		if chosen.size() < 3:
+			chosen.append(Upgrades.card(filler))
+	while chosen.size() < 3:
+		chosen.append(Upgrades.card("coins"))
 	chosen.shuffle()   # que la carta forzada no quede siempre en Card1
 	return chosen
 
-## Los cuatro caminos ramificados muestran el nivel/cantidad que VAN
-## A QUEDAR si se eligen, en vez del título fijo del pool.
 func _title_for(u: Dictionary) -> String:
-	if _player == null:
-		return u.title
-	match u["id"]:
-		"ranged_power":
-			return "DISPARO A DISTANCIA NV %d" % (_player.ranged_power_level + 1)
-		"ranged_count":
-			return "DISPARO A DISTANCIA x%d" % (_player.ranged_bonus_shots + 1)
-		"flying_swords_power":
-			return "ESPADAS VOLADORAS NV %d" % (_player.sword_level() + 1)
-		"flying_swords_count":
-			return "ESPADAS VOLADORAS x%d ATAQUES" % (_player.sword_attacks_per_cycle() + 1)
-	return u.title
-
-func _is_eligible(u: Dictionary) -> bool:
-	if _player == null:
-		return true
-	match u["id"]:
-		"multishot":
-			# No sirve de nada mientras no dispare nada (AXEL sin
-			# "disparo a distancia" todavía), ni pasado el tope (4).
-			if not _player.has_ranged_attack():
-				return false
-			return _player.projectiles_per_shot < 4
-		"ranged_bonus":
-			return _player.ranged_power_level == 0
-		"ranged_power":
-			return _player.ranged_power_level > 0 and _player.ranged_power_level < _player.RANGED_MAX_POWER_LEVEL
-		"ranged_count":
-			return _player.ranged_power_level > 0 and _player.ranged_bonus_shots < _player.RANGED_MAX_BONUS_SHOTS
-		# Poderes de la tienda: la carta sólo sale si se compró el
-		# desbloqueo (GameState.SHOP_POWERS).
-		"flying_swords":
-			return GameState.is_power_unlocked("flying_swords") and not _player.has_flying_swords()
-		"meteors":
-			return GameState.is_power_unlocked("meteors")
-		"flying_swords_power":
-			return _player.has_flying_swords() and _player.sword_level() < 5
-		"flying_swords_count":
-			return _player.has_flying_swords() and _player.sword_attacks_per_cycle() < 3
-	return true
-
-func _already_unlocked(id: String) -> bool:
-	if _player == null:
-		return false
-	match id:
-		"ranged_bonus":
-			return _player.has_method("has_ranged_attack") and _player.ranged_power_level > 0
-		"flying_swords":
-			return _player.has_method("has_flying_swords") and _player.has_flying_swords()
-		"meteors":
-			return _player.has_method("has_meteors") and _player.has_meteors()
-	return false
+	return Upgrades.title_for(_player, u["id"])

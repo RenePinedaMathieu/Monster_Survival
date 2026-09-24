@@ -38,6 +38,9 @@ const ITEM_STYLE: Dictionary = {
 const POWER_ICONS: Dictionary = {
 	"meteors": "res://assets/ui/skill_icons/skill_22.png",
 	"flying_swords": "res://assets/ui/skill_icons/skill_5.png",
+	"aura": "res://assets/ui/skill_icons/skill_23.png",
+	"hacha": "res://assets/ui/skill_icons/skill_25.png",
+	"rayo": "res://assets/ui/skill_icons/skill_70.png",
 }
 ## Primer frame del idle de frente, recortado al bicho (el frame de
 ## 32x32 trae mucho aire alrededor).

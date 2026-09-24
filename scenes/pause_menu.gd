@@ -13,11 +13,11 @@ extends CanvasLayer
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
-const LEVEL_UP_MENU := preload("res://scenes/level_up_menu.gd")
+const Upgrades := preload("res://scenes/upgrades.gd")
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 
 ## Etiquetas legibles para el historial de "Potenciadores" — se
-## reusan los títulos ya definidos en level_up_menu.gd en vez de
+## reusan los títulos ya definidos en upgrades.gd en vez de
 ## mantener una segunda copia del texto de cada carta.
 var _upgrade_titles: Dictionary = {}
 
@@ -43,7 +43,7 @@ var _player: Node = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for u in LEVEL_UP_MENU.UPGRADES:
+	for u in Upgrades.CARDS:
 		_upgrade_titles[u["id"]] = u["title"]
 
 	_panel.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(26.0, 22.0))
@@ -121,6 +121,11 @@ func _build_powerups() -> void:
 			var title: String = _upgrade_titles.get(id, id)
 			var count: int = counts[id]
 			_add_stat_line(title + (" x%d" % count if count > 1 else ""))
+
+	if not _player.evolutions.is_empty():
+		_add_section_label("EVOLUCIONES")
+		for evo in _player.evolutions:
+			_add_stat_line("• " + Upgrades.EVOLUTIONS[evo]["name"])
 
 	_add_section_label("STATS ACTUALES")
 	_add_stat_line("Vida máxima: %d" % int(round(_player.max_hp)))

@@ -63,6 +63,11 @@ var _sprite: Sprite2D
 
 var velocity: Vector2 = Vector2.ZERO
 var _damage: float = DAMAGE
+## Evolución "lluvia de flechas": cuántos enemigos más atraviesa antes
+## de desaparecer, y con qué id reporta el daño (ver weapons.gd).
+var pierce: int = 0
+var source: String = "disparo"
+var _hit_ids: Array = []
 var _age: float = 0.0
 var _charged: bool = false
 var _level: int = 0
@@ -144,5 +149,11 @@ func _draw() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.has_method("take_damage"):
-		body.take_damage(_damage, "disparo")
+		if body.get_instance_id() in _hit_ids:
+			return
+		_hit_ids.append(body.get_instance_id())
+		body.take_damage(_damage, source)
+		if pierce > 0:
+			pierce -= 1
+			return
 		queue_free()

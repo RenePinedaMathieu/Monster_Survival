@@ -7,13 +7,13 @@ extends CanvasLayer
 ##   - Tablón de madera con oleada / enemigos / monedas de la run.
 ##   - Timer centrado arriba y barra del jefe debajo.
 ##   - Minimapa enmarcado en madera (arriba der.).
-##   - Barra de mejoras activas abajo al centro: una casilla por mejora
-##     elegida en los level-ups, con "xN" si se tomó varias veces.
+##   - Barra de mejoras activas abajo al centro: una casilla por arma y
+##     por pasiva de la build (player.build_summary()) con su nivel; las
+##     armas evolucionadas muestran el ícono de la evolución y "EVO".
 ##   - Banner central "OLEADA SUPERADA" con fade.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
-const LEVEL_UP_MENU := preload("res://scenes/level_up_menu.gd")
 
 const CHAR_PANEL_TEXTURE := "res://assets/ui/rpg/char_panel.png"
 const ACTION_SLOT_TEXTURE := "res://assets/ui/rpg/action_slot.png"
@@ -29,12 +29,7 @@ const COLOR_BOSS := Color("d74427")
 const PORTRAIT_BG := Color("7f95dc")
 const PORTRAIT_SIZE := 67
 
-## Las ramas "más fuerte"/"más cantidad" se muestran en la casilla del
-## desbloqueo del que salen, no como casillas aparte.
-const UPGRADE_FAMILY: Dictionary = {
-	"ranged_power": "ranged_bonus", "ranged_count": "ranged_bonus",
-	"flying_swords_power": "flying_swords", "flying_swords_count": "flying_swords",
-}
+const COLOR_EVOLVED := Color("ffd24a")
 
 @onready var _portrait: TextureRect = $CharPanel/Portrait
 @onready var _hp_bar: ProgressBar = $CharPanel/HPBar
@@ -56,15 +51,12 @@ const UPGRADE_FAMILY: Dictionary = {
 
 var _run_time: float = 0.0
 var _running: bool = true
-var _upgrade_icons: Dictionary = {}   # id de carta -> ruta del ícono
 var _action_slot: Texture2D
 
 func _ready() -> void:
 	$CharPanel/Frame.texture = load(CHAR_PANEL_TEXTURE)
 	$InfoPanel/VBox/CoinsRow/CoinIcon.texture = load(COIN_TEXTURE)
 	_action_slot = load(ACTION_SLOT_TEXTURE)
-	for u in LEVEL_UP_MENU.UPGRADES:
-		_upgrade_icons[u["id"]] = u.get("icon", "")
 
 	RpgTheme.style_track_bar(_hp_bar, BAR_HP[0], BAR_HP[1])
 	RpgTheme.style_track_bar(_defense_bar, BAR_DEFENSE[0], BAR_DEFENSE[1])
@@ -190,24 +182,13 @@ func set_portrait(tex: Texture2D) -> void:
 
 # ── Barra de mejoras activas ─────────────────────────────────────
 
-## Recibe el historial de cartas elegidas (player.upgrade_log) y arma
-## una casilla por mejora, en el orden en que se eligieron por primera vez.
-func on_upgrades_changed(upgrade_log: Array) -> void:
-	var order: Array = []
-	var counts: Dictionary = {}
-	for id in upgrade_log:
-		var family: String = UPGRADE_FAMILY.get(id, id)
-		if not counts.has(family):
-			order.append(family)
-			counts[family] = 0
-		counts[family] += 1
-
-	_last_upgrade_order = order
-	_last_upgrade_counts = counts
+## Recibe player.build_summary(): [{icon, level, evolved}, ...] — armas
+## primero, después pasivas.
+func on_upgrades_changed(summary: Array) -> void:
+	_last_summary = summary
 	_rebuild_upgrade_rows()
 
-var _last_upgrade_order: Array = []
-var _last_upgrade_counts: Dictionary = {}
+var _last_summary: Array = []
 
 ## Reparte las casillas en filas que entren a lo ancho (en un teléfono
 ## vertical no entran las 11 posibles en una fila).
@@ -217,18 +198,18 @@ func _rebuild_upgrade_rows() -> void:
 		child.queue_free()
 	var per_row: int = maxi(1, floori((Screen.view_size().x - 40.0) / 46.0))
 	var row: HBoxContainer = null
-	for i in range(_last_upgrade_order.size()):
+	for i in range(_last_summary.size()):
 		if i % per_row == 0:
 			row = HBoxContainer.new()
 			row.alignment = BoxContainer.ALIGNMENT_CENTER
 			row.add_theme_constant_override("separation", 4)
 			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			_upgrade_rows.add_child(row)
-		var family: String = _last_upgrade_order[i]
-		row.add_child(_make_upgrade_tile(_upgrade_icons.get(family, ""), _last_upgrade_counts[family]))
-	_upgrades_bar.visible = not _last_upgrade_order.is_empty()
+		var entry: Dictionary = _last_summary[i]
+		row.add_child(_make_upgrade_tile(entry["icon"], entry["level"], entry["evolved"]))
+	_upgrades_bar.visible = not _last_summary.is_empty()
 
-func _make_upgrade_tile(icon_path: String, count: int) -> Control:
+func _make_upgrade_tile(icon_path: String, level: int, evolved: bool) -> Control:
 	var tile := TextureRect.new()
 	tile.texture = _action_slot
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -248,10 +229,12 @@ func _make_upgrade_tile(icon_path: String, count: int) -> Control:
 		icon.offset_bottom = -5.0
 		tile.add_child(icon)
 
-	if count > 1:
+	if evolved or level > 1:
 		var label := Label.new()
-		label.text = "x%d" % count
-		RpgTheme.style_light_label(label, 12)
+		label.text = "EVO" if evolved else str(level)
+		RpgTheme.style_light_label(label, 11 if evolved else 12)
+		if evolved:
+			label.add_theme_color_override("font_color", COLOR_EVOLVED)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.anchor_left = 1.0

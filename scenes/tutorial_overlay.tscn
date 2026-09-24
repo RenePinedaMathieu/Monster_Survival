@@ -34,12 +34,11 @@ color = Color(0, 0, 0, 0)
 [node name="Highlight" type="Panel" parent="Spotlight"]
 mouse_filter = 2
 
-[node name="Arrow" type="Label" parent="Spotlight"]
-size = Vector2(32, 36)
+[node name="Arrow" type="TextureRect" parent="Spotlight"]
+size = Vector2(32, 32)
 mouse_filter = 2
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "▶"
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Bubble" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(560, 0)

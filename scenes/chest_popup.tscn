@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/chest_popup.gd" id="1_chest"]
+
+[node name="ChestPopup" type="CanvasLayer"]
+process_mode = 3
+layer = 11
+script = ExtResource("1_chest")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Window" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Window"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/Window/VBox"]
+layout_mode = 2
+text = "¡COFRE!"
+
+[node name="Icon" type="TextureRect" parent="Center/Window/VBox"]
+custom_minimum_size = Vector2(104, 104)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Center/Window/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "..."
+
+[node name="Desc" type="Label" parent="Center/Window/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "..."
+
+[node name="Extra" type="Label" parent="Center/Window/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = ""
+
+[node name="OkButton" type="Button" parent="Center/Window/VBox"]
+custom_minimum_size = Vector2(200, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "¡GENIAL!"

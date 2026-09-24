@@ -14,6 +14,18 @@ const SOURCES: Dictionary = {
 	"meteoros": {"name": "Lluvia de meteoros",  "icon": SKILL + "skill_22.png"},
 	"pollo":    {"name": "Pollo",               "icon": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
 		"region": Rect2(6, 9, 20, 20)},
+	"aura":     {"name": "Aura sagrada",        "icon": SKILL + "skill_23.png"},
+	"hacha":    {"name": "Hacha giratoria",     "icon": SKILL + "skill_25.png"},
+	"rayo":     {"name": "Rayo en cadena",      "icon": SKILL + "skill_70.png"},
+	# Evoluciones (upgrades.gd EVOLUTIONS) — el arma evolucionada reporta
+	# su daño con el id de la evolución.
+	"lluvia_flechas":     {"name": "Lluvia de flechas",   "icon": SKILL + "skill_43.png"},
+	"tormenta_espadas":   {"name": "Tormenta de espadas", "icon": SKILL + "skill_26.png"},
+	"apocalipsis":        {"name": "Apocalipsis",         "icon": SKILL + "skill_35.png"},
+	"santuario":          {"name": "Santuario",           "icon": SKILL + "skill_21.png"},
+	"torbellino":         {"name": "Torbellino",          "icon": SKILL + "skill_36.png"},
+	"tormenta_electrica": {"name": "Tormenta eléctrica",  "icon": SKILL + "skill_19.png"},
+	"gallina_dorada":     {"name": "Gallina dorada",      "icon": SKILL + "skill_90.png"},
 }
 
 static func display_name(id: String) -> String:

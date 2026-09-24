@@ -127,4 +127,16 @@ func _try_fire() -> void:
 	get_tree().current_scene.add_child(egg)
 	egg.global_position = global_position + dir * 10.0
 	# Escala con las mejoras de daño de la run (cartas + tienda).
-	egg.setup(dir, float(_data["damage"]) * player.damage_mult)
+	egg.setup(dir, float(_data["damage"]) * player.damage_mult * (2.0 if _golden else 1.0))
+	if _golden:
+		egg.make_golden()
+
+## Evolución "Gallina dorada" (pollo + regeneración): huevos de oro —
+## doble daño, más seguido y +1 moneda por cada golpe.
+var _golden: bool = false
+
+func evolve() -> void:
+	_golden = true
+	_data = _data.duplicate()
+	_data["fire_interval"] = float(_data["fire_interval"]) * 0.7
+	_sprite.modulate = Color(1.25, 1.1, 0.6)

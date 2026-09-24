@@ -144,28 +144,65 @@ text = "D3"
 theme_override_font_sizes/font_size = 11
 text = "Unlocks"
 
-[node name="Unlocks" type="VBoxContainer" parent="UI/TouchPanel/Content"]
-theme_override_constants/separation = 4
+[node name="Unlocks" type="GridContainer" parent="UI/TouchPanel/Content"]
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 2
 
 [node name="SwordsBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
-custom_minimum_size = Vector2(0, 36)
-text = "Flying Swords"
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "Espadas"
 
 [node name="RangedBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
 text = "Ranged"
 
 [node name="MeteorsBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
 text = "Meteors"
 
 [node name="ChickenBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
 text = "Pollo"
 
 [node name="CoinsBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
-custom_minimum_size = Vector2(0, 36)
-text = "+500 monedas"
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "+500 $"
+
+[node name="AuraBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "Aura"
+
+[node name="AxeBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "Hacha"
+
+[node name="BoltBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "Rayo"
+
+[node name="EliteBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "Élite"
+
+[node name="ChestBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "Cofre"
+
+[node name="MaxBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 3
+text = "Armas máx"
 
 [node name="HPLbl" type="Label" parent="UI/TouchPanel/Content"]
 theme_override_font_sizes/font_size = 11

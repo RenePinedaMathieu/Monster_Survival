@@ -137,10 +137,22 @@ func _finish() -> void:
 	consumed.emit()
 	queue_free()
 
+## Evolución "Tormenta de espadas": girando en formación también cortan
+## lo que tocan (sin consumirse — sólo el dash las gasta).
+var _orbit: bool = false
+
+func set_orbit(on: bool) -> void:
+	_orbit = on
+
 func _on_body_entered(body: Node) -> void:
-	if state == State.DASH and body.has_method("take_damage"):
-		body.take_damage(damage, "espadas")
+	if not body.has_method("take_damage"):
+		return
+	var source := "tormenta_espadas" if _orbit else "espadas"
+	if state == State.DASH:
+		body.take_damage(damage, source)
 		_finish()
+	elif _orbit:
+		body.take_damage(damage * 0.6, source)
 
 func _core_color() -> Color:
 	if level >= MAX_LEVEL:
