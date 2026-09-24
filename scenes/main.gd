@@ -192,8 +192,19 @@ const WAVE_POWER_STEP := 0.04   # oleada 20 ≈ x1.76 de daño
 ## que aguantar lo suficiente como para ser una pelea, no un trámite.
 const BOSS_BASE_HP := 900.0
 
+## Mapa y dificultad elegidos (map_select): el mapa trae sus propios
+## bichos y jefes, y ambos multiplican vida/daño y monedas.
+var _map: Dictionary = GameState.map_data()
+var _difficulty: Dictionary = GameState.difficulty_data()
+
+func _stat_mult() -> float:
+	return float(_map["mult"]) * float(_difficulty["mult"])
+
+func _coin_mult() -> float:
+	return float(_map["mult"]) * float(_difficulty["coins"])
+
 func _wave_hp_mult() -> float:
-	return 1.0 + (_current_wave - 1) * WAVE_HP_STEP
+	return (1.0 + (_current_wave - 1) * WAVE_HP_STEP) * _stat_mult()
 
 func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 	var m = MONSTER_SCENE.instantiate()
@@ -201,30 +212,33 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 	_monsters_container.add_child(m)
 	# set_kind necesita @onready resuelto — sólo funciona DESPUÉS de
 	# add_child (mismo motivo por el que antes set_sprite iba después).
-	m.power_mult = 1.0 + (_current_wave - 1) * WAVE_POWER_STEP
+	m.power_mult = (1.0 + (_current_wave - 1) * WAVE_POWER_STEP) * _stat_mult()
 	if is_boss:
-		# Boss tier per encounter: 1er boss → demon1, 2do → demon2, 3ro+ → demon3
-		var tier: int = min(_bosses_spawned, m.BOSS_KIND_IDS.size() - 1)
-		m.set_kind(m.BOSS_KIND_IDS[tier])
-		m.max_hp = BOSS_BASE_HP * (1 + tier) * _wave_hp_mult()
+		# 1er jefe (oleada 10) y jefe final (oleada 20) según el mapa.
+		var bosses: Array = _map["bosses"]
+		var tier: int = mini(_bosses_spawned, bosses.size() - 1)
+		m.set_kind(bosses[tier])
+		m.max_hp = BOSS_BASE_HP * (1 + mini(_bosses_spawned, 2)) * _wave_hp_mult()
 		m.hp = m.max_hp
 		m.coin_reward = 25 + tier * 15
 		_bosses_spawned += 1
 	else:
 		# Pool de spawn depende de la wave — waves altas traen bichos
 		# más grandes/duros (tier 2 y 3 sólo aparecen tarde).
+		var pools: Array = _map["pools"]
 		var pool: Array
 		if _current_wave >= WAVE_HIGH_START:
-			pool = m.KIND_IDS_HIGH
+			pool = pools[2]
 		elif _current_wave >= WAVE_MID_START:
-			pool = m.KIND_IDS_MID
+			pool = pools[1]
 		else:
-			pool = m.KIND_IDS
+			pool = pools[0]
 		m.set_kind(pool[randi() % pool.size()])
 		m.max_hp *= _wave_hp_mult()
 		m.hp = m.max_hp
 		if is_elite:
 			m.make_elite()
+	m.coin_reward = maxi(1, int(round(m.coin_reward * _coin_mult())))
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
 	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
 	# sin necesidad de estar en el radio de detección. Los remote

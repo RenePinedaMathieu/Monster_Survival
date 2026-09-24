@@ -17,6 +17,7 @@ const SOURCES: Dictionary = {
 	"huevos":   {"name": "Huevos",              "icon": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
 		"region": Rect2(6, 9, 20, 20)},
 	"habilidad": {"name": "Habilidad",          "icon": SKILL + "skill_62.png"},
+	"bomba":    {"name": "Bomba",               "icon": SKILL + "skill_98.png"},
 	"aura":     {"name": "Aura sagrada",        "icon": SKILL + "skill_23.png"},
 	"hacha":    {"name": "Hacha giratoria",     "icon": SKILL + "skill_25.png"},
 	"rayo":     {"name": "Rayo en cadena",      "icon": SKILL + "skill_70.png"},

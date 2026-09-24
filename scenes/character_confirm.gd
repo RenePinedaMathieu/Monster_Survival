@@ -10,7 +10,7 @@ extends Control
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
-const GAME_SCENE := "res://scenes/main.tscn"
+const MAP_SCENE := "res://scenes/map_select.tscn"
 const SELECT_SCENE := "res://scenes/character_select.tscn"
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
@@ -132,8 +132,9 @@ func _build_stats(stats: Dictionary) -> void:
 		RpgTheme.style_level_bar(bar, STAT_COLOR)
 		row.add_child(bar)
 
+## Antes de jugar se elige mapa y dificultad (map_select.tscn).
 func _on_confirm() -> void:
-	get_tree().change_scene_to_file(GAME_SCENE)
+	get_tree().change_scene_to_file(MAP_SCENE)
 
 func _on_back() -> void:
 	get_tree().change_scene_to_file(SELECT_SCENE)

@@ -84,6 +84,63 @@ const SKILL_TREE: Dictionary = {
 	"luck":      {"branch": "utility", "tier": 5, "name": "Suerte", "desc": "Una 4ª carta en cada subida de nivel",
 		"base_cost": 500, "cost_step": 0, "max_level": 1, "requires": "reroll", "req_level": 1, "icon": SKILL_ICON + "skill_7.png"},
 }
+## Mapas (pantalla de mapa, map_select.tscn). "mult" escala la vida y
+## el daño de los monstruos Y las monedas; "pools" son los bichos de
+## las oleadas 1-3 / 4-6 / 7+; "bosses" el jefe de la oleada 10 y el
+## final (20); "hazard" el peligro propio (ver painted_world.gd).
+const MAPS: Dictionary = {
+	"pradera": {
+		"name": "Pradera", "desc": "Donde empieza todo: ratas, imps y lizardmen.",
+		"mult": 1.0, "scene": "res://scenes/Grass1.tscn", "tileset": "res://assets/tiles/overworld_tileset_grass.png",
+		"tint": Color(1, 1, 1), "hazard": "", "bosses": ["demon1", "demon2"],
+		"pools": [
+			["rat", "imp", "lizardman", "slime_1"],
+			["rat", "imp", "lizardman", "rat_2", "imp_2", "lizardman_2", "slime_1", "slime_2", "ghost_1"],
+			["rat_2", "imp_2", "lizardman_2", "rat_3", "imp_3", "lizardman_3", "slime_2", "slime_3", "ghost_2", "ghost_3", "beholder_1", "beholder_2", "beholder_3"],
+		],
+	},
+	"pantano": {
+		"name": "Pantano", "desc": "Lodo que te frena, slimes que se parten y fantasmas.",
+		"mult": 1.35, "scene": "res://scenes/Swamp1.tscn", "tileset": "res://assets/tiles/overworld_tileset_swamp.png",
+		"tint": Color(0.84, 0.92, 0.86), "hazard": "mud", "bosses": ["demon2", "demon3"],
+		"pools": [
+			["slime_1", "ghost_1", "rat", "imp"],
+			["slime_1", "slime_2", "ghost_1", "ghost_2", "imp_2", "rat_2"],
+			["slime_2", "slime_3", "ghost_2", "ghost_3", "beholder_1", "imp_3", "rat_3"],
+		],
+	},
+	"desierto": {
+		"name": "Desierto", "desc": "Tormentas de arena, lizardmen que embisten y beholders.",
+		"mult": 1.7, "scene": "res://scenes/Desert1.tscn", "tileset": "res://assets/tiles/overworld_tileset_desert.png",
+		"tint": Color(1.0, 0.97, 0.9), "hazard": "sandstorm", "bosses": ["demon3", "demon3"],
+		"pools": [
+			["lizardman", "rat", "imp", "lizardman"],
+			["lizardman", "lizardman_2", "rat_2", "imp_2", "beholder_1"],
+			["lizardman_2", "lizardman_3", "rat_3", "beholder_2", "beholder_3", "imp_3"],
+		],
+	},
+}
+const MAP_ORDER: Array = ["pradera", "pantano", "desierto"]
+
+## Dificultad: multiplica vida/daño de los monstruos y las monedas.
+## Difícil se abre al ganar una partida; Pesadilla, al ganar en Difícil.
+const DIFFICULTIES: Dictionary = {
+	"normal":    {"name": "NORMAL",    "mult": 1.0, "coins": 1.0, "unlock": ""},
+	"dificil":   {"name": "DIFÍCIL",   "mult": 1.5, "coins": 1.5, "unlock": "win_1"},
+	"pesadilla": {"name": "PESADILLA", "mult": 2.2, "coins": 2.0, "unlock": "hard_win"},
+}
+const DIFFICULTY_ORDER: Array = ["normal", "dificil", "pesadilla"]
+
+func is_difficulty_unlocked(id: String) -> bool:
+	var need: String = DIFFICULTIES[id]["unlock"]
+	return need == "" or is_achievement_unlocked(need)
+
+func map_data() -> Dictionary:
+	return MAPS.get(selected_map, MAPS["pradera"])
+
+func difficulty_data() -> Dictionary:
+	return DIFFICULTIES.get(selected_difficulty, DIFFICULTIES["normal"])
+
 const SKILL_BRANCHES: Array = [
 	{"id": "attack", "name": "ATAQUE", "color": Color("d74427")},
 	{"id": "defense", "name": "DEFENSA", "color": Color("37a0df")},

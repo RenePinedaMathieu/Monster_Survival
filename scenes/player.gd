@@ -235,6 +235,24 @@ var _is_chicken: bool = false
 var _xp_frac: float = 0.0
 ## "Segunda vida" del árbol de habilidades.
 var _revives_left: int = 0
+## Terreno (painted_world.gd): charcos de lodo del pantano en los que
+## está parado y tormenta de arena del desierto — ambos frenan.
+var _mud_zones: int = 0
+var in_sandstorm: bool = false
+
+func enter_mud() -> void:
+	_mud_zones += 1
+
+func exit_mud() -> void:
+	_mud_zones = maxi(0, _mud_zones - 1)
+
+func _terrain_mult() -> float:
+	var m: float = 1.0
+	if _mud_zones > 0:
+		m *= 0.6
+	if in_sandstorm:
+		m *= 0.82
+	return m
 ## "Relanzar" del árbol: cuántas veces se pueden re-sortear las cartas
 ## del level-up en esta partida (lo gasta level_up_menu.gd).
 var rerolls_left: int = 0
@@ -605,7 +623,7 @@ func _physics_process(delta: float) -> void:
 		_last_move_dir = input
 	# Aceleración en vez de velocidad instantánea — un toque de peso
 	# natural sin perder respuesta (llega a top speed en ~0.11s).
-	velocity = velocity.move_toward(input * move_speed, ACCELERATION * delta)
+	velocity = velocity.move_toward(input * move_speed * _terrain_mult(), ACCELERATION * delta)
 	_tick_active_skill(delta)
 	move_and_slide()
 
