@@ -16,6 +16,12 @@ const MONSTER_SCENE := preload("res://scenes/monster.tscn")
 const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
+const RESULTS_SCENE := preload("res://scenes/results_screen.tscn")
+
+## La partida se gana al limpiar esta oleada (jefe en la 10 y jefe
+## final en la 20). Después de ganar se puede seguir en modo infinito.
+const FINAL_WAVE := 20
+const BOSS_EVERY := 10
 
 ## El kind (rata/murciélago/cangrejo/etc, con su propio set de
 ## animaciones) lo resuelve monster.gd — ver KIND_IDS/BOSS_KIND_ID/
@@ -46,6 +52,9 @@ var _monsters_alive: int = 0
 var _in_break: bool = false
 ## Cuenta cuántos bosses ya spawneó la run — para elegir demon1/2/3.
 var _bosses_spawned: int = 0
+## true después de ganar y elegir SEGUIR: oleadas sin final.
+var _endless: bool = false
+var _run_over: bool = false
 ## Umbrales de dificultad. Debajo de MID sólo tier 1 (crías). Entre
 ## MID y HIGH mix de tier 1 y 2. En HIGH sólo tier 2 y 3 (los más
 ## amenazantes). Se siente la escalada de la run sin necesidad de
@@ -55,6 +64,7 @@ const WAVE_HIGH_START := 7
 
 func _ready() -> void:
 	print("[main] booting…")
+	GameState.start_run()
 	Supabase.auth_ready.connect(_on_auth_ready)
 	Realtime.remote_join.connect(_on_remote_join)
 	Realtime.remote_leave.connect(_on_remote_leave)
@@ -67,7 +77,7 @@ func _ready() -> void:
 	_player.died.connect(_on_player_died)
 	_player.upgrades_changed.connect(_hud.on_upgrades_changed)
 	_hud.set_portrait(_player.portrait_texture())
-	_hud.set_wave(0, 0)
+	_update_wave_hud()
 	# Joystick táctil — vive siempre; en desktop no molesta porque
 	# no recibe eventos de touch. En web/mobile permite jugar sin
 	# teclado.
@@ -122,12 +132,16 @@ func _on_remote_move(uid: String, x: float, y: float, facing: int, dir: int) -> 
 # ── Waves ────────────────────────────────────────────────────────
 
 func _start_next_wave() -> void:
+	if _run_over:
+		return
 	_current_wave += 1
 	_in_break = false
 	var count := BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE
 	# Cada 10 waves aparece 1 boss extra, bastante más grande y duro
 	# que el resto (ver KIND_DATA["golem"] en monster.gd).
-	var boss_count: int = 1 if _current_wave % 10 == 0 else 0
+	var boss_count: int = 1 if _current_wave % BOSS_EVERY == 0 else 0
+	if boss_count > 0:
+		_player.shake(6.0)
 	print("[main] wave %d — %d monsters + %d bosses" % [_current_wave, count, boss_count])
 	Audio.play_sfx("wave_start")
 	# En wave con boss, cambiamos a música de boss (cross-fade)
@@ -142,7 +156,7 @@ func _start_next_wave() -> void:
 	for i in range(boss_count):
 		_spawn_monster(true)
 	_monsters_alive = count + boss_count
-	_hud.set_wave(_current_wave, _monsters_alive)
+	_update_wave_hud()
 
 ## Anillo alrededor del player, pero reintentando si cae en agua o
 ## fuera del mapa — antes tiraba el dado una sola vez y podía
@@ -197,15 +211,22 @@ func _spawn_monster(is_boss: bool) -> void:
 		_hud.show_boss_bar(m.max_hp)
 		m.hp_changed.connect(_hud.on_boss_hp_changed)
 		m.died.connect(_hud.hide_boss_bar)
+		m.died.connect(_player.shake.bind(8.0))
 
 func _on_monster_hit_player(damage: float) -> void:
 	_player.take_damage(damage)
 
+func _update_wave_hud() -> void:
+	_hud.set_wave(_current_wave, _monsters_alive, 0 if _endless else FINAL_WAVE)
+
 func _on_monster_died() -> void:
 	_monsters_alive = max(0, _monsters_alive - 1)
-	_hud.set_wave(_current_wave, _monsters_alive)
-	if _monsters_alive == 0 and not _in_break:
+	_update_wave_hud()
+	if _monsters_alive == 0 and not _in_break and not _run_over:
 		_in_break = true
+		if _current_wave == FINAL_WAVE and not _endless:
+			_finish_run(true)
+			return
 		Audio.play_sfx("wave_clear")
 		# Volver a track normal si veníamos de un boss (wave % 10 == 0)
 		if _current_wave % 10 == 0:
@@ -223,6 +244,14 @@ func _on_player_leveled_up(_new_level: int) -> void:
 	menu.show_for(_player)
 
 func _on_player_died() -> void:
+	_finish_run(false)
+
+## Fin de la partida — por victoria (limpiar FINAL_WAVE) o por muerte.
+## Banca la moneda, guarda récords y muestra la pantalla de resultados.
+func _finish_run(victory: bool) -> void:
+	if _run_over:
+		return
+	_run_over = true
 	_hud.stop_timer()
 	# La moneda ganada esta run recién queda gastable en la tienda
 	# cuando la run termina — ver GameState.bank_run_currency().
@@ -230,5 +259,23 @@ func _on_player_died() -> void:
 	# Récord de oleada alcanzada y tiempo sobrevivido — independientes
 	# entre sí (ver GameState.report_run_result).
 	GameState.report_run_result(_current_wave, _hud.get_run_time())
-	# Pequeño delay para que el player vea que murió
-	get_tree().create_timer(1.2).timeout.connect(func(): get_tree().reload_current_scene())
+	if victory:
+		Audio.play_music("gameplay_chill", 1200)
+	# Pequeño delay para que se vea el golpe final / la muerte.
+	get_tree().create_timer(1.0 if victory else 1.2).timeout.connect(_show_results.bind(victory))
+
+func _show_results(victory: bool) -> void:
+	var results = RESULTS_SCENE.instantiate()
+	add_child(results)
+	var hero: String = GameState.pending_character.get("name", "El héroe")
+	results.show_results(victory, _current_wave, _hud.get_run_time(), hero, victory and not _endless)
+	results.continue_pressed.connect(_on_continue_endless)
+
+## SEGUIR tras la victoria: oleadas infinitas para estirar el récord.
+func _on_continue_endless() -> void:
+	_endless = true
+	_run_over = false
+	get_tree().paused = false
+	_hud.resume_timer()
+	_update_wave_hud()
+	get_tree().create_timer(WAVE_BREAK_SEC).timeout.connect(_start_next_wave)

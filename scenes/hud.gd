@@ -282,12 +282,16 @@ func on_boss_hp_changed(current: float, max_hp: float) -> void:
 func hide_boss_bar() -> void:
 	_boss_panel.visible = false
 
-func set_wave(n: int, remaining: int) -> void:
-	_wave_label.text = "OLEADA %d" % n
+var _wave: int = 0
+
+## final_wave 0 = modo infinito (sin "/ N").
+func set_wave(n: int, remaining: int, final_wave: int = 0) -> void:
+	_wave = n
+	_wave_label.text = ("OLEADA %d / %d" % [n, final_wave]) if final_wave > 0 else ("OLEADA %d" % n)
 	_monsters_label.text = "Enemigos: %d" % remaining
 
 func show_wave_break(_duration: float) -> void:
-	_banner.text = "OLEADA %d SUPERADA" % int(_wave_label.text.trim_prefix("OLEADA "))
+	_banner.text = "OLEADA %d SUPERADA" % _wave
 	var tw := create_tween()
 	tw.tween_property(_banner, "modulate:a", 1.0, 0.3)
 	tw.tween_interval(1.2)
@@ -295,6 +299,9 @@ func show_wave_break(_duration: float) -> void:
 
 func stop_timer() -> void:
 	_running = false
+
+func resume_timer() -> void:
+	_running = true
 
 func get_run_time() -> float:
 	return _run_time

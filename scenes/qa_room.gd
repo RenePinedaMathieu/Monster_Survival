@@ -156,7 +156,7 @@ func _unlock(id: String) -> void:
 func _kill_all() -> void:
 	for m in get_tree().get_nodes_in_group("monster"):
 		if m.has_method("take_damage"):
-			m.take_damage(9999.0)
+			m.take_damage(9999.0, "qa")
 
 func _back_to_menu() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

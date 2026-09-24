@@ -144,5 +144,5 @@ func _draw() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.has_method("take_damage"):
-		body.take_damage(_damage)
+		body.take_damage(_damage, "disparo")
 		queue_free()

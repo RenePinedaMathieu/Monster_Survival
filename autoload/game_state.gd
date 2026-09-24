@@ -146,10 +146,39 @@ func mark_tutorial_seen() -> void:
 	tutorial_seen = true
 	_save()
 
+# ── Partida en curso ─────────────────────────────────────────────
+
+## Estadísticas de la run actual: daño y bajas por arma (los registra
+## monster.gd con el id de weapons.gd que le pegó) — las muestra la
+## pantalla de resultados. Transitorio: no se persiste.
+var run_stats: Dictionary = {}
+
+func start_run() -> void:
+	run_currency = 0
+	run_stats = {"damage": {}, "kills": {}, "total_kills": 0, "bosses": 0}
+	currency_changed.emit(0)
+
+func record_damage(source: String, amount: float) -> void:
+	if amount <= 0.0 or run_stats.is_empty():
+		return
+	var dmg: Dictionary = run_stats["damage"]
+	dmg[source] = dmg.get(source, 0.0) + amount
+
+func record_kill(source: String, is_boss: bool) -> void:
+	if run_stats.is_empty():
+		return
+	var kills: Dictionary = run_stats["kills"]
+	kills[source] = kills.get(source, 0) + 1
+	run_stats["total_kills"] += 1
+	if is_boss:
+		run_stats["bosses"] += 1
+
 ## Se llama por cada monstruo que muere durante la run (ver
 ## monster.gd). No toca total_currency todavía.
 func add_run_currency(amount: int) -> void:
 	run_currency += amount
+	if not run_stats.is_empty():
+		run_stats["coins"] = run_stats.get("coins", 0) + amount
 	currency_changed.emit(run_currency)
 
 ## Moneda directo al total gastable — sólo para la sala QA.

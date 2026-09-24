@@ -473,13 +473,31 @@ func _input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_set_zoom(cam.zoom.x - CAM_ZOOM_WHEEL_STEP)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# Q aleja, E acerca — mismo esquema que sandbox.gd.
 	var cam: Camera2D = $Camera2D
 	if Input.is_key_pressed(KEY_Q):
 		_set_zoom(cam.zoom.x - CAM_ZOOM_KEY_STEP)
 	elif Input.is_key_pressed(KEY_E):
 		_set_zoom(cam.zoom.x + CAM_ZOOM_KEY_STEP)
+	_update_shake(cam, delta)
+
+# ── Sacudida de cámara ──────────────────────────────────────────
+
+var _shake_strength: float = 0.0
+
+## Sacude la cámara `strength` unidades de mundo y decae sola. Si ya
+## está sacudiendo más fuerte, no la achica.
+func shake(strength: float) -> void:
+	_shake_strength = maxf(_shake_strength, strength)
+
+func _update_shake(cam: Camera2D, delta: float) -> void:
+	if _shake_strength > 0.1:
+		cam.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake_strength
+		_shake_strength = lerpf(_shake_strength, 0.0, minf(1.0, 12.0 * delta))
+	elif cam.offset != Vector2.ZERO:
+		_shake_strength = 0.0
+		cam.offset = Vector2.ZERO
 
 func _set_zoom(value: float) -> void:
 	# clampf en vez de clamp — el proyecto tiene warnings como errores
@@ -667,7 +685,7 @@ func _update_axel_attack(delta: float) -> void:
 func _axel_apply_melee_damage() -> void:
 	for body in _attack_area.get_overlapping_bodies():
 		if body.has_method("take_damage"):
-			body.take_damage(AXEL_MELEE_DAMAGE * damage_mult)
+			body.take_damage(AXEL_MELEE_DAMAGE * damage_mult, "ataque")
 
 # ── SWORDMAN: ataque melee con evolución por tier ────────────────
 
@@ -699,7 +717,7 @@ func _swordman_apply_melee_damage() -> void:
 	var dmg: float = SWORDMAN_MELEE_DAMAGE * damage_mult * tier_mult
 	for body in _attack_area.get_overlapping_bodies():
 		if body.has_method("take_damage"):
-			body.take_damage(dmg)
+			body.take_damage(dmg, "ataque")
 
 ## Mapea un vector de movimiento/target a la dirección del sprite
 ## swordman (front/back/side_left/side_right). Usa el eje dominante
@@ -802,6 +820,7 @@ func apply_upgrade(id: String) -> void:
 func take_damage(amount: float) -> void:
 	if hp <= 0.0: return
 	Audio.play_sfx("player_hurt", global_position, 0.1)
+	shake(3.0)
 	var remaining := amount
 	if defense > 0.0:
 		var absorbed: float = min(defense, remaining)

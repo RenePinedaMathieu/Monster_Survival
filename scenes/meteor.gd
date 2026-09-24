@@ -41,7 +41,10 @@ func _impact() -> void:
 		if not is_instance_valid(m): continue
 		if global_position.distance_to(m.global_position) <= IMPACT_RADIUS:
 			if m.has_method("take_damage"):
-				m.take_damage(damage)
+				m.take_damage(damage, "meteoros")
+	for p in get_tree().get_nodes_in_group("player"):
+		if p.has_method("shake") and global_position.distance_to(p.global_position) < 260.0:
+			p.shake(2.0)
 
 func _draw() -> void:
 	match _phase:

@@ -21,6 +21,7 @@ signal died
 enum State { IDLE_WANDER, CHASE, WINDUP, STRIKE, COOLDOWN }
 
 const XP_ORB_SCENE := preload("res://scenes/xp_orb.tscn")
+const DAMAGE_NUMBER := preload("res://scenes/damage_number.gd")
 
 ## Bajado de 30/90 (y de nuevo de 20/62) — seguía sintiéndose
 ## demasiado rápido apenas arranca la wave 1, antes de que el
@@ -327,6 +328,7 @@ var _last_wander_change := 0
 var _state_timer := 0.0
 var _did_hit_this_strike := false
 var _dead := false
+var _last_hit_source := "otro"
 
 var _base_sprite_scale := Vector2.ONE
 var _kind_id := ""
@@ -620,15 +622,24 @@ func _on_body_exited(_body: Node) -> void:
 	# Ya no perdemos target al salir del área — persigue siempre.
 	pass
 
-func take_damage(amount: float) -> void:
+## `source` = id del arma que pegó (ver weapons.gd) — alimenta el
+## "daño por arma" de la pantalla de resultados. El daño que sobra
+## después de matar no cuenta.
+func take_damage(amount: float, source: String = "otro") -> void:
 	if _dead: return
+	GameState.record_damage(source, minf(amount, hp))
+	_last_hit_source = source
 	hp -= amount
+	DAMAGE_NUMBER.spawn(DAMAGE_NUMBER, get_tree().current_scene, global_position, amount)
 	emit_signal("hp_changed", max(0.0, hp), max_hp)
 	_sprite.modulate = Color(2.0, 2.0, 2.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)
 	Audio.play_sfx("monster_hit", global_position, 0.15)
 	if hp <= 0.0:
 		_die()
+
+func is_boss() -> bool:
+	return _kind_id in BOSS_KIND_IDS
 
 ## A diferencia de antes (queue_free inmediato), ahora deja correr la
 ## animación de death antes de desaparecer — pero el signal/XP/wave
@@ -641,6 +652,7 @@ func _die() -> void:
 	_detection.set_deferred("monitoring", false)
 	_drop_xp_orb()
 	GameState.add_run_currency(coin_reward)
+	GameState.record_kill(_last_hit_source, is_boss())
 	# Boss suena distinto — más grave y grande. Cualquier demon (tier)
 	# cuenta como boss.
 	if _kind_id in BOSS_KIND_IDS:
