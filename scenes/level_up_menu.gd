@@ -11,6 +11,7 @@ extends CanvasLayer
 ## El menu se auto-destruye después de elegir.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
 
 signal upgrade_chosen(id: String)
 
@@ -72,28 +73,29 @@ var _player: Node = null
 var _current_choices: Array = []
 
 func _ready() -> void:
-	UITheme.style_label($Center/VBox/Title, 38, true)
-	for i in range(3):
-		var card: Button = [
-			$Center/VBox/HBox/Card1,
-			$Center/VBox/HBox/Card2,
-			$Center/VBox/HBox/Card3,
-		][i]
-		UITheme.style_button(card, 17)
+	$Center/Window.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(28.0, 26.0))
+	RpgTheme.style_header_title($Center/Window/VBox/Title, 24)
+	for card in _cards():
+		RpgTheme.style_card_button(card, 16)
+		# Los skill_icons son ilustraciones de 256px achicadas a 96 — con
+		# el filtro nearest del proyecto quedan con serrucho.
+		card.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		card.mouse_entered.connect(UITheme.pulse.bind(card, 1.04, 0.08))
 		card.mouse_exited.connect(UITheme.pulse.bind(card, 1.0, 0.08))
-	$Center/VBox/HBox/Card1.pressed.connect(_pick.bind(0))
-	$Center/VBox/HBox/Card2.pressed.connect(_pick.bind(1))
-	$Center/VBox/HBox/Card3.pressed.connect(_pick.bind(2))
+	for i in range(3):
+		_cards()[i].pressed.connect(_pick.bind(i))
+
+func _cards() -> Array:
+	return [
+		$Center/Window/VBox/HBox/Card1,
+		$Center/Window/VBox/HBox/Card2,
+		$Center/Window/VBox/HBox/Card3,
+	]
 
 func show_for(player: Node) -> void:
 	_player = player
 	_current_choices = _random_three()
-	var cards := [
-		$Center/VBox/HBox/Card1,
-		$Center/VBox/HBox/Card2,
-		$Center/VBox/HBox/Card3,
-	]
+	var cards := _cards()
 	for i in range(3):
 		var u = _current_choices[i]
 		cards[i].text = _title_for(u) + "\n\n" + u.desc
@@ -111,9 +113,6 @@ func show_for(player: Node) -> void:
 			# hover forzaba un layout pass que acomodaba las cosas,
 			# pero se veía roto al mostrarse la carta.
 			cards[i].add_theme_constant_override("icon_max_width", 96)
-			# Fuerza recalc del layout inmediato en vez de esperar al
-			# primer hover.
-			cards[i].queue_sort()
 		else:
 			cards[i].icon = null
 	Audio.play_sfx("level_up")

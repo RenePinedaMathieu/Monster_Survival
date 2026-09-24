@@ -15,6 +15,9 @@ signal defense_changed(current: float, max_defense: float)
 signal xp_changed(current: int, needed: int, level: int)
 signal leveled_up(new_level: int)
 signal died
+## Cada vez que se aplica una carta de level-up — el HUD arma con esto
+## la barra de mejoras activas.
+signal upgrades_changed(upgrade_log: Array)
 
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
@@ -782,6 +785,7 @@ func apply_upgrade(id: String) -> void:
 		"flying_swords_count":
 			if _swords_rig != null:
 				_swords_rig.buff_count()
+	upgrades_changed.emit(upgrade_log)
 
 # ── HP ──────────────────────────────────────────────────────────
 
@@ -841,6 +845,20 @@ func sword_level() -> int:
 
 func has_meteors() -> bool:
 	return _has_meteors
+
+## Primer frame del idle mirando a cámara — el HUD lo usa de retrato.
+## Para el swordman refleja el tier actual (evoluciona con el nivel).
+func portrait_texture() -> Texture2D:
+	var frames: Array = []
+	if _is_swordman:
+		frames = _swordman_idle.get("front", [])
+	elif _is_axel:
+		frames = _axel_idle.get("down", [])
+	elif _is_ranged_skin:
+		frames = _ranged_idle.get("down", [])
+	else:
+		frames = _idle_textures
+	return frames[0] if not frames.is_empty() else null
 
 # ── Utils ───────────────────────────────────────────────────────
 

@@ -65,6 +65,8 @@ func _ready() -> void:
 	_player.xp_changed.connect(_hud.on_xp_changed)
 	_player.leveled_up.connect(_on_player_leveled_up)
 	_player.died.connect(_on_player_died)
+	_player.upgrades_changed.connect(_hud.on_upgrades_changed)
+	_hud.set_portrait(_player.portrait_texture())
 	_hud.set_wave(0, 0)
 	# Joystick táctil — vive siempre; en desktop no molesta porque
 	# no recibe eventos de touch. En web/mobile permite jugar sin
@@ -213,6 +215,8 @@ func _on_monster_died() -> void:
 		get_tree().create_timer(WAVE_BREAK_SEC).timeout.connect(_start_next_wave)
 
 func _on_player_leveled_up(_new_level: int) -> void:
+	# El swordman evoluciona de sprite con el nivel — el retrato lo sigue.
+	_hud.set_portrait(_player.portrait_texture())
 	# Instanciamos el modal, que se auto-pause y auto-destruye al elegir.
 	var menu = LEVEL_UP_MENU_SCENE.instantiate()
 	add_child(menu)

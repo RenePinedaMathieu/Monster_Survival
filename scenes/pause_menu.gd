@@ -12,6 +12,7 @@ extends CanvasLayer
 ##   get_tree().paused = true
 
 const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const LEVEL_UP_MENU := preload("res://scenes/level_up_menu.gd")
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 
@@ -45,10 +46,14 @@ func _ready() -> void:
 	for u in LEVEL_UP_MENU.UPGRADES:
 		_upgrade_titles[u["id"]] = u["title"]
 
-	_panel.add_theme_stylebox_override("panel", UITheme.make_box(UITheme.COLOR_FILL, UITheme.COLOR_BORDER, 0.0, 3))
-	UITheme.style_label(_title, 32, true)
+	_panel.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(26.0, 22.0))
+	RpgTheme.style_header_title(_title, 24)
+	RpgTheme.style_ink_label($Center/Panel/Margin/VBox/OptionsView/VolumeRow/VolumeLabel, 16, true)
+	RpgTheme.style_ink_label($Center/Panel/Margin/VBox/OptionsView/FullscreenRow/FullscreenLabel, 16, true)
+	RpgTheme.style_slider(_volume_slider)
+	RpgTheme.style_check(_fullscreen_check)
 	for b in [_resume_button, _powerups_button, _options_button, _quit_button, _powerups_back, _options_back]:
-		UITheme.style_button(b, 18)
+		RpgTheme.style_button(b, 18)
 		b.mouse_entered.connect(UITheme.pulse.bind(b, 1.05, 0.08))
 		b.mouse_exited.connect(UITheme.pulse.bind(b, 1.0, 0.08))
 
@@ -129,15 +134,13 @@ func _build_powerups() -> void:
 func _add_section_label(text: String) -> void:
 	var l := Label.new()
 	l.text = text
-	UITheme.style_label(l, 16, true)
-	l.modulate.a = 0.9
+	RpgTheme.style_ink_label(l, 16, true)
 	_stats_list.add_child(l)
 
 func _add_stat_line(text: String) -> void:
 	var l := Label.new()
 	l.text = text
-	UITheme.style_label(l, 14)
-	l.modulate.a = 0.85
+	RpgTheme.style_ink_label(l, 14, false, true)
 	_stats_list.add_child(l)
 
 # ── Botones principales ────────────────────────────────────────────

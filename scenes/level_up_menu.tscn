@@ -10,39 +10,42 @@ script = ExtResource("1_lvl01")
 [node name="Dim" type="ColorRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.75)
+color = Color(0, 0, 0, 0.6)
 
 [node name="Center" type="CenterContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="VBox" type="VBoxContainer" parent="Center"]
+[node name="Window" type="PanelContainer" parent="Center"]
 layout_mode = 2
-theme_override_constants/separation = 26
 
-[node name="Title" type="Label" parent="Center/VBox"]
+[node name="VBox" type="VBoxContainer" parent="Center/Window"]
 layout_mode = 2
-text = "SUBISTE DE NIVEL"
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="Center/Window/VBox"]
+layout_mode = 2
+text = "¡SUBISTE DE NIVEL!"
 horizontal_alignment = 1
 
-[node name="HBox" type="HBoxContainer" parent="Center/VBox"]
+[node name="HBox" type="HBoxContainer" parent="Center/Window/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 22
+theme_override_constants/separation = 18
 
-[node name="Card1" type="Button" parent="Center/VBox/HBox"]
-custom_minimum_size = Vector2(270, 190)
+[node name="Card1" type="Button" parent="Center/Window/VBox/HBox"]
+custom_minimum_size = Vector2(260, 220)
 layout_mode = 2
 autowrap_mode = 3
 text = "Card 1"
 
-[node name="Card2" type="Button" parent="Center/VBox/HBox"]
-custom_minimum_size = Vector2(270, 190)
+[node name="Card2" type="Button" parent="Center/Window/VBox/HBox"]
+custom_minimum_size = Vector2(260, 220)
 layout_mode = 2
 autowrap_mode = 3
 text = "Card 2"
 
-[node name="Card3" type="Button" parent="Center/VBox/HBox"]
-custom_minimum_size = Vector2(270, 190)
+[node name="Card3" type="Button" parent="Center/Window/VBox/HBox"]
+custom_minimum_size = Vector2(260, 220)
 layout_mode = 2
 autowrap_mode = 3
 text = "Card 3"

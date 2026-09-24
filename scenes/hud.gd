@@ -1,75 +1,96 @@
 extends CanvasLayer
 
-## HUD estilo Vampire Survivors, con look pixel-art (paneles oscuros
-## translúcidos + borde dorado cuadrado, texto con outline — mismo
-## lenguaje visual que el menú y la selección de personaje) en vez
-## del theme default de Godot:
-##   - HP arriba a la izquierda; la barra pasa de verde a rojo según
-##     el % de vida restante.
-##   - Badge de nivel + barra de XP debajo.
-##   - Timer del run centrado arriba.
-##   - Panel de wave debajo del XP.
+## HUD in-game con las piezas del pack de UI (rpg_theme.gd):
+##   - Panel de personaje (arriba izq.): retrato del héroe en el círculo,
+##     placa verde con el nivel y 3 barras — roja = vida, azul = defensa
+##     (armadura de la tienda), verde = experiencia.
+##   - Tablón de madera con oleada / enemigos / monedas de la run.
+##   - Timer centrado arriba y barra del jefe debajo.
+##   - Minimapa enmarcado en madera (arriba der.).
+##   - Barra de mejoras activas abajo al centro: una casilla por mejora
+##     elegida en los level-ups, con "xN" si se tomó varias veces.
 ##   - Banner central "OLEADA SUPERADA" con fade.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
+const LEVEL_UP_MENU := preload("res://scenes/level_up_menu.gd")
 
-const COLOR_XP       := Color("4fc3e0")
-const COLOR_HP_LOW   := Color("e0483e")
-const COLOR_HP_MID   := Color("e0a94c")
-const COLOR_HP_FULL  := Color("6bcf6b")
-const COLOR_DEFENSE  := Color("8fb8e0")
-const COLOR_BOSS     := Color("c73e6b")
+const CHAR_PANEL_TEXTURE := "res://assets/ui/rpg/char_panel.png"
+const ACTION_SLOT_TEXTURE := "res://assets/ui/rpg/action_slot.png"
+const COIN_TEXTURE := "res://assets/ui/rpg/coin.png"
 
-@onready var _hp_value_label: Label = $HPPanel/Margin/VBox/Row/Value
-@onready var _hp_caption_label: Label = $HPPanel/Margin/VBox/Row/Caption
-@onready var _hp_bar: ProgressBar = $HPPanel/Margin/VBox/HPBar
-@onready var _defense_bar: ProgressBar = $HPPanel/Margin/VBox/DefenseBar
-@onready var _level_badge: PanelContainer = $LevelPanel/Margin2/HBox2/LevelBadge
-@onready var _level_number: Label = $LevelPanel/Margin2/HBox2/LevelBadge/LevelNumber
-@onready var _xp_caption_label: Label = $LevelPanel/Margin2/HBox2/XPCol/XPCaption
-@onready var _xp_bar: ProgressBar = $LevelPanel/Margin2/HBox2/XPCol/XPBar
-@onready var _wave_label: Label = $WavePanel/Margin4/VBox3/WaveLabel
-@onready var _monsters_label: Label = $WavePanel/Margin4/VBox3/MonstersLabel
-@onready var _coins_label: Label = $WavePanel/Margin4/VBox3/CoinsLabel
-@onready var _timer_label: Label = $TimerPanel/Margin3/TimerLabel
+## Colores reales de las barras llenas del pack (claro arriba, oscuro abajo).
+const BAR_HP := [Color("d74427"), Color("b82b28")]
+const BAR_DEFENSE := [Color("37a0df"), Color("3583c4")]
+const BAR_XP := [Color("44a13b"), Color("368040")]
+const COLOR_BOSS := Color("d74427")
+
+## Fondo del círculo del retrato — el mismo azul de los retratos del pack.
+const PORTRAIT_BG := Color("7f95dc")
+const PORTRAIT_SIZE := 67
+
+## Las ramas "más fuerte"/"más cantidad" se muestran en la casilla del
+## desbloqueo del que salen, no como casillas aparte.
+const UPGRADE_FAMILY: Dictionary = {
+	"ranged_power": "ranged_bonus", "ranged_count": "ranged_bonus",
+	"flying_swords_power": "flying_swords", "flying_swords_count": "flying_swords",
+}
+
+@onready var _portrait: TextureRect = $CharPanel/Portrait
+@onready var _hp_bar: ProgressBar = $CharPanel/HPBar
+@onready var _defense_bar: ProgressBar = $CharPanel/DefenseBar
+@onready var _xp_bar: ProgressBar = $CharPanel/XPBar
+@onready var _level_badge: PanelContainer = $CharPanel/LevelBadge
+@onready var _level_number: Label = $CharPanel/LevelBadge/LevelNumber
+@onready var _hp_value_label: Label = $HPValue
+@onready var _wave_label: Label = $InfoPanel/VBox/WaveLabel
+@onready var _monsters_label: Label = $InfoPanel/VBox/MonstersLabel
+@onready var _coins_label: Label = $InfoPanel/VBox/CoinsRow/CoinsLabel
+@onready var _timer_label: Label = $TimerPanel/TimerLabel
 @onready var _banner: Label = $BreakBanner
 @onready var _boss_panel: PanelContainer = $BossPanel
-@onready var _boss_label: Label = $BossPanel/Margin5/VBox4/BossLabel
-@onready var _boss_bar: ProgressBar = $BossPanel/Margin5/VBox4/BossBar
-
-var _hp_fill_style: StyleBoxFlat
-var _hp_gradient := Gradient.new()
+@onready var _boss_label: Label = $BossPanel/VBox/BossLabel
+@onready var _boss_bar: ProgressBar = $BossPanel/VBox/BossBar
+@onready var _upgrades_bar: PanelContainer = $UpgradesArea/UpgradesBar
+@onready var _upgrade_slots: HBoxContainer = $UpgradesArea/UpgradesBar/Slots
 
 var _run_time: float = 0.0
 var _running: bool = true
+var _upgrade_icons: Dictionary = {}   # id de carta -> ruta del ícono
+var _action_slot: Texture2D
 
 func _ready() -> void:
-	_hp_gradient.colors = PackedColorArray([COLOR_HP_LOW, COLOR_HP_MID, COLOR_HP_FULL])
-	_hp_gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	$CharPanel/Frame.texture = load(CHAR_PANEL_TEXTURE)
+	$InfoPanel/VBox/CoinsRow/CoinIcon.texture = load(COIN_TEXTURE)
+	_action_slot = load(ACTION_SLOT_TEXTURE)
+	for u in LEVEL_UP_MENU.UPGRADES:
+		_upgrade_icons[u["id"]] = u.get("icon", "")
 
-	for panel in [$HPPanel, $TimerPanel, $LevelPanel, $WavePanel, _boss_panel]:
-		panel.add_theme_stylebox_override("panel", UITheme.make_panel_box())
-	_level_badge.add_theme_stylebox_override("panel", UITheme.make_box(UITheme.COLOR_FILL, UITheme.COLOR_BORDER))
+	RpgTheme.style_track_bar(_hp_bar, BAR_HP[0], BAR_HP[1])
+	RpgTheme.style_track_bar(_defense_bar, BAR_DEFENSE[0], BAR_DEFENSE[1])
+	RpgTheme.style_track_bar(_xp_bar, BAR_XP[0], BAR_XP[1])
+	RpgTheme.style_level_bar(_boss_bar, COLOR_BOSS)
+	_defense_bar.value = 0.0
 
-	_hp_fill_style = UITheme.style_progress_bar(_hp_bar, COLOR_HP_FULL)
-	UITheme.style_progress_bar(_xp_bar, COLOR_XP)
-	UITheme.style_progress_bar(_defense_bar, COLOR_DEFENSE)
-	UITheme.style_progress_bar(_boss_bar, COLOR_BOSS)
+	_level_badge.add_theme_stylebox_override("panel", RpgTheme.badge_box())
+	_level_number.add_theme_font_size_override("font_size", 14)
+	_level_number.add_theme_color_override("font_color", RpgTheme.COLOR_BTN_TEXT)
+	_level_number.add_theme_font_override("font", UITheme.make_bold_font(0.6))
 
-	UITheme.style_label(_hp_caption_label, 15)
-	UITheme.style_label(_hp_value_label, 15, true)
-	UITheme.style_label(_level_number, 22, true)
-	UITheme.style_label(_xp_caption_label, 12)
-	UITheme.style_label(_wave_label, 18, true)
-	UITheme.style_label(_monsters_label, 15)
-	UITheme.style_label(_coins_label, 15)
-	UITheme.style_label(_timer_label, 28, true)
-	UITheme.style_label(_banner, 44, true)
-	UITheme.style_label(_boss_label, 16, true)
-	_hp_caption_label.modulate.a = 0.8
-	_xp_caption_label.modulate.a = 0.8
+	for panel in [$InfoPanel, $TimerPanel, _boss_panel]:
+		panel.add_theme_stylebox_override("panel", RpgTheme.wood_box())
+	$MinimapFrame.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 9.0))
+	_upgrades_bar.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 6.0))
 
-	_coins_label.text = "Monedas: %d" % GameState.run_currency
+	RpgTheme.style_light_label(_hp_value_label, 15)
+	RpgTheme.style_light_label(_wave_label, 18)
+	RpgTheme.style_light_label(_monsters_label, 14)
+	RpgTheme.style_light_label(_coins_label, 14)
+	RpgTheme.style_light_label(_timer_label, 26)
+	RpgTheme.style_light_label(_boss_label, 16)
+	RpgTheme.style_light_label(_banner, 44)
+
+	_coins_label.text = "%d" % GameState.run_currency
 	GameState.currency_changed.connect(_on_currency_changed)
 
 func _process(delta: float) -> void:
@@ -79,31 +100,121 @@ func _process(delta: float) -> void:
 	var secs := int(_run_time) % 60
 	_timer_label.text = "%02d:%02d" % [mins, secs]
 
+# ── Panel de personaje ───────────────────────────────────────────
+
 func on_hp_changed(current: float, max_hp: float) -> void:
 	_hp_bar.max_value = max_hp
 	_hp_bar.value = current
 	_hp_value_label.text = "%d / %d" % [int(round(current)), int(round(max_hp))]
-	var ratio: float = clamp(current / max_hp, 0.0, 1.0) if max_hp > 0.0 else 0.0
-	_hp_fill_style.bg_color = _hp_gradient.sample(ratio)
 
 func on_xp_changed(current: int, needed: int, level: int) -> void:
 	_xp_bar.max_value = needed
 	_xp_bar.value = current
-	_level_number.text = str(level)
+	_level_number.text = "NV %d" % level
 
-## La barra de defensa (armadura comprada en la tienda) sólo se
-## muestra si el player realmente tiene puntos de defensa — sin
-## compras, max_defense es 0 y esto queda oculto como antes.
+## Sin armadura comprada max_defense es 0: la pista azul queda vacía.
 func on_defense_changed(current: float, max_defense: float) -> void:
-	_defense_bar.visible = max_defense > 0.0
-	if max_defense > 0.0:
-		_defense_bar.max_value = max_defense
-		_defense_bar.value = current
+	_defense_bar.max_value = max(max_defense, 1.0)
+	_defense_bar.value = current if max_defense > 0.0 else 0.0
+
+## Retrato circular armado a partir de un frame del sprite del héroe:
+## recorte cuadrado de cabeza y torso, escalado sin suavizar, sobre el
+## fondo azul del pack y recortado en círculo (el aro de madera de
+## char_panel.png tapa el borde).
+func set_portrait(tex: Texture2D) -> void:
+	if tex == null:
+		return
+	var src := tex.get_image()
+	if src == null or src.is_empty():
+		return
+	if src.is_compressed():
+		src.decompress()
+	src.convert(Image.FORMAT_RGBA8)
+	var used := src.get_used_rect()
+	if used.size.x <= 0 or used.size.y <= 0:
+		return
+
+	var side: int = mini(maxi(used.size.x, int(used.size.y * 0.6)), maxi(used.size.x, used.size.y))
+	var cx: int = used.position.x + int(used.size.x / 2.0)
+	var region := Rect2i(cx - int(side / 2.0), used.position.y - 1, side, side)
+	var clipped := region.intersection(Rect2i(Vector2i.ZERO, src.get_size()))
+	var crop := Image.create_empty(side, side, false, Image.FORMAT_RGBA8)
+	crop.blit_rect(src, clipped, clipped.position - region.position)
+	crop.resize(PORTRAIT_SIZE, PORTRAIT_SIZE, Image.INTERPOLATE_NEAREST)
+
+	var out := Image.create_empty(PORTRAIT_SIZE, PORTRAIT_SIZE, false, Image.FORMAT_RGBA8)
+	out.fill(PORTRAIT_BG)
+	out.blend_rect(crop, Rect2i(0, 0, PORTRAIT_SIZE, PORTRAIT_SIZE), Vector2i.ZERO)
+	var c := (PORTRAIT_SIZE - 1) / 2.0
+	var r2 := (PORTRAIT_SIZE / 2.0) * (PORTRAIT_SIZE / 2.0)
+	for y in range(PORTRAIT_SIZE):
+		for x in range(PORTRAIT_SIZE):
+			if (x - c) * (x - c) + (y - c) * (y - c) > r2:
+				out.set_pixel(x, y, Color(0, 0, 0, 0))
+	_portrait.texture = ImageTexture.create_from_image(out)
+
+# ── Barra de mejoras activas ─────────────────────────────────────
+
+## Recibe el historial de cartas elegidas (player.upgrade_log) y arma
+## una casilla por mejora, en el orden en que se eligieron por primera vez.
+func on_upgrades_changed(upgrade_log: Array) -> void:
+	var order: Array = []
+	var counts: Dictionary = {}
+	for id in upgrade_log:
+		var family: String = UPGRADE_FAMILY.get(id, id)
+		if not counts.has(family):
+			order.append(family)
+			counts[family] = 0
+		counts[family] += 1
+
+	for child in _upgrade_slots.get_children():
+		_upgrade_slots.remove_child(child)
+		child.queue_free()
+	for family in order:
+		_upgrade_slots.add_child(_make_upgrade_tile(_upgrade_icons.get(family, ""), counts[family]))
+	_upgrades_bar.visible = not order.is_empty()
+
+func _make_upgrade_tile(icon_path: String, count: int) -> Control:
+	var tile := TextureRect.new()
+	tile.texture = _action_slot
+	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		var icon := TextureRect.new()
+		icon.texture = load(icon_path)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.anchor_right = 1.0
+		icon.anchor_bottom = 1.0
+		icon.offset_left = 5.0
+		icon.offset_top = 5.0
+		icon.offset_right = -5.0
+		icon.offset_bottom = -5.0
+		tile.add_child(icon)
+
+	if count > 1:
+		var label := Label.new()
+		label.text = "x%d" % count
+		RpgTheme.style_light_label(label, 12)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.anchor_left = 1.0
+		label.anchor_top = 1.0
+		label.anchor_right = 1.0
+		label.anchor_bottom = 1.0
+		label.offset_left = -34.0
+		label.offset_top = -20.0
+		label.offset_right = 1.0
+		label.offset_bottom = 3.0
+		tile.add_child(label)
+	return tile
+
+# ── Oleadas / moneda ─────────────────────────────────────────────
 
 func _on_currency_changed(amount: int) -> void:
-	_coins_label.text = "Monedas: %d" % amount
-
-# ── Boss ──────────────────────────────────────────────────────────
+	_coins_label.text = "%d" % amount
 
 func show_boss_bar(max_hp: float) -> void:
 	_boss_panel.visible = true

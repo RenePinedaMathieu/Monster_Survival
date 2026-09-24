@@ -2,10 +2,10 @@ extends Control
 
 ## Selección de personaje, estilo "versus screen" (Mega Man X5): 3
 ## recuadros con el retrato grande + un preview animado del sprite
-## idle real de cada pack. Al pasar el mouse o mover el foco con
-## teclado/mando, el marco se enciende con un brillo que cicla de
-## tono; click/Enter confirma, apaga a los otros dos y pasa al
-## gameplay.
+## idle real de cada pack, en ventanas del pack de UI (rpg_theme.gd).
+## Al pasar el mouse o mover el foco con teclado/mando, la carta se
+## rodea de un aro verde que late; click/Enter confirma, apaga a los
+## otros y pasa a la confirmación.
 ##
 ## La elección queda en GameState.selected_character_id. El gameplay
 ## (player.gd) todavía NO lee ese valor — cada pack en
@@ -14,6 +14,9 @@ extends Control
 ## hoy, así que conectar el skin real es trabajo aparte.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
+const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
+const COLOR_GLOW := Color("6ae356")
 
 const CONFIRM_SCENE := "res://scenes/character_confirm.tscn"
 const MENU_SCENE := "res://scenes/main_menu.tscn"
@@ -73,9 +76,6 @@ const CHARACTERS: Array[Dictionary] = [
 	},
 ]
 
-@onready var _glow_base: TextureRect = $GlowBase
-@onready var _glow_accent_a: TextureRect = $GlowAccentA
-@onready var _glow_accent_b: TextureRect = $GlowAccentB
 @onready var _title: Label = $Layout/Title
 @onready var _hint: Label = $Layout/Hint
 @onready var _back_button: Button = $BackButton
@@ -106,7 +106,6 @@ const CHARACTERS: Array[Dictionary] = [
 	$Layout/CardsRow/Card1/HitButton, $Layout/CardsRow/Card2/HitButton, $Layout/CardsRow/Card3/HitButton, $Layout/CardsRow/Card4/HitButton,
 ]
 
-var _frame_styles: Array[StyleBoxFlat] = []
 var _glow_styles: Array[StyleBoxFlat] = []
 var _idle_atlases: Array[AtlasTexture] = []
 var _idle_frame_widths: Array[float] = []
@@ -117,22 +116,18 @@ var _was_active: Array[bool] = [false, false, false, false]
 ## (algunos packs traen 8 frames, otros 12 — swordman).
 var _idle_frame_counts: Array[int] = []
 
-var _glow_a_base := Vector2.ZERO
-var _glow_b_base := Vector2.ZERO
 var _confirmed := false
 var _time := 0.0
 
 func _ready() -> void:
 	Audio.play_music("character_select", 1000)
-	_build_background_glow()
-	_glow_a_base = _glow_accent_a.position
-	_glow_b_base = _glow_accent_b.position
+	$Background.texture = load(BACKGROUND_TEXTURE)
 
-	UITheme.style_label(_title, 40)
-	UITheme.style_label(_hint, 15)
-	_hint.modulate.a = 0.75
+	RpgTheme.style_light_label(_title, 40)
+	RpgTheme.style_light_label(_hint, 15)
+	_hint.modulate.a = 0.85
 
-	UITheme.style_button(_back_button)
+	RpgTheme.style_button(_back_button, 20)
 	_back_button.mouse_entered.connect(UITheme.pulse.bind(_back_button, 1.05, 0.08))
 	_back_button.mouse_exited.connect(UITheme.pulse.bind(_back_button, 1.0, 0.08))
 	_back_button.pressed.connect(_on_back_pressed)
@@ -140,7 +135,7 @@ func _ready() -> void:
 	# La tienda también es accesible desde acá (antes sólo desde el
 	# menú principal) — "para que se entienda bien" dónde conseguir
 	# mejoras permanentes sin tener que volver atrás primero.
-	UITheme.style_button(_shop_button)
+	RpgTheme.style_button(_shop_button, 20)
 	_shop_button.mouse_entered.connect(UITheme.pulse.bind(_shop_button, 1.05, 0.08))
 	_shop_button.mouse_exited.connect(UITheme.pulse.bind(_shop_button, 1.0, 0.08))
 	_shop_button.pressed.connect(_on_shop_pressed)
@@ -161,7 +156,6 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	_animate_background()
 	_animate_idle_previews(delta)
 	for i in range(_hit_buttons.size()):
 		var active := _hit_buttons[i].is_hovered() or _hit_buttons[i].has_focus()
@@ -178,12 +172,12 @@ func _setup_card(i: int) -> void:
 	var data: Dictionary = CHARACTERS[i]
 	var accent: Color = data["accent"]
 
-	# Los PNG tienen alpha real alrededor del personaje (no fondo
-	# opaco), así que el túnel de neón dibujado detrás se ve completo.
-	_tunnel_lines[i].set_accent(accent)
+	# El túnel de neón no va con el estilo pergamino del resto de la UI
+	# — el retrato va sobre el fondo azul de los retratos del pack.
+	_tunnel_lines[i].visible = false
 	_portraits[i].texture = load(data["portrait"])
 	_name_labels[i].text = data["name"]
-	UITheme.style_label(_name_labels[i], 30, true)
+	RpgTheme.style_light_label(_name_labels[i], 24)
 
 	var idle_tex: Texture2D = load(data["idle_sheet"])
 	var frame_count: int = data.get("idle_frames", DEFAULT_IDLE_FRAME_COUNT)
@@ -198,13 +192,11 @@ func _setup_card(i: int) -> void:
 	_idle_timers.append(randf() * 0.5)
 	_idle_frame_index.append(0)
 
-	var idle_style := UITheme.make_box(UITheme.COLOR_FILL, accent.darkened(0.4))
-	_frames[i].add_theme_stylebox_override("panel", idle_style)
-	_frame_styles.append(idle_style)
+	_frames[i].add_theme_stylebox_override("panel", RpgTheme.window_box())
 
 	var glow_style := StyleBoxFlat.new()
-	glow_style.bg_color = Color(accent, 0.0)
-	glow_style.border_color = Color(accent, 0.0)
+	glow_style.bg_color = Color(COLOR_GLOW, 0.0)
+	glow_style.border_color = Color(COLOR_GLOW, 0.0)
 	glow_style.set_border_width_all(6)
 	glow_style.set_corner_radius_all(0)
 	glow_style.anti_aliasing = false
@@ -220,8 +212,6 @@ func _setup_card(i: int) -> void:
 	for state in ["normal", "hover", "pressed", "focus"]:
 		_hit_buttons[i].add_theme_stylebox_override(state, invisible)
 
-# ── Fondo ────────────────────────────────────────────────────────
-
 var _cached_glow_material: CanvasItemMaterial
 
 func _shared_additive_material() -> CanvasItemMaterial:
@@ -229,33 +219,6 @@ func _shared_additive_material() -> CanvasItemMaterial:
 		_cached_glow_material = CanvasItemMaterial.new()
 		_cached_glow_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	return _cached_glow_material
-
-func _build_background_glow() -> void:
-	_glow_base.texture = _make_radial_gradient(Color(0.35, 0.28, 0.55, 0.55))
-	_glow_accent_a.texture = _make_radial_gradient(Color(1.0, 0.55, 0.25, 0.35))
-	_glow_accent_b.texture = _make_radial_gradient(Color(0.3, 0.55, 1.0, 0.35))
-	var mat := _shared_additive_material()
-	_glow_base.material = mat
-	_glow_accent_a.material = mat
-	_glow_accent_b.material = mat
-
-func _make_radial_gradient(center_color: Color) -> GradientTexture2D:
-	var gradient := Gradient.new()
-	gradient.set_color(0, center_color)
-	gradient.set_color(1, Color(center_color, 0.0))
-	var tex := GradientTexture2D.new()
-	tex.gradient = gradient
-	tex.fill = GradientTexture2D.FILL_RADIAL
-	tex.fill_from = Vector2(0.5, 0.5)
-	tex.fill_to = Vector2(1.0, 0.5)
-	tex.width = 512
-	tex.height = 512
-	return tex
-
-func _animate_background() -> void:
-	_glow_accent_a.position = _glow_a_base + Vector2(sin(_time * 0.25) * 60.0, cos(_time * 0.2) * 30.0)
-	_glow_accent_b.position = _glow_b_base + Vector2(cos(_time * 0.22) * 70.0, sin(_time * 0.18) * 40.0)
-	_glow_base.modulate.a = 0.85 + 0.15 * sin(_time * 0.5)
 
 # ── Idle preview ─────────────────────────────────────────────────
 
@@ -272,21 +235,11 @@ func _animate_idle_previews(delta: float) -> void:
 
 # ── Marco brillante ──────────────────────────────────────────────
 
+## Aro verde que late alrededor de la carta activa (hover o foco).
 func _update_card_glow(i: int, active: bool) -> void:
-	var frame_style := _frame_styles[i]
 	var glow_style := _glow_styles[i]
-	var accent: Color = CHARACTERS[i]["accent"]
-
-	if active:
-		var hue := fmod(_time * 0.35, 1.0)
-		var glow_color := Color.from_hsv(hue, 0.75, 1.0)
-		frame_style.border_color = glow_color
-		frame_style.set_border_width_all(4)
-		glow_style.border_color = Color(glow_color, 0.5 + 0.25 * sin(_time * 5.0))
-	else:
-		frame_style.border_color = accent.darkened(0.4)
-		frame_style.set_border_width_all(3)
-		glow_style.border_color = Color(accent, 0.0)
+	var alpha: float = 0.55 + 0.3 * sin(_time * 5.0) if active else 0.0
+	glow_style.border_color = Color(COLOR_GLOW, alpha)
 
 	if active != _was_active[i]:
 		_was_active[i] = active

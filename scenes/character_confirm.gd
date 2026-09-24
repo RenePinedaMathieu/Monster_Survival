@@ -1,27 +1,29 @@
 extends Control
 
 ## Pantalla intermedia entre elegir personaje y arrancar la run:
-## retrato grande a la izquierda + panel "holográfico" a la derecha
-## con rol, stats orientativas y una descripción corta. Antes se
-## pasaba directo de la card al gameplay y se sentía muy brusco.
+## retrato grande a la izquierda + ventana a la derecha con rol, stats
+## orientativas y una descripción corta. Antes se pasaba directo de la
+## card al gameplay y se sentía muy brusco.
 ##
 ## Lee GameState.pending_character (dict completo de la entry elegida
 ## en character_select.gd, ver CHARACTERS ahí) — no duplica esos datos.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const GAME_SCENE := "res://scenes/main.tscn"
 const SELECT_SCENE := "res://scenes/character_select.tscn"
+const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
-const HOLO_COLOR := Color("4fc3e0")
+const STAT_COLOR := Color("57c767")
 const STAT_MAX := 5
 
-@onready var _portrait: TextureRect = $Layout/Left/Portrait
-@onready var _holo_panel: PanelContainer = $Layout/Right/HoloWrap/HoloPanel
-@onready var _name_label: Label = $Layout/Right/HoloWrap/HoloPanel/Margin/VBox/NameLabel
-@onready var _role_label: Label = $Layout/Right/HoloWrap/HoloPanel/Margin/VBox/RoleLabel
-@onready var _stats_box: VBoxContainer = $Layout/Right/HoloWrap/HoloPanel/Margin/VBox/StatsBox
-@onready var _blurb_label: Label = $Layout/Right/HoloWrap/HoloPanel/Margin/VBox/BlurbLabel
-@onready var _scanline: ColorRect = $Layout/Right/HoloWrap/Scanline
+@onready var _portrait_frame: PanelContainer = $Layout/Left/PortraitFrame
+@onready var _portrait: TextureRect = $Layout/Left/PortraitFrame/Portrait
+@onready var _panel: PanelContainer = $Layout/Right/Panel
+@onready var _name_label: Label = $Layout/Right/Panel/VBox/NameLabel
+@onready var _role_label: Label = $Layout/Right/Panel/VBox/RoleLabel
+@onready var _stats_box: VBoxContainer = $Layout/Right/Panel/VBox/StatsBox
+@onready var _blurb_label: Label = $Layout/Right/Panel/VBox/BlurbLabel
 @onready var _confirm_button: Button = $Layout/Right/Buttons/ConfirmButton
 @onready var _back_button: Button = $Layout/Right/Buttons/BackButton
 
@@ -34,32 +36,24 @@ func _ready() -> void:
 		get_tree().change_scene_to_file(SELECT_SCENE)
 		return
 
+	$Background.texture = load(BACKGROUND_TEXTURE)
 	_portrait.texture = load(data["portrait"])
-
-	var holo_style := UITheme.make_box(Color(0.03, 0.08, 0.1, 0.75), HOLO_COLOR, 0.0, 2)
-	_holo_panel.add_theme_stylebox_override("panel", holo_style)
-	_scanline.color = Color(HOLO_COLOR, 0.35)
-	var scan_mat := CanvasItemMaterial.new()
-	scan_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	_scanline.material = scan_mat
-	_animate_scanline()
+	_portrait_frame.add_theme_stylebox_override("panel", RpgTheme.slot_box(true, 12.0))
+	_panel.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(28.0, 24.0))
 
 	_name_label.text = data["name"]
-	UITheme.style_label(_name_label, 40, true)
-	_name_label.add_theme_color_override("font_color", HOLO_COLOR)
+	RpgTheme.style_header_title(_name_label, 26)
 
 	_role_label.text = data.get("role", "")
-	UITheme.style_label(_role_label, 16)
-	_role_label.modulate.a = 0.85
+	RpgTheme.style_ink_label(_role_label, 17, true)
 
 	_blurb_label.text = data.get("blurb", "")
-	UITheme.style_label(_blurb_label, 15)
-	_blurb_label.modulate.a = 0.9
+	RpgTheme.style_ink_label(_blurb_label, 15, false, true)
 
 	_build_stats(data.get("stats", {}))
 
 	for b in [_confirm_button, _back_button]:
-		UITheme.style_button(b, 20)
+		RpgTheme.style_button(b, 20)
 		b.mouse_entered.connect(UITheme.pulse.bind(b, 1.05, 0.08))
 		b.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
 		b.mouse_exited.connect(UITheme.pulse.bind(b, 1.0, 0.08))
@@ -83,8 +77,8 @@ func _build_stats(stats: Dictionary) -> void:
 
 		var label := Label.new()
 		label.text = stat_name
-		label.custom_minimum_size = Vector2(110, 0)
-		UITheme.style_label(label, 14)
+		label.custom_minimum_size = Vector2(120, 0)
+		RpgTheme.style_ink_label(label, 15, true)
 		row.add_child(label)
 
 		var bar := ProgressBar.new()
@@ -93,20 +87,10 @@ func _build_stats(stats: Dictionary) -> void:
 		bar.value = value
 		bar.show_percentage = false
 		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		bar.custom_minimum_size = Vector2(0, 18)
-		UITheme.style_progress_bar(bar, HOLO_COLOR)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.custom_minimum_size = Vector2(0, 16)
+		RpgTheme.style_level_bar(bar, STAT_COLOR)
 		row.add_child(bar)
-
-## Línea horizontal que baja en loop dentro del panel — el único
-## toque "en vivo" del holograma, sin sumar un shader nuevo al proyecto.
-## Espera un frame a que el layout de containers termine de calcular
-## tamaños reales antes de medir _holo_panel.size.
-func _animate_scanline() -> void:
-	await get_tree().process_frame
-	var h: float = maxf(_holo_panel.size.y, 200.0)
-	_scanline.position.y = 0.0
-	var tw := create_tween().set_loops()
-	tw.tween_property(_scanline, "position:y", h, 2.2).from(0.0)
 
 func _on_confirm() -> void:
 	get_tree().change_scene_to_file(GAME_SCENE)

@@ -24,6 +24,7 @@ extends Node2D
 const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const MONSTER_SCENE := preload("res://scenes/monster.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
 
 const SPAWN_KEYS: Dictionary = {
 	KEY_1: "rat",
@@ -57,6 +58,18 @@ func _ready() -> void:
 		tc.move_input.connect(_player.set_touch_input)
 
 	_wire_touch_buttons()
+	_style_panels()
+
+## Mismo estilo que el resto de la UI (rpg_theme.gd): madera + verdes.
+func _style_panels() -> void:
+	_touch_panel.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 9.0))
+	$UI/HelpBg.color = Color(0.227, 0.157, 0.114, 0.85)
+	RpgTheme.style_light_label(_help_label, 12)
+	for node in _touch_panel.find_children("*", "", true, false):
+		if node is Button:
+			RpgTheme.style_button(node, 14)
+		elif node is Label:
+			RpgTheme.style_light_label(node, 12)
 
 func _wire_touch_buttons() -> void:
 	# Los botones cuelgan de UI/TouchPanel/Content/<Group>/<Btn> — la

@@ -15,8 +15,8 @@ const SIZE := 150.0
 # lo pasamos a [0..SIZE].
 const SCALE := SIZE / (WORLD_BOUND * 2.0)
 
-const BG_COLOR := Color(0.141, 0.094, 0.071, 0.7)
-const BORDER_COLOR := Color(0.878, 0.663, 0.298, 0.85)   # dorado — mismo acento que el resto del HUD
+const BG_COLOR := Color(0.227, 0.157, 0.114, 0.8)
+const BORDER_COLOR := Color(0.243, 0.122, 0.114, 1.0)   # borde oscuro de la madera del pack (el marco lo pone hud.tscn)
 const WORLD_BORDER_COLOR := Color(0.9, 0.9, 0.5, 0.5)
 const PLAYER_COLOR := Color(0.4, 1.0, 0.5)
 const REMOTE_COLOR := Color(0.55, 0.85, 1.0)

@@ -9,102 +9,95 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_confirm")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.023, 0.027, 0.055, 1)
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
 
 [node name="Layout" type="HBoxContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 60.0
-offset_top = 48.0
+offset_top = 40.0
 offset_right = -60.0
-offset_bottom = -48.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 60
+theme_override_constants/separation = 50
 
 [node name="Left" type="CenterContainer" parent="Layout"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Portrait" type="TextureRect" parent="Layout/Left"]
-custom_minimum_size = Vector2(420, 630)
+[node name="PortraitFrame" type="PanelContainer" parent="Layout/Left"]
+layout_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="Layout/Left/PortraitFrame"]
+custom_minimum_size = Vector2(380, 560)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Right" type="VBoxContainer" parent="Layout"]
-custom_minimum_size = Vector2(440, 0)
+custom_minimum_size = Vector2(460, 0)
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 24
+theme_override_constants/separation = 20
 
-[node name="HoloWrap" type="Control" parent="Layout/Right"]
+[node name="Panel" type="PanelContainer" parent="Layout/Right"]
 layout_mode = 2
 size_flags_vertical = 3
-clip_contents = true
 
-[node name="HoloPanel" type="PanelContainer" parent="Layout/Right/HoloWrap"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Margin" type="MarginContainer" parent="Layout/Right/HoloWrap/HoloPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 26
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 26
-theme_override_constants/margin_bottom = 24
-
-[node name="VBox" type="VBoxContainer" parent="Layout/Right/HoloWrap/HoloPanel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Right/Panel"]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="NameLabel" type="Label" parent="Layout/Right/HoloWrap/HoloPanel/Margin/VBox"]
+[node name="NameLabel" type="Label" parent="Layout/Right/Panel/VBox"]
 layout_mode = 2
 text = "..."
 
-[node name="RoleLabel" type="Label" parent="Layout/Right/HoloWrap/HoloPanel/Margin/VBox"]
+[node name="RoleLabel" type="Label" parent="Layout/Right/Panel/VBox"]
 layout_mode = 2
+horizontal_alignment = 1
 text = "..."
 
-[node name="Divider" type="ColorRect" parent="Layout/Right/HoloWrap/HoloPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 2)
+[node name="Divider" type="ColorRect" parent="Layout/Right/Panel/VBox"]
+custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
-color = Color(0.31, 0.76, 0.878, 0.5)
+color = Color(0.439, 0.286, 0.165, 0.6)
 
-[node name="StatsBox" type="VBoxContainer" parent="Layout/Right/HoloWrap/HoloPanel/Margin/VBox"]
+[node name="StatsBox" type="VBoxContainer" parent="Layout/Right/Panel/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BlurbLabel" type="Label" parent="Layout/Right/HoloWrap/HoloPanel/Margin/VBox"]
+[node name="BlurbLabel" type="Label" parent="Layout/Right/Panel/VBox"]
 layout_mode = 2
 autowrap_mode = 3
 text = "..."
-
-[node name="Scanline" type="ColorRect" parent="Layout/Right/HoloWrap"]
-anchor_right = 1.0
-offset_bottom = 3.0
-mouse_filter = 2
-color = Color(0.31, 0.76, 0.878, 0.35)
 
 [node name="Buttons" type="HBoxContainer" parent="Layout/Right"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
 [node name="ConfirmButton" type="Button" parent="Layout/Right/Buttons"]
-custom_minimum_size = Vector2(0, 54)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "CONFIRMAR"
 
 [node name="BackButton" type="Button" parent="Layout/Right/Buttons"]
-custom_minimum_size = Vector2(140, 54)
+custom_minimum_size = Vector2(150, 56)
 layout_mode = 2
 text = "VOLVER"

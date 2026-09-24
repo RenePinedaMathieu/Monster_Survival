@@ -22,6 +22,8 @@ extends CanvasLayer
 signal finished
 
 const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
+const COLOR_HIGHLIGHT := Color("6ae356")
 
 ## "target" vacío = página informativa centrada, sin nada que marcar.
 const PAGES: Array[Dictionary] = [
@@ -42,7 +44,7 @@ const PAGES: Array[Dictionary] = [
 	},
 	{
 		"title": "MONEDA Y MEJORAS PERMANENTES",
-		"body": "Ese es el botón de la tienda. Los enemigos sueltan moneda al morir, y esa moneda queda guardada al terminar la partida para comprar aquí armadura, vida, daño y regeneración que empiezan contigo en cada run futura.",
+		"body": "Ese es el botón de la tienda. Los enemigos sueltan moneda al morir, y esa moneda queda guardada al terminar la partida para comprar mejoras permanentes, poderes nuevos que aparecen al subir de nivel, y acompañantes que pelean contigo.",
 		"target": "MenuButtons/ShopButton",
 	},
 	{
@@ -97,13 +99,12 @@ var _arrow_bounce: float = 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_bubble.add_theme_stylebox_override("panel", UITheme.make_box(UITheme.COLOR_FILL, UITheme.COLOR_BORDER, 0.0, 4))
-	UITheme.style_label(_title_label, 26, true)
-	UITheme.style_label(_body_label, 16)
-	UITheme.style_label(_page_label, 13)
-	_page_label.modulate.a = 0.7
+	_bubble.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(24.0, 20.0))
+	RpgTheme.style_header_title(_title_label, 20)
+	RpgTheme.style_ink_label(_body_label, 16)
+	RpgTheme.style_ink_label(_page_label, 13, false, true)
 	for b in [_prev_button, _next_button, _skip_button]:
-		UITheme.style_button(b, 16)
+		RpgTheme.style_button(b, 15)
 		b.mouse_entered.connect(UITheme.pulse.bind(b, 1.05, 0.08))
 		b.mouse_exited.connect(UITheme.pulse.bind(b, 1.0, 0.08))
 	_prev_button.pressed.connect(_on_prev)
@@ -112,7 +113,7 @@ func _ready() -> void:
 
 	_highlight_style = StyleBoxFlat.new()
 	_highlight_style.bg_color = Color(0, 0, 0, 0)
-	_highlight_style.border_color = UITheme.COLOR_BORDER
+	_highlight_style.border_color = COLOR_HIGHLIGHT
 	_highlight_style.set_border_width_all(4)
 	_highlight_style.set_corner_radius_all(4)
 	_highlight_style.anti_aliasing = false
@@ -121,8 +122,8 @@ func _ready() -> void:
 		.from(1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	_arrow.add_theme_font_size_override("font_size", 26)
-	_arrow.add_theme_color_override("font_color", UITheme.COLOR_BORDER)
-	_arrow.add_theme_color_override("font_outline_color", UITheme.COLOR_TEXT_OUTLINE)
+	_arrow.add_theme_color_override("font_color", COLOR_HIGHLIGHT)
+	_arrow.add_theme_color_override("font_outline_color", RpgTheme.COLOR_LIGHT_OUTLINE)
 	_arrow.add_theme_constant_override("outline_size", 4)
 
 	_render_page()

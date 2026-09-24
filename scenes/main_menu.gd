@@ -6,6 +6,7 @@ extends Control
 ## selección de personaje, no directo al gameplay.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
 
 const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
@@ -27,8 +28,8 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
 func _ready() -> void:
 	_background.texture = load(BACKGROUND_TEXTURE)
-	UITheme.style_label(_record_label, 16, true)
-	_record_label.modulate.a = 0.85
+	RpgTheme.style_light_label(_record_label, 16)
+	_record_label.modulate.a = 0.9
 	if GameState.best_wave > 0:
 		var mins := int(GameState.best_time) / 60
 		var secs := int(GameState.best_time) % 60
@@ -36,8 +37,11 @@ func _ready() -> void:
 	else:
 		_record_label.text = ""
 
+	for button in [_play_button, _shop_button, _options_button, _quit_button]:
+		RpgTheme.style_button(button, 24)
+	for button in [_back_button, _tutorial_button, _qa_room_button]:
+		RpgTheme.style_button(button, 16)
 	for button in [_play_button, _shop_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
-		UITheme.style_button(button)
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
 		button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
 		button.mouse_exited.connect(UITheme.pulse.bind(button, 1.0, 0.08))
@@ -52,6 +56,13 @@ func _ready() -> void:
 	_options_button.pressed.connect(_on_options_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_back_button.pressed.connect(_on_back_pressed)
+
+	_options_panel.add_theme_stylebox_override("panel", RpgTheme.window_box())
+	RpgTheme.style_header_title($OptionsPanel/Content/Title, 22)
+	RpgTheme.style_ink_label($OptionsPanel/Content/VolumeRow/VolumeLabel, 16, true)
+	RpgTheme.style_ink_label($OptionsPanel/Content/FullscreenRow/FullscreenLabel, 16, true)
+	RpgTheme.style_slider(_volume_slider)
+	RpgTheme.style_check(_fullscreen_check)
 
 	var master_idx := AudioServer.get_bus_index("Master")
 	_volume_slider.value = db_to_linear(AudioServer.get_bus_volume_db(master_idx))
