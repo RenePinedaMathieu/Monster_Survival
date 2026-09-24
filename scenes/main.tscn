@@ -10,8 +10,6 @@ script = ExtResource("1_main1")
 
 [node name="World" parent="." instance=ExtResource("4_wrl01")]
 
-[node name="RemotePlayers" type="Node2D" parent="."]
-
 [node name="Monsters" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_plyr1")]

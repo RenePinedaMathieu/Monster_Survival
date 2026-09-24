@@ -653,9 +653,6 @@ func _physics_process(delta: float) -> void:
 	else:
 		_apply_idle(delta)
 
-	if moving:
-		Realtime.send_move(position.x, position.y, 1, current_dir)
-
 	# Regen pasivo
 	if hp_regen_per_sec > 0.0 and hp < max_hp:
 		_regen_accum += delta

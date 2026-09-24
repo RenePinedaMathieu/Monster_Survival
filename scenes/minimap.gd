@@ -5,7 +5,6 @@ extends Control
 ##   - Contorno del mundo (WORLD_BOUND del world.gd)
 ##   - Puntos rojos por cada monstruo (grupo "monster")
 ##   - Punto verde por el player (grupo "player")
-##   - Puntos celestes por remote players
 ##
 ## Es "top-down" en coordenadas de mundo, no rota con la cámara.
 
@@ -22,7 +21,6 @@ const BG_COLOR := Color(0.227, 0.157, 0.114, 0.8)
 const BORDER_COLOR := Color(0.243, 0.122, 0.114, 1.0)   # borde oscuro de la madera del pack (el marco lo pone hud.tscn)
 const WORLD_BORDER_COLOR := Color(0.9, 0.9, 0.5, 0.5)
 const PLAYER_COLOR := Color(0.4, 1.0, 0.5)
-const REMOTE_COLOR := Color(0.55, 0.85, 1.0)
 const MONSTER_COLOR := Color(1.0, 0.35, 0.35)
 
 func set_side(side: float) -> void:
@@ -62,13 +60,6 @@ func _draw() -> void:
 		var d := _world_to_map(m.global_position)
 		if _in_bounds(d):
 			draw_circle(d, 2.2, MONSTER_COLOR)
-
-	# Remote players (multiplayer)
-	for rp in get_tree().get_nodes_in_group("remote_player"):
-		if not is_instance_valid(rp): continue
-		var d := _world_to_map(rp.global_position)
-		if _in_bounds(d):
-			draw_circle(d, 2.8, REMOTE_COLOR)
 
 	# Player siempre encima
 	draw_circle(pcenter, 3.4, PLAYER_COLOR)

@@ -1,17 +1,11 @@
 extends Node2D
 
 ## Main del juego. Se encarga de:
-##   - Auth anónima en Supabase + WebSocket a Realtime
-##   - Multiplayer: spawn/despawn/move de remote players
+##   - Sesión anónima en Supabase (sólo para subir la partida al ranking)
 ##   - Oleadas de monstruos: wave N tiene 3 + N*2 bichos; cuando
 ##     matás todos, break de 3s y viene la próxima
 ##   - Wire del daño monster→player y muerte del player
-##
-## En multiplayer cada cliente maneja SUS PROPIAS oleadas
-## (no hay servidor autoritativo). Los otros players que ves
-## están para company/coop cosmético; no comparten enemigos.
 
-const REMOTE_PLAYER_SCENE := preload("res://scenes/remote_player.tscn")
 const MONSTER_SCENE := preload("res://scenes/monster.tscn")
 const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
@@ -40,13 +34,11 @@ const MONSTERS_PER_WAVE := 4
 const WAVE_SPEED_STEP := 0.035
 const WAVE_SPEED_CAP := 1.75
 
-@onready var _remote_players_container: Node2D = $RemotePlayers
 @onready var _monsters_container: Node2D = $Monsters
 @onready var _player: CharacterBody2D = $Player
 @onready var _hud: CanvasLayer = $HUD
 @onready var _world = $World
 
-var _remote_players: Dictionary = {}
 var _current_wave: int = 0
 var _monsters_alive: int = 0
 var _in_break: bool = false
@@ -72,10 +64,6 @@ func _ready() -> void:
 	if GameState.daily_active:
 		seed(GameState.daily_info()["seed"])
 		_final_wave = GameState.DAILY_WAVES
-	Supabase.auth_ready.connect(_on_auth_ready)
-	Realtime.remote_join.connect(_on_remote_join)
-	Realtime.remote_leave.connect(_on_remote_leave)
-	Realtime.remote_move.connect(_on_remote_move)
 	Supabase.ensure_session(GameState.ensure_player_name())
 	_player.hp_changed.connect(_hud.on_hp_changed)
 	_player.defense_changed.connect(_hud.on_defense_changed)
@@ -124,28 +112,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		pause_menu.setup(_player)
 		get_tree().paused = true
 		get_viewport().set_input_as_handled()
-
-# ── Multiplayer ──────────────────────────────────────────────────
-
-func _on_auth_ready() -> void:
-	print("[main] auth ok, uid=", Supabase.user_id)
-
-func _on_remote_join(uid: String, meta: Dictionary) -> void:
-	if _remote_players.has(uid): return
-	var rp = REMOTE_PLAYER_SCENE.instantiate()
-	_remote_players_container.add_child(rp)
-	rp.setup(uid, meta)
-	_remote_players[uid] = rp
-
-func _on_remote_leave(uid: String) -> void:
-	if not _remote_players.has(uid): return
-	_remote_players[uid].queue_free()
-	_remote_players.erase(uid)
-
-func _on_remote_move(uid: String, x: float, y: float, facing: int, dir: int) -> void:
-	if not _remote_players.has(uid):
-		_on_remote_join(uid, {})
-	_remote_players[uid].apply_move(x, y, facing, dir)
 
 # ── Waves ────────────────────────────────────────────────────────
 
@@ -261,9 +227,8 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
 	if GameState.daily_modifier() == "veloces":
 		m.speed_mult *= 1.3
-	# El monster persigue AL PLAYER LOCAL desde el momento del spawn,
-	# sin necesidad de estar en el radio de detección. Los remote
-	# players quedan fuera del scope (cada cliente maneja los suyos).
+	# El monster persigue al player desde el momento del spawn,
+	# sin necesidad de estar en el radio de detección.
 	m.target = _player
 	m.hit_player.connect(_on_monster_hit_player)
 	m.died.connect(_on_monster_died)
