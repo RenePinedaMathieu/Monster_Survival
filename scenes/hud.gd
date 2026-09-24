@@ -11,6 +11,11 @@ extends CanvasLayer
 ##     por pasiva de la build (player.build_summary()) con su nivel; las
 ##     armas evolucionadas muestran el ícono de la evolución y "EVO".
 ##   - Banner central "OLEADA SUPERADA" con fade.
+##
+## Todo cuelga de $Root, que en teléfono se dibuja achicado
+## (Screen.hud_scale()): los anchors se resuelven sobre un área virtual
+## más grande (viewport / escala) y después se escala hacia abajo, así
+## los paneles ocupan menos pantalla sin reacomodar nada a mano.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
@@ -37,31 +42,32 @@ signal skill_pressed
 
 var _skill_button: Button
 
-@onready var _portrait: TextureRect = $CharPanel/Portrait
-@onready var _hp_bar: ProgressBar = $CharPanel/HPBar
-@onready var _defense_bar: ProgressBar = $CharPanel/DefenseBar
-@onready var _xp_bar: ProgressBar = $CharPanel/XPBar
-@onready var _level_badge: PanelContainer = $CharPanel/LevelBadge
-@onready var _level_number: Label = $CharPanel/LevelBadge/LevelNumber
-@onready var _hp_value_label: Label = $HPValue
-@onready var _wave_label: Label = $InfoPanel/VBox/WaveLabel
-@onready var _monsters_label: Label = $InfoPanel/VBox/MonstersLabel
-@onready var _coins_label: Label = $InfoPanel/VBox/CoinsRow/CoinsLabel
-@onready var _timer_label: Label = $TimerPanel/TimerLabel
-@onready var _banner: Label = $BreakBanner
-@onready var _boss_panel: PanelContainer = $BossPanel
-@onready var _boss_label: Label = $BossPanel/VBox/BossLabel
-@onready var _boss_bar: ProgressBar = $BossPanel/VBox/BossBar
-@onready var _upgrades_bar: PanelContainer = $UpgradesArea/UpgradesBar
-@onready var _upgrade_rows: VBoxContainer = $UpgradesArea/UpgradesBar/Rows
+@onready var _root: Control = $Root
+@onready var _portrait: TextureRect = $Root/CharPanel/Portrait
+@onready var _hp_bar: ProgressBar = $Root/CharPanel/HPBar
+@onready var _defense_bar: ProgressBar = $Root/CharPanel/DefenseBar
+@onready var _xp_bar: ProgressBar = $Root/CharPanel/XPBar
+@onready var _level_badge: PanelContainer = $Root/CharPanel/LevelBadge
+@onready var _level_number: Label = $Root/CharPanel/LevelBadge/LevelNumber
+@onready var _hp_value_label: Label = $Root/HPValue
+@onready var _wave_label: Label = $Root/InfoPanel/VBox/WaveLabel
+@onready var _monsters_label: Label = $Root/InfoPanel/VBox/MonstersLabel
+@onready var _coins_label: Label = $Root/InfoPanel/VBox/CoinsRow/CoinsLabel
+@onready var _timer_label: Label = $Root/TimerPanel/TimerLabel
+@onready var _banner: Label = $Root/BreakBanner
+@onready var _boss_panel: PanelContainer = $Root/BossPanel
+@onready var _boss_label: Label = $Root/BossPanel/VBox/BossLabel
+@onready var _boss_bar: ProgressBar = $Root/BossPanel/VBox/BossBar
+@onready var _upgrades_bar: PanelContainer = $Root/UpgradesArea/UpgradesBar
+@onready var _upgrade_rows: VBoxContainer = $Root/UpgradesArea/UpgradesBar/Rows
 
 var _run_time: float = 0.0
 var _running: bool = true
 var _action_slot: Texture2D
 
 func _ready() -> void:
-	$CharPanel/Frame.texture = load(CHAR_PANEL_TEXTURE)
-	$InfoPanel/VBox/CoinsRow/CoinIcon.texture = load(COIN_TEXTURE)
+	$Root/CharPanel/Frame.texture = load(CHAR_PANEL_TEXTURE)
+	$Root/InfoPanel/VBox/CoinsRow/CoinIcon.texture = load(COIN_TEXTURE)
 	_action_slot = load(ACTION_SLOT_TEXTURE)
 
 	RpgTheme.style_track_bar(_hp_bar, BAR_HP[0], BAR_HP[1])
@@ -71,21 +77,24 @@ func _ready() -> void:
 	_defense_bar.value = 0.0
 
 	_level_badge.add_theme_stylebox_override("panel", RpgTheme.badge_box())
-	_level_number.add_theme_font_size_override("font_size", 14)
 	_level_number.add_theme_color_override("font_color", RpgTheme.COLOR_BTN_TEXT)
 	_level_number.add_theme_font_override("font", UITheme.make_bold_font(0.6))
 
-	for panel in [$InfoPanel, $TimerPanel, _boss_panel]:
+	for panel in [$Root/InfoPanel, $Root/TimerPanel, _boss_panel]:
 		panel.add_theme_stylebox_override("panel", RpgTheme.wood_box())
-	$MinimapFrame.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 9.0))
+	$Root/MinimapFrame.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 9.0))
 	_upgrades_bar.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 6.0))
 
-	RpgTheme.style_light_label(_hp_value_label, 15)
-	RpgTheme.style_light_label(_wave_label, 18)
-	RpgTheme.style_light_label(_monsters_label, 14)
-	RpgTheme.style_light_label(_coins_label, 14)
+	# En teléfono el HUD va achicado: los textos chicos suben un poco
+	# para que se sigan leyendo.
+	var boost: int = 3 if Screen.is_phone else 0
+	_level_number.add_theme_font_size_override("font_size", 14 + boost)
+	RpgTheme.style_light_label(_hp_value_label, 15 + boost)
+	RpgTheme.style_light_label(_wave_label, 18 + boost)
+	RpgTheme.style_light_label(_monsters_label, 14 + boost)
+	RpgTheme.style_light_label(_coins_label, 14 + boost)
 	RpgTheme.style_light_label(_timer_label, 26)
-	RpgTheme.style_light_label(_boss_label, 16)
+	RpgTheme.style_light_label(_boss_label, 16 + boost)
 	RpgTheme.style_light_label(_banner, 44)
 
 	_coins_label.text = "%d" % GameState.run_currency
@@ -99,7 +108,7 @@ func _ready() -> void:
 	_skill_button.anchor_bottom = 1.0
 	_skill_button.visible = false
 	_skill_button.pressed.connect(func(): skill_pressed.emit())
-	add_child(_skill_button)
+	_root.add_child(_skill_button)
 
 	GameState.achievement_unlocked.connect(_on_achievement_unlocked)
 
@@ -150,11 +159,11 @@ func _show_next_toast() -> void:
 	RpgTheme.style_light_label(reward, 13)
 	reward.add_theme_color_override("font_color", COLOR_EVOLVED)
 	col.add_child(reward)
-	add_child(panel)
+	_root.add_child(panel)
 	# Centrado arriba, debajo del timer/jefe según el layout.
 	panel.reset_size()
-	var vp := Screen.view_size()
-	var y: float = 300.0 if Screen.compact else 140.0
+	var vp := _root.size
+	var y: float = 300.0 if _compact else 140.0
 	panel.position = Vector2((vp.x - panel.size.x) / 2.0, y - 30.0)
 	panel.modulate.a = 0.0
 	Audio.play_sfx("wave_clear")
@@ -166,18 +175,26 @@ func _show_next_toast() -> void:
 	tw.tween_callback(panel.queue_free)
 	tw.tween_callback(_show_next_toast)
 
+var _compact: bool = false
+
 ## Teléfono vertical: el panel de personaje y el minimapa ocupan todo el
 ## ancho de arriba, así que el timer baja debajo del minimapa y la
 ## barra del jefe debajo de todo eso, a lo ancho de la pantalla.
-func _apply_layout(compact: bool) -> void:
-	var vp := Screen.view_size()
+func _apply_layout(_screen_compact: bool) -> void:
+	var s: float = Screen.hud_scale()
+	var vp: Vector2 = Screen.view_size() / s
+	_root.position = Vector2.ZERO
+	_root.scale = Vector2(s, s)
+	_root.size = vp
+	var compact: bool = vp.x < Screen.COMPACT_WIDTH
+	_compact = compact
 	# Minimapa más chico en vertical: el panel de personaje ya ocupa 264
 	# de los 420 de ancho.
 	var map_side: float = 110.0 if compact else 150.0
-	$MinimapFrame/Minimap.set_side(map_side)
-	$MinimapFrame.offset_left = -(map_side + 18.0 + 12.0)
-	$MinimapFrame.offset_bottom = 12.0 + map_side + 18.0
-	var timer: PanelContainer = $TimerPanel
+	$Root/MinimapFrame/Minimap.set_side(map_side)
+	$Root/MinimapFrame.offset_left = -(map_side + 18.0 + 12.0)
+	$Root/MinimapFrame.offset_bottom = 12.0 + map_side + 18.0
+	var timer: PanelContainer = $Root/TimerPanel
 	if compact:
 		timer.anchor_left = 1.0
 		timer.anchor_right = 1.0
@@ -197,10 +214,11 @@ func _apply_layout(compact: bool) -> void:
 	_boss_panel.offset_right = boss_w / 2.0
 	_boss_panel.offset_top = 218.0 if compact else 72.0
 	_boss_panel.offset_bottom = _boss_panel.offset_top + 60.0
-	# Botón de habilidad: abajo a la derecha; en teléfono más grande y
-	# por encima de la barra de mejoras (que ahí ocupa casi todo el ancho).
-	var side: float = 92.0 if compact else 80.0
-	var bottom: float = -84.0 if compact else -20.0
+	# Botón de habilidad: abajo a la derecha; en teléfono más grande (se
+	# toca con el pulgar) y en vertical por encima de la barra de mejoras
+	# (que ahí ocupa casi todo el ancho).
+	var side: float = 104.0 if Screen.is_phone else 80.0
+	var bottom: float = -84.0 if compact else -24.0
 	_skill_button.offset_right = -16.0
 	_skill_button.offset_left = -16.0 - side
 	_skill_button.offset_bottom = bottom
@@ -295,7 +313,7 @@ func _rebuild_upgrade_rows() -> void:
 	for child in _upgrade_rows.get_children():
 		_upgrade_rows.remove_child(child)
 		child.queue_free()
-	var per_row: int = maxi(1, floori((Screen.view_size().x - 40.0) / 46.0))
+	var per_row: int = maxi(1, floori((_root.size.x - 40.0) / 46.0))
 	var row: HBoxContainer = null
 	for i in range(_last_summary.size()):
 		if i % per_row == 0:

@@ -7,7 +7,8 @@ extends Node
 ## arriba de todo. Acá elegimos el tamaño base según el lado corto de
 ## la pantalla en píxeles CSS (lo que el ojo ve), así el texto queda
 ## legible en cualquier dispositivo:
-##   teléfono (<600)  lado corto lógico 420
+##   teléfono (<600)  lado corto lógico 520 (con 420 la UI tapaba
+##                    media pantalla y en horizontal no entraba nada)
 ##   tablet   (<900)  lado corto lógico 640
 ##   PC               1280x720 como siempre
 ## "compact" = viewport lógico angosto (<700 de ancho): las pantallas
@@ -17,7 +18,7 @@ extends Node
 signal layout_changed(compact: bool)
 
 const DESKTOP_SIZE := Vector2i(1280, 720)
-const PHONE_SHORT := 420
+const PHONE_SHORT := 520
 const TABLET_SHORT := 640
 const COMPACT_WIDTH := 700.0
 
@@ -53,6 +54,11 @@ func _apply() -> void:
 
 	compact = root.get_visible_rect().size.x < COMPACT_WIDTH
 	layout_changed.emit(compact)
+
+## Escala extra del HUD in-game: en teléfono los paneles se dibujan más
+## chicos que el resto de la UI para dejar ver el mundo.
+func hud_scale() -> float:
+	return 0.8 if is_phone else 1.0
 
 ## Tamaño lógico actual del viewport (lo que miden los layouts).
 func view_size() -> Vector2:

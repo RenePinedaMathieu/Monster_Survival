@@ -185,42 +185,52 @@ func _build_cards() -> void:
 
 ## Teléfono: grilla de 2x2 con cartas más angostas, título más chico y
 ## más abajo (arriba van VOLVER/TIENDA) y la ayuda de teclado se cambia
-## por una de toque. PC: 4 en fila como siempre.
+## por una de toque. PC: 4 en fila como siempre. Teléfono horizontal
+## ("short": poca altura): fila de PC pero con cartas más bajas y el
+## título a la altura de los botones.
 func _apply_layout(compact: bool) -> void:
 	var grid: GridContainer = $Layout/CardsRow
 	var n: int = _card_roots.size()
+	var short: bool = not compact and Screen.view_size().y < 640.0
 	# PC: todas en una fila. Teléfono: 2 columnas con 4 cartas, 3 con 5.
 	grid.columns = (2 if n <= 4 else 3) if compact else n
 	grid.add_theme_constant_override("h_separation", 16 if compact else (46 if n <= 4 else 16))
 	var card_w: float = 250.0 if n <= 4 else 210.0
 	if compact:
-		card_w = 186.0 if n <= 4 else 124.0
+		card_w = 186.0 if n <= 4 else 148.0
+	elif short:
+		card_w = 200.0
+	var card_h: float = 330.0 if compact else (370.0 if short else 400.0)
+	# Retrato arriba y abajo la franja del preview / candado.
+	var portrait_bottom: float = 236.0 if compact else card_h - 124.0
 	# En vertical 2 filas de 400 no entran en la altura: cartas más bajas
 	# y el retrato/preview reubicados adentro (sus offsets son absolutos).
 	for i in range(_card_roots.size()):
-		_card_roots[i].custom_minimum_size = Vector2(card_w, 330.0 if compact else 400.0)
+		_card_roots[i].custom_minimum_size = Vector2(card_w, card_h)
 		_name_labels[i].add_theme_font_size_override("font_size", 18 if compact and n > 4 else 24)
 		_lock_hints[i].offset_left = 10.0
 		_lock_hints[i].offset_right = -10.0
-		_lock_hints[i].offset_top = 240.0 if compact else 284.0
-		_lock_hints[i].offset_bottom = 318.0 if compact else 382.0
-		var portrait_bottom: float = 236.0 if compact else 276.0
+		_lock_hints[i].offset_top = portrait_bottom + 4.0
+		_lock_hints[i].offset_bottom = card_h - 18.0
 		_frames[i].get_node("PortraitBg").offset_bottom = portrait_bottom
 		_portraits[i].offset_bottom = portrait_bottom
-		_idle_previews[i].offset_top = 240.0 if compact else 284.0
-		_idle_previews[i].offset_bottom = 318.0 if compact else 382.0
+		_idle_previews[i].offset_top = portrait_bottom + 4.0
+		_idle_previews[i].offset_bottom = card_h - 18.0
+	var small: bool = compact or short
 	var layout: VBoxContainer = $Layout
-	layout.offset_left = 12.0 if compact else 48.0
-	layout.offset_right = -12.0 if compact else -48.0
-	layout.offset_top = 84.0 if compact else 32.0
-	layout.add_theme_constant_override("separation", 8 if compact else 14)
-	RpgTheme.style_light_label(_title, 28 if compact else 40)
-	_hint.text = "Toca un héroe para elegirlo" if compact \
+	layout.offset_left = 12.0 if compact else (24.0 if short else 48.0)
+	layout.offset_right = -layout.offset_left
+	layout.offset_top = 84.0 if compact else (14.0 if short else 32.0)
+	layout.add_theme_constant_override("separation", 8 if small else 14)
+	RpgTheme.style_light_label(_title, 28 if small else 40)
+	_hint.text = "Toca un héroe para elegirlo" if Screen.is_phone \
 		else "Flechas para elegir  ·  Enter / click para confirmar  ·  Esc para volver"
 	for b in [_back_button, _shop_button]:
-		RpgTheme.style_button(b, 16 if compact else 20)
-	_back_button.offset_right = _back_button.offset_left + (110.0 if compact else 140.0)
-	_shop_button.offset_left = _shop_button.offset_right - (110.0 if compact else 140.0)
+		RpgTheme.style_button(b, 16 if small else 20)
+		b.offset_top = 14.0 if short else 26.0
+		b.offset_bottom = b.offset_top + (42.0 if short else 50.0)
+	_back_button.offset_right = _back_button.offset_left + (110.0 if small else 140.0)
+	_shop_button.offset_left = _shop_button.offset_right - (110.0 if small else 140.0)
 
 func _process(delta: float) -> void:
 	_time += delta

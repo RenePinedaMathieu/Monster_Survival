@@ -6,14 +6,17 @@
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud01")
 
-[node name="CharPanel" type="Control" parent="."]
+[node name="Root" type="Control" parent="."]
+mouse_filter = 2
+
+[node name="CharPanel" type="Control" parent="Root"]
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 264.0
 offset_bottom = 102.0
 mouse_filter = 2
 
-[node name="Portrait" type="TextureRect" parent="CharPanel"]
+[node name="Portrait" type="TextureRect" parent="Root/CharPanel"]
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 77.0
@@ -22,12 +25,12 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Frame" type="TextureRect" parent="CharPanel"]
+[node name="Frame" type="TextureRect" parent="Root/CharPanel"]
 offset_right = 252.0
 offset_bottom = 90.0
 mouse_filter = 2
 
-[node name="HPBar" type="ProgressBar" parent="CharPanel"]
+[node name="HPBar" type="ProgressBar" parent="Root/CharPanel"]
 offset_left = 84.0
 offset_top = 24.0
 offset_right = 240.0
@@ -37,7 +40,7 @@ max_value = 100.0
 value = 100.0
 show_percentage = false
 
-[node name="DefenseBar" type="ProgressBar" parent="CharPanel"]
+[node name="DefenseBar" type="ProgressBar" parent="Root/CharPanel"]
 offset_left = 90.0
 offset_top = 39.0
 offset_right = 219.0
@@ -46,7 +49,7 @@ mouse_filter = 2
 max_value = 1.0
 show_percentage = false
 
-[node name="XPBar" type="ProgressBar" parent="CharPanel"]
+[node name="XPBar" type="ProgressBar" parent="Root/CharPanel"]
 offset_left = 87.0
 offset_top = 54.0
 offset_right = 201.0
@@ -55,20 +58,20 @@ mouse_filter = 2
 max_value = 4.0
 show_percentage = false
 
-[node name="LevelBadge" type="PanelContainer" parent="CharPanel"]
+[node name="LevelBadge" type="PanelContainer" parent="Root/CharPanel"]
 offset_left = 14.0
 offset_top = 72.0
 offset_right = 74.0
 offset_bottom = 98.0
 mouse_filter = 2
 
-[node name="LevelNumber" type="Label" parent="CharPanel/LevelBadge"]
+[node name="LevelNumber" type="Label" parent="Root/CharPanel/LevelBadge"]
 layout_mode = 2
 text = "NV 1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HPValue" type="Label" parent="."]
+[node name="HPValue" type="Label" parent="Root"]
 offset_left = 94.0
 offset_top = 84.0
 offset_right = 220.0
@@ -76,32 +79,32 @@ offset_bottom = 104.0
 mouse_filter = 2
 text = "100 / 100"
 
-[node name="InfoPanel" type="PanelContainer" parent="."]
+[node name="InfoPanel" type="PanelContainer" parent="Root"]
 offset_left = 12.0
 offset_top = 120.0
 offset_right = 196.0
 offset_bottom = 206.0
 mouse_filter = 2
 
-[node name="VBox" type="VBoxContainer" parent="InfoPanel"]
+[node name="VBox" type="VBoxContainer" parent="Root/InfoPanel"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="WaveLabel" type="Label" parent="InfoPanel/VBox"]
+[node name="WaveLabel" type="Label" parent="Root/InfoPanel/VBox"]
 layout_mode = 2
 text = "OLEADA 0"
 
-[node name="MonstersLabel" type="Label" parent="InfoPanel/VBox"]
+[node name="MonstersLabel" type="Label" parent="Root/InfoPanel/VBox"]
 layout_mode = 2
 text = "Enemigos: 0"
 
-[node name="CoinsRow" type="HBoxContainer" parent="InfoPanel/VBox"]
+[node name="CoinsRow" type="HBoxContainer" parent="Root/InfoPanel/VBox"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="CoinIcon" type="TextureRect" parent="InfoPanel/VBox/CoinsRow"]
+[node name="CoinIcon" type="TextureRect" parent="Root/InfoPanel/VBox/CoinsRow"]
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 size_flags_vertical = 4
@@ -109,11 +112,11 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="CoinsLabel" type="Label" parent="InfoPanel/VBox/CoinsRow"]
+[node name="CoinsLabel" type="Label" parent="Root/InfoPanel/VBox/CoinsRow"]
 layout_mode = 2
 text = "0"
 
-[node name="TimerPanel" type="PanelContainer" parent="."]
+[node name="TimerPanel" type="PanelContainer" parent="Root"]
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -70.0
@@ -123,13 +126,13 @@ offset_bottom = 62.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="TimerLabel" type="Label" parent="TimerPanel"]
+[node name="TimerLabel" type="Label" parent="Root/TimerPanel"]
 layout_mode = 2
 text = "00:00"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BossPanel" type="PanelContainer" parent="."]
+[node name="BossPanel" type="PanelContainer" parent="Root"]
 visible = false
 anchor_left = 0.5
 anchor_right = 0.5
@@ -140,17 +143,17 @@ offset_bottom = 132.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="VBox" type="VBoxContainer" parent="BossPanel"]
+[node name="VBox" type="VBoxContainer" parent="Root/BossPanel"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="BossLabel" type="Label" parent="BossPanel/VBox"]
+[node name="BossLabel" type="Label" parent="Root/BossPanel/VBox"]
 layout_mode = 2
 text = "JEFE"
 horizontal_alignment = 1
 
-[node name="BossBar" type="ProgressBar" parent="BossPanel/VBox"]
+[node name="BossBar" type="ProgressBar" parent="Root/BossPanel/VBox"]
 custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 mouse_filter = 2
@@ -158,7 +161,7 @@ max_value = 100.0
 value = 100.0
 show_percentage = false
 
-[node name="MinimapFrame" type="PanelContainer" parent="."]
+[node name="MinimapFrame" type="PanelContainer" parent="Root"]
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -180.0
@@ -168,10 +171,10 @@ offset_bottom = 180.0
 grow_horizontal = 0
 mouse_filter = 2
 
-[node name="Minimap" parent="MinimapFrame" instance=ExtResource("2_mmap")]
+[node name="Minimap" parent="Root/MinimapFrame" instance=ExtResource("2_mmap")]
 layout_mode = 2
 
-[node name="UpgradesArea" type="CenterContainer" parent="."]
+[node name="UpgradesArea" type="CenterContainer" parent="Root"]
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -181,17 +184,17 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="UpgradesBar" type="PanelContainer" parent="UpgradesArea"]
+[node name="UpgradesBar" type="PanelContainer" parent="Root/UpgradesArea"]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Rows" type="VBoxContainer" parent="UpgradesArea/UpgradesBar"]
+[node name="Rows" type="VBoxContainer" parent="Root/UpgradesArea/UpgradesBar"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="BreakBanner" type="Label" parent="."]
+[node name="BreakBanner" type="Label" parent="Root"]
 anchor_left = 0.5
 anchor_top = 0.35
 anchor_right = 0.5

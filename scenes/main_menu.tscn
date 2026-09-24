@@ -26,56 +26,49 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.25)
 
-[node name="RecordLabel" type="Label" parent="."]
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -200.0
-offset_top = -352.0
-offset_right = 200.0
-offset_bottom = -324.0
-grow_horizontal = 2
-grow_vertical = 0
-horizontal_alignment = 1
-text = ""
-
 [node name="MenuButtons" type="VBoxContainer" parent="."]
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -120.0
-offset_top = -320.0
-offset_right = 120.0
+offset_top = -34.0
 offset_bottom = -34.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 9
+
+[node name="RecordLabel" type="Label" parent="MenuButtons"]
+horizontal_alignment = 1
+text = ""
 
 [node name="PlayButton" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(240, 48)
 size_flags_horizontal = 4
 text = "JUGAR"
 
-[node name="ShopButton" type="Button" parent="MenuButtons"]
-custom_minimum_size = Vector2(240, 48)
+[node name="Grid" type="GridContainer" parent="MenuButtons"]
 size_flags_horizontal = 4
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 9
+
+[node name="ShopButton" type="Button" parent="MenuButtons/Grid"]
+custom_minimum_size = Vector2(240, 48)
 text = "TIENDA"
 
-[node name="AchievementsButton" type="Button" parent="MenuButtons"]
+[node name="RankingButton" type="Button" parent="MenuButtons/Grid"]
 custom_minimum_size = Vector2(240, 48)
-size_flags_horizontal = 4
+text = "RANKING"
+
+[node name="AchievementsButton" type="Button" parent="MenuButtons/Grid"]
+custom_minimum_size = Vector2(240, 48)
 text = "LOGROS"
 
-[node name="OptionsButton" type="Button" parent="MenuButtons"]
+[node name="OptionsButton" type="Button" parent="MenuButtons/Grid"]
 custom_minimum_size = Vector2(240, 48)
-size_flags_horizontal = 4
 text = "OPCIONES"
 
-[node name="QuitButton" type="Button" parent="MenuButtons"]
+[node name="QuitButton" type="Button" parent="MenuButtons/Grid"]
 custom_minimum_size = Vector2(240, 48)
-size_flags_horizontal = 4
 text = "SALIR"
 
 [node name="DailyButton" type="Button" parent="."]

@@ -45,12 +45,12 @@ const PAGES: Array[Dictionary] = [
 	{
 		"title": "MONEDA Y MEJORAS PERMANENTES",
 		"body": "Ese es el botón de la tienda. Los enemigos sueltan moneda al morir, y esa moneda queda guardada al terminar la partida para comprar mejoras permanentes, poderes nuevos que aparecen al subir de nivel, y acompañantes que pelean contigo.",
-		"target": "MenuButtons/ShopButton",
+		"target": "MenuButtons/Grid/ShopButton",
 	},
 	{
 		"title": "OPCIONES",
 		"body": "Desde aquí se ajusta el volumen y se activa la pantalla completa (F11 también funciona en cualquier momento durante la partida).",
-		"target": "MenuButtons/OptionsButton",
+		"target": "MenuButtons/Grid/OptionsButton",
 	},
 	{
 		"title": "¡A SOBREVIVIR!",

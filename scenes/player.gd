@@ -534,16 +534,14 @@ func _keyboard_input() -> Vector2:
 		- (1.0 if Input.is_physical_key_pressed(KEY_W) else 0.0)
 	return v
 
-## En móvil la pantalla es chica y queremos ver menos mundo pero
-## más detalle — subimos el zoom. En desktop 2.0 (match sandbox),
-## mobile 2.4. Antes eran 1.5/2.4 pero el 1.5 se sentía muy lejos.
 ## Cuántas unidades de mundo entran en el lado corto de la pantalla —
 ## más chico = cámara más cerca. En teléfono va más cerca que en PC: la
-## pantalla es chica y el héroe se perdía entre los bichos. Se calcula
+## pantalla es chica y el héroe se perdía entre los bichos (con 200 se
+## veía demasiado poco alrededor y los bichos llegaban sin aviso). Se calcula
 ## sobre el viewport lógico que arma el autoload Screen, así da lo
 ## mismo la resolución real o si el teléfono está vertical/horizontal.
 const VIEW_SHORT_UNITS_DESKTOP := 335.0
-const VIEW_SHORT_UNITS_PHONE := 200.0
+const VIEW_SHORT_UNITS_PHONE := 250.0
 
 func _on_layout_changed(_compact: bool) -> void:
 	_apply_camera_zoom_for_device()

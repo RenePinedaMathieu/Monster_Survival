@@ -55,15 +55,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file(CONFIRM_SCENE)
 
+## Vertical: una columna de tarjetas apaisadas. Horizontal con poca
+## altura (teléfono acostado): 3 columnas pero con las tarjetas
+## apaisadas, que las altas no entran.
 func _apply_layout(compact: bool) -> void:
+	var short: bool = not compact and Screen.view_size().y < 640.0
 	_maps.columns = 1 if compact else 3
 	var w: float = minf(1000.0, Screen.view_size().x - 20.0)
 	_window.custom_minimum_size.x = w
 	for id in _map_buttons:
 		var card: Button = _map_buttons[id]
-		card.custom_minimum_size = Vector2(0, 118) if compact else Vector2(290, 250)
+		if compact:
+			card.custom_minimum_size = Vector2(0, 118)
+		elif short:
+			card.custom_minimum_size = Vector2(290, 124)
+		else:
+			card.custom_minimum_size = Vector2(290, 250)
 		var box: BoxContainer = card.get_node("Box")
-		box.vertical = not compact
+		box.vertical = not (compact or short)
 	for id in _diff_buttons:
 		_diff_buttons[id].custom_minimum_size.x = 0.0 if compact else 130.0
 		_diff_buttons[id].size_flags_horizontal = Control.SIZE_EXPAND_FILL if compact else Control.SIZE_FILL

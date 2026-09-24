@@ -390,15 +390,18 @@ func set_player_name(n: String) -> void:
 		player_name = n
 		_save()
 
-## Puntaje del reto: oleadas pesan mucho, bajas desempatan y ganar
-## (sobrevivir las 10) suma un bonus grande.
-static func run_score(wave: int, kills: int, victory: bool) -> int:
-	return wave * 1000 + kills * 2 + (20000 if victory else 0)
+## Puntaje: oleadas pesan mucho, bajas desempatan y ganar suma un
+## bonus grande. mult: en partidas normales, mapa x dificultad (el
+## ranking histórico premia jugar más difícil); el reto diario es igual
+## para todos y va sin multiplicador.
+static func run_score(wave: int, kills: int, victory: bool, mult: float = 1.0) -> int:
+	return int(round((wave * 1000 + kills * 2 + (20000 if victory else 0)) * mult))
 
 ## Registra la partida en Supabase (si hay sesión). Devuelve el puntaje.
 func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary) -> int:
 	var kills: int = run_stats.get("total_kills", 0)
-	var score := run_score(wave, kills, victory)
+	var mult: float = 1.0 if daily_active else float(map_data()["mult"]) * float(difficulty_data()["mult"])
+	var score := run_score(wave, kills, victory, mult)
 	var date: Variant = null
 	if daily_active:
 		date = daily_date()

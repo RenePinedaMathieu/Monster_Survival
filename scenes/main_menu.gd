@@ -1,9 +1,10 @@
 extends Control
 
-## Menú de inicio. Fondo fijo (background_home.png) + 3 botones
-## estilo pixel-art (Jugar / Opciones / Salir) y un panel simple de
-## opciones (volumen master + pantalla completa). "Jugar" lleva a la
-## selección de personaje, no directo al gameplay.
+## Menú de inicio. Fondo fijo (background_home.png), JUGAR y debajo
+## Tienda / Ranking / Logros / Opciones / Salir (una columna en
+## vertical, dos acostado), RETO DIARIO arriba a la derecha y un panel
+## simple de opciones (volumen master + pantalla completa). "Jugar"
+## lleva a la selección de personaje, no directo al gameplay.
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
@@ -12,16 +13,20 @@ const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
 const ACHIEVEMENTS_SCENE := "res://scenes/achievements_menu.tscn"
 const DAILY_SCENE := "res://scenes/daily_menu.tscn"
+const RANKING_SCENE := "res://scenes/leaderboard_menu.tscn"
 const TUTORIAL_SCENE := preload("res://scenes/tutorial_overlay.tscn")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
 @onready var _background: TextureRect = $Background
-@onready var _record_label: Label = $RecordLabel
+@onready var _menu_buttons: VBoxContainer = $MenuButtons
+@onready var _grid: GridContainer = $MenuButtons/Grid
+@onready var _record_label: Label = $MenuButtons/RecordLabel
 @onready var _play_button: Button = $MenuButtons/PlayButton
-@onready var _shop_button: Button = $MenuButtons/ShopButton
-@onready var _achievements_button: Button = $MenuButtons/AchievementsButton
-@onready var _options_button: Button = $MenuButtons/OptionsButton
-@onready var _quit_button: Button = $MenuButtons/QuitButton
+@onready var _shop_button: Button = $MenuButtons/Grid/ShopButton
+@onready var _ranking_button: Button = $MenuButtons/Grid/RankingButton
+@onready var _achievements_button: Button = $MenuButtons/Grid/AchievementsButton
+@onready var _options_button: Button = $MenuButtons/Grid/OptionsButton
+@onready var _quit_button: Button = $MenuButtons/Grid/QuitButton
 @onready var _options_panel: Panel = $OptionsPanel
 @onready var _volume_slider: HSlider = $OptionsPanel/Content/VolumeRow/VolumeSlider
 @onready var _fullscreen_check: CheckButton = $OptionsPanel/Content/FullscreenRow/FullscreenCheck
@@ -45,14 +50,15 @@ func _ready() -> void:
 		var secs := int(GameState.best_time) % 60
 		_record_label.text = "RÉCORD — Oleada %d · %02d:%02d" % [GameState.best_wave, mins, secs]
 	else:
-		_record_label.text = ""
+		_record_label.hide()
 
-	for button in [_play_button, _shop_button, _achievements_button, _options_button, _quit_button]:
+	for button in [_play_button, _shop_button, _ranking_button, _achievements_button, _options_button, _quit_button]:
 		RpgTheme.style_button(button, 20)
 	for button in [_back_button, _tutorial_button, _qa_room_button]:
 		RpgTheme.style_button(button, 16)
 	_achievements_button.pressed.connect(func(): get_tree().change_scene_to_file(ACHIEVEMENTS_SCENE))
-	for button in [_play_button, _shop_button, _achievements_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
+	_ranking_button.pressed.connect(func(): get_tree().change_scene_to_file(RANKING_SCENE))
+	for button in [_play_button, _shop_button, _ranking_button, _achievements_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
 		button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
 		button.mouse_exited.connect(UITheme.pulse.bind(button, 1.0, 0.08))
@@ -97,12 +103,28 @@ func _ready() -> void:
 ## vertical, "cubrir" la pantalla recortaba el logo por los costados:
 ## ahí escalamos la imagen para que el logo entre a lo ancho y la
 ## pegamos arriba (abajo queda el fondo oscuro, donde van los botones).
+##
+## Botones: una columna en vertical; acostado (o PC) JUGAR ancho arriba
+## y el resto en 2 columnas, así quedan debajo del logo. El bloque crece
+## hacia arriba desde el borde inferior (grow_vertical = begin).
 func _apply_layout(_compact: bool) -> void:
 	var vp := Screen.view_size()
 	var ow: float = minf(400.0, vp.x - 20.0)
 	_options_panel.offset_left = -ow / 2.0
 	_options_panel.offset_right = ow / 2.0
-	if vp.y > vp.x * 1.2:
+	var tall: bool = vp.y > vp.x * 1.2
+	var short: bool = vp.y < 640.0
+	var bw: float = 240.0 if tall else (190.0 if short else 220.0)
+	var bh: float = 48.0 if not short else 42.0
+	_grid.columns = 1 if tall else 2
+	for b in _grid.get_children():
+		b.custom_minimum_size = Vector2(bw, bh)
+	_play_button.custom_minimum_size = Vector2(bw if tall else bw * 2.0 + 10.0, bh + (0.0 if tall else 4.0))
+	_menu_buttons.add_theme_constant_override("separation", 7 if short else 9)
+	_grid.add_theme_constant_override("v_separation", 7 if short else 9)
+	_menu_buttons.offset_bottom = -16.0 if short else -34.0
+	_menu_buttons.offset_top = _menu_buttons.offset_bottom
+	if tall:
 		var w: float = vp.x * 1280.0 / 470.0
 		_background.anchor_right = 0.0
 		_background.anchor_bottom = 0.0

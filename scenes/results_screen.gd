@@ -22,9 +22,10 @@ const BAR_COLOR := Color("d74427")
 @onready var _window: PanelContainer = $Center/Window
 @onready var _title: Label = $Center/Window/VBox/Title
 @onready var _subtitle: Label = $Center/Window/VBox/Subtitle
-@onready var _stats: GridContainer = $Center/Window/VBox/Stats
-@onready var _damage_title: Label = $Center/Window/VBox/DamageTitle
-@onready var _damage_list: VBoxContainer = $Center/Window/VBox/DamageList
+@onready var _body: BoxContainer = $Center/Window/VBox/Body
+@onready var _stats: GridContainer = $Center/Window/VBox/Body/Left/Stats
+@onready var _damage_title: Label = $Center/Window/VBox/Body/Right/DamageTitle
+@onready var _damage_list: VBoxContainer = $Center/Window/VBox/Body/Right/DamageList
 @onready var _buttons: GridContainer = $Center/Window/VBox/Buttons
 @onready var _continue_button: Button = $Center/Window/VBox/Buttons/ContinueButton
 @onready var _retry_button: Button = $Center/Window/VBox/Buttons/RetryButton
@@ -52,10 +53,15 @@ func _ready() -> void:
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
 
+## Teléfono acostado (poca altura): resumen a la izquierda y daño por
+## arma a la derecha, si no los botones quedan fuera de la pantalla.
 func _apply_layout(compact: bool) -> void:
+	var short: bool = not compact and Screen.view_size().y < 640.0
 	var visible_buttons: int = 4 if _continue_button.visible else 3
 	_buttons.columns = 2 if compact else visible_buttons
-	_window.custom_minimum_size.x = minf(640.0, Screen.view_size().x - 16.0)
+	_body.vertical = not short
+	_body.add_theme_constant_override("separation", 28 if short else 12)
+	_window.custom_minimum_size.x = minf(960.0 if short else 640.0, Screen.view_size().x - 16.0)
 
 ## daily_score >= 0: partida del reto diario (se muestra el puntaje).
 func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_continue: bool, daily_score: int = -1) -> void:
@@ -170,7 +176,7 @@ func _build_new_achievements() -> void:
 		RpgTheme.style_ink_label(l, 14, true)
 		l.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)
 		box.add_child(l)
-	_damage_list.add_sibling(box)
+	_stats.add_sibling(box)
 
 # ── Botones ──────────────────────────────────────────────────────
 

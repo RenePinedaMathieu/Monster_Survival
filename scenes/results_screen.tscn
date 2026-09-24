@@ -32,17 +32,32 @@ layout_mode = 2
 horizontal_alignment = 1
 text = "..."
 
-[node name="Stats" type="GridContainer" parent="Center/Window/VBox"]
+[node name="Body" type="BoxContainer" parent="Center/Window/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+vertical = true
+
+[node name="Left" type="VBoxContainer" parent="Center/Window/VBox/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="Stats" type="GridContainer" parent="Center/Window/VBox/Body/Left"]
 layout_mode = 2
 theme_override_constants/h_separation = 24
 theme_override_constants/v_separation = 4
 columns = 2
 
-[node name="DamageTitle" type="Label" parent="Center/Window/VBox"]
+[node name="Right" type="VBoxContainer" parent="Center/Window/VBox/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="DamageTitle" type="Label" parent="Center/Window/VBox/Body/Right"]
 layout_mode = 2
 text = "DAÑO POR ARMA"
 
-[node name="DamageList" type="VBoxContainer" parent="Center/Window/VBox"]
+[node name="DamageList" type="VBoxContainer" parent="Center/Window/VBox/Body/Right"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
