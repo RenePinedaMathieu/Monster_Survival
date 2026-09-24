@@ -58,11 +58,13 @@ layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
 
-[node name="CardsRow" type="HBoxContainer" parent="Layout"]
+[node name="CardsRow" type="GridContainer" parent="Layout"]
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
-theme_override_constants/separation = 46
+theme_override_constants/h_separation = 46
+theme_override_constants/v_separation = 16
+columns = 4
 
 [node name="Card1" type="Control" parent="Layout/CardsRow"]
 layout_mode = 2

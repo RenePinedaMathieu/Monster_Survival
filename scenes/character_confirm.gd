@@ -33,7 +33,7 @@ func _ready() -> void:
 		# Llegaron acá sin pasar por character_select (F5 directo a
 		# esta escena, etc.) — no hay nada que mostrar, así que
 		# volvemos a elegir en vez de crashear leyendo un dict vacío.
-		get_tree().change_scene_to_file(SELECT_SCENE)
+		get_tree().change_scene_to_file.call_deferred(SELECT_SCENE)
 		return
 
 	$Background.texture = load(BACKGROUND_TEXTURE)
@@ -61,6 +61,35 @@ func _ready() -> void:
 	_confirm_button.pressed.connect(_on_confirm)
 	_back_button.pressed.connect(_on_back)
 	_confirm_button.grab_focus()
+	Screen.layout_changed.connect(_apply_layout)
+	_apply_layout(Screen.compact)
+
+## Teléfono: retrato arriba y ficha abajo, todo centrado y del tamaño de
+## su contenido — antes la ficha se estiraba a toda la altura de la
+## pantalla vertical y el texto quedaba en el décimo de arriba.
+func _apply_layout(compact: bool) -> void:
+	var vp := Screen.view_size()
+	var layout: BoxContainer = $Layout
+	var right: VBoxContainer = $Layout/Right
+	layout.vertical = compact
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER if compact else BoxContainer.ALIGNMENT_BEGIN
+	layout.add_theme_constant_override("separation", 16 if compact else 50)
+	var margin: float = 14.0 if compact else 60.0
+	layout.offset_left = margin
+	layout.offset_right = -margin
+	layout.offset_top = 16.0 if compact else 40.0
+	layout.offset_bottom = -16.0 if compact else -40.0
+	if compact:
+		var ph: float = clampf(vp.y * 0.34, 200.0, 420.0)
+		_portrait.custom_minimum_size = Vector2(ph * 0.68, ph)
+		right.custom_minimum_size = Vector2(0, 0)
+		right.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	else:
+		_portrait.custom_minimum_size = Vector2(380, 560)
+		right.custom_minimum_size = Vector2(460, 0)
+		right.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):

@@ -84,6 +84,32 @@ func _ready() -> void:
 		card.mouse_exited.connect(UITheme.pulse.bind(card, 1.0, 0.08))
 	for i in range(3):
 		_cards()[i].pressed.connect(_pick.bind(i))
+	Screen.layout_changed.connect(_apply_layout)
+	_apply_layout(Screen.compact)
+
+## Teléfono: las 3 cartas apiladas, cada una con el ícono a la
+## izquierda y el texto al lado. PC: 3 cartas en fila, ícono arriba.
+## icon_max_width acota el ícono — sin eso se expandía a todo el botón
+## y tapaba el texto.
+func _apply_layout(compact: bool) -> void:
+	var vp := Screen.view_size()
+	($Center/Window/VBox/HBox as BoxContainer).vertical = compact
+	for card in _cards():
+		var b: Button = card
+		b.expand_icon = true
+		if compact:
+			b.custom_minimum_size = Vector2(vp.x - 90.0, 104.0)
+			b.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+			b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			b.add_theme_constant_override("icon_max_width", 68)
+			b.add_theme_constant_override("h_separation", 14)
+		else:
+			b.custom_minimum_size = Vector2(260.0, 220.0)
+			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+			b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			b.add_theme_constant_override("icon_max_width", 96)
 
 func _cards() -> Array:
 	return [
@@ -98,21 +124,11 @@ func show_for(player: Node) -> void:
 	var cards := _cards()
 	for i in range(3):
 		var u = _current_choices[i]
-		cards[i].text = _title_for(u) + "\n\n" + u.desc
-		# Ícono de la carta — Button.icon soporta Texture2D nativamente
-		# y lo pone al lado del texto. Con expand_icon y alineación
-		# center-top queda arriba del texto de la carta.
+		var sep := "\n" if Screen.compact else "\n\n"
+		cards[i].text = _title_for(u) + sep + u.desc
+		# Alineación y tamaño del ícono los fija _apply_layout.
 		if u.has("icon") and ResourceLoader.exists(u["icon"]):
 			cards[i].icon = load(u["icon"])
-			cards[i].expand_icon = true
-			cards[i].icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			cards[i].vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-			# Limita el ancho máximo del icon así deja lugar al texto
-			# abajo. Sin esto (o con icon_max_width default), el icon
-			# expandía a todo el botón y se solapaba con el texto — el
-			# hover forzaba un layout pass que acomodaba las cosas,
-			# pero se veía roto al mostrarse la carta.
-			cards[i].add_theme_constant_override("icon_max_width", 96)
 		else:
 			cards[i].icon = null
 	Audio.play_sfx("level_up")

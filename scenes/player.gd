@@ -265,6 +265,7 @@ func _ready() -> void:
 	defense = max_defense
 	hp = max_hp
 	_apply_camera_zoom_for_device()
+	Screen.layout_changed.connect(_on_layout_changed)
 	var skin_id: String = GameState.selected_character_id
 	_is_axel = skin_id == "main_char1"
 	_is_swordman = skin_id == "swordman"
@@ -434,17 +435,23 @@ func _keyboard_input() -> Vector2:
 ## En móvil la pantalla es chica y queremos ver menos mundo pero
 ## más detalle — subimos el zoom. En desktop 2.0 (match sandbox),
 ## mobile 2.4. Antes eran 1.5/2.4 pero el 1.5 se sentía muy lejos.
+## Cuántas unidades de mundo entran en el lado corto de la pantalla —
+## más chico = cámara más cerca. En teléfono va más cerca que en PC: la
+## pantalla es chica y el héroe se perdía entre los bichos. Se calcula
+## sobre el viewport lógico que arma el autoload Screen, así da lo
+## mismo la resolución real o si el teléfono está vertical/horizontal.
+const VIEW_SHORT_UNITS_DESKTOP := 335.0
+const VIEW_SHORT_UNITS_PHONE := 200.0
+
+func _on_layout_changed(_compact: bool) -> void:
+	_apply_camera_zoom_for_device()
+
 func _apply_camera_zoom_for_device() -> void:
 	var cam: Camera2D = $Camera2D
 	var vp := get_viewport().get_visible_rect().size
-	var is_touch := DisplayServer.is_touchscreen_available()
-	var is_small := vp.x < 900.0 or vp.y < 700.0
-	if is_touch or is_small:
-		# Mobile más cerca — pantalla chica pide sprites grandes o el
-		# player se pierde en el bullet-hell.
-		cam.zoom = Vector2(3.0, 3.0)
-	else:
-		cam.zoom = Vector2(2.15, 2.15)
+	var units: float = VIEW_SHORT_UNITS_PHONE if Screen.is_phone else VIEW_SHORT_UNITS_DESKTOP
+	var z: float = minf(vp.x, vp.y) / units
+	cam.zoom = Vector2(z, z)
 	# CRÍTICO: force ser la cámara current. Sin esto, la PreviewCamera
 	# de world.tscn (zoom 0.35, usada para F6 de solo el mundo) le gana
 	# porque entra al tree antes. Con esto la del player siempre wins,

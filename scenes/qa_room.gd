@@ -46,9 +46,6 @@ const BOSS_KEYS: Dictionary = {
 @onready var _touch_panel: Control = $UI/TouchPanel
 
 func _ready() -> void:
-	var cam: Camera2D = _player.get_node("Camera2D")
-	cam.zoom = Vector2(2.0, 2.0)
-	cam.make_current()
 	_help_label.text = _help_text()
 
 	# Joystick táctil izquierdo — mismo que se usa en el gameplay real
@@ -59,6 +56,16 @@ func _ready() -> void:
 
 	_wire_touch_buttons()
 	_style_panels()
+
+	Screen.layout_changed.connect(_apply_layout)
+	_apply_layout(Screen.compact)
+
+## En teléfono: panel más angosto y sin la ayuda de teclado (tapa el
+## juego y en el celu no sirve).
+func _apply_layout(compact: bool) -> void:
+	_touch_panel.offset_left = -208.0 if compact else -260.0
+	$UI/HelpBg.visible = not compact
+	_help_label.visible = not compact
 
 ## Mismo estilo que el resto de la UI (rpg_theme.gd): madera + verdes.
 func _style_panels() -> void:

@@ -62,6 +62,8 @@ const COMPANION_ICONS: Dictionary = {
 
 var _tab: int = Tab.UPGRADES
 var _coin: Texture2D
+var _compact: bool = false
+var _tab_font: int = 16
 
 func _ready() -> void:
 	_background.texture = load(BACKGROUND_TEXTURE)
@@ -76,21 +78,53 @@ func _ready() -> void:
 	_back_button.pressed.connect(_on_back_pressed)
 	for tab in _tab_buttons:
 		var b: Button = _tab_buttons[tab]
-		b.pressed.connect(_select_tab.bind(tab))
+		b.pressed.connect(_select_tab.bind(tab, true))
 		b.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
-	_select_tab(Tab.UPGRADES)
+	Screen.layout_changed.connect(_apply_layout)
+	_apply_layout(Screen.compact)
 	_back_button.grab_focus()
+
+## Teléfono: ventana a pantalla completa, pestañas repartidas a lo
+## ancho, la moneda en su propia fila y tarjetas en una sola columna.
+func _apply_layout(compact: bool) -> void:
+	_compact = compact
+	var vp := Screen.view_size()
+	var w: float = minf(1120.0, vp.x - 16.0)
+	var h: float = minf(680.0, vp.y - 24.0)
+	_window.offset_left = -w / 2.0
+	_window.offset_right = w / 2.0
+	_window.offset_top = -h / 2.0
+	_window.offset_bottom = h / 2.0
+	var body: Control = $Window/Body
+	body.offset_left = 18.0 if compact else 30.0
+	body.offset_right = -18.0 if compact else -30.0
+
+	var top_row: BoxContainer = $Window/Body/TopRow
+	top_row.vertical = compact
+	var tabs: HBoxContainer = $Window/Body/TopRow/Tabs
+	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL if compact else Control.SIZE_FILL
+	_tab_font = 13 if compact else 16
+	var widths: Dictionary = {Tab.UPGRADES: 180.0, Tab.POWERS: 180.0, Tab.COMPANIONS: 220.0}
+	# "ACOMPAÑANTES" no entra en un tercio de pantalla de teléfono.
+	_tab_buttons[Tab.COMPANIONS].text = "MASCOTAS" if compact else "ACOMPAÑANTES"
+	for t in _tab_buttons:
+		var b: Button = _tab_buttons[t]
+		b.custom_minimum_size.x = 0.0 if compact else widths[t]
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL if compact else Control.SIZE_FILL
+	_currency_box.size_flags_horizontal = Control.SIZE_SHRINK_END if compact else Control.SIZE_FILL
+	_grid.columns = 1 if compact else 2
+	_select_tab(_tab, false)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_on_back_pressed()
 
-func _select_tab(tab: int) -> void:
-	if tab != _tab:
+func _select_tab(tab: int, sound: bool = true) -> void:
+	if sound and tab != _tab:
 		Audio.play_sfx("ui_click")
 	_tab = tab
 	for t in _tab_buttons:
-		RpgTheme.style_tab(_tab_buttons[t], t == tab, 16)
+		RpgTheme.style_tab(_tab_buttons[t], t == tab, _tab_font)
 	_hint_label.text = TAB_HINTS[tab]
 	_rebuild()
 
@@ -117,7 +151,7 @@ func _build_upgrades() -> void:
 		bar.max_value = item["max_level"]
 		bar.value = level
 		bar.show_percentage = false
-		bar.custom_minimum_size = Vector2(140, 12)
+		bar.custom_minimum_size = Vector2(100 if _compact else 140, 12)
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		RpgTheme.style_level_bar(bar, style["color"])
 		card["status"].add_child(bar)
@@ -171,16 +205,21 @@ func _make_card(icon: Control, title: String, desc: String) -> Dictionary:
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", RpgTheme.slot_box(false, 12.0))
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.custom_minimum_size = Vector2(0, 108)
+	card.custom_minimum_size = Vector2(0, 0 if _compact else 108)
 	_grid.add_child(card)
 
+	# Compacto (teléfono): [insignia][nombre/desc] arriba y [estado][botón]
+	# abajo — en una fila sola el texto quedaba de 80px de ancho.
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 8)
+	card.add_child(outer)
 	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 14)
-	card.add_child(hbox)
+	hbox.add_theme_constant_override("separation", 12 if _compact else 14)
+	outer.add_child(hbox)
 
 	var badge := PanelContainer.new()
 	badge.add_theme_stylebox_override("panel", RpgTheme.slot_box(true, 6.0))
-	badge.custom_minimum_size = Vector2(76, 76)
+	badge.custom_minimum_size = Vector2(64, 64) if _compact else Vector2(76, 76)
 	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	hbox.add_child(badge)
 	badge.add_child(icon)
@@ -204,14 +243,21 @@ func _make_card(icon: Control, title: String, desc: String) -> Dictionary:
 
 	var status := HBoxContainer.new()
 	status.add_theme_constant_override("separation", 10)
-	info.add_child(status)
-
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(160, 54)
+	button.custom_minimum_size = Vector2(160, 54) if not _compact else Vector2(150, 46)
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	RpgTheme.style_button(button, 15)
 	button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
-	hbox.add_child(button)
+	if _compact:
+		var bottom := HBoxContainer.new()
+		outer.add_child(bottom)
+		status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bottom.add_child(status)
+		bottom.add_child(button)
+	else:
+		info.add_child(status)
+		hbox.add_child(button)
 
 	return {"status": status, "button": button}
 

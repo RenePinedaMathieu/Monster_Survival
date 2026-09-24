@@ -52,7 +52,7 @@ const UPGRADE_FAMILY: Dictionary = {
 @onready var _boss_label: Label = $BossPanel/VBox/BossLabel
 @onready var _boss_bar: ProgressBar = $BossPanel/VBox/BossBar
 @onready var _upgrades_bar: PanelContainer = $UpgradesArea/UpgradesBar
-@onready var _upgrade_slots: HBoxContainer = $UpgradesArea/UpgradesBar/Slots
+@onready var _upgrade_rows: VBoxContainer = $UpgradesArea/UpgradesBar/Rows
 
 var _run_time: float = 0.0
 var _running: bool = true
@@ -92,6 +92,41 @@ func _ready() -> void:
 
 	_coins_label.text = "%d" % GameState.run_currency
 	GameState.currency_changed.connect(_on_currency_changed)
+	Screen.layout_changed.connect(_apply_layout)
+	_apply_layout(Screen.compact)
+
+## Teléfono vertical: el panel de personaje y el minimapa ocupan todo el
+## ancho de arriba, así que el timer baja debajo del minimapa y la
+## barra del jefe debajo de todo eso, a lo ancho de la pantalla.
+func _apply_layout(compact: bool) -> void:
+	var vp := Screen.view_size()
+	# Minimapa más chico en vertical: el panel de personaje ya ocupa 264
+	# de los 420 de ancho.
+	var map_side: float = 110.0 if compact else 150.0
+	$MinimapFrame/Minimap.set_side(map_side)
+	$MinimapFrame.offset_left = -(map_side + 18.0 + 12.0)
+	$MinimapFrame.offset_bottom = 12.0 + map_side + 18.0
+	var timer: PanelContainer = $TimerPanel
+	if compact:
+		timer.anchor_left = 1.0
+		timer.anchor_right = 1.0
+		timer.offset_left = -(map_side + 18.0 + 12.0)
+		timer.offset_right = -12.0
+		timer.offset_top = map_side + 38.0
+		timer.offset_bottom = map_side + 88.0
+	else:
+		timer.anchor_left = 0.5
+		timer.anchor_right = 0.5
+		timer.offset_left = -70.0
+		timer.offset_right = 70.0
+		timer.offset_top = 12.0
+		timer.offset_bottom = 62.0
+	var boss_w: float = minf(440.0, vp.x - 24.0)
+	_boss_panel.offset_left = -boss_w / 2.0
+	_boss_panel.offset_right = boss_w / 2.0
+	_boss_panel.offset_top = 218.0 if compact else 72.0
+	_boss_panel.offset_bottom = _boss_panel.offset_top + 60.0
+	_rebuild_upgrade_rows()
 
 func _process(delta: float) -> void:
 	if not _running: return
@@ -167,12 +202,31 @@ func on_upgrades_changed(upgrade_log: Array) -> void:
 			counts[family] = 0
 		counts[family] += 1
 
-	for child in _upgrade_slots.get_children():
-		_upgrade_slots.remove_child(child)
+	_last_upgrade_order = order
+	_last_upgrade_counts = counts
+	_rebuild_upgrade_rows()
+
+var _last_upgrade_order: Array = []
+var _last_upgrade_counts: Dictionary = {}
+
+## Reparte las casillas en filas que entren a lo ancho (en un teléfono
+## vertical no entran las 11 posibles en una fila).
+func _rebuild_upgrade_rows() -> void:
+	for child in _upgrade_rows.get_children():
+		_upgrade_rows.remove_child(child)
 		child.queue_free()
-	for family in order:
-		_upgrade_slots.add_child(_make_upgrade_tile(_upgrade_icons.get(family, ""), counts[family]))
-	_upgrades_bar.visible = not order.is_empty()
+	var per_row: int = maxi(1, floori((Screen.view_size().x - 40.0) / 46.0))
+	var row: HBoxContainer = null
+	for i in range(_last_upgrade_order.size()):
+		if i % per_row == 0:
+			row = HBoxContainer.new()
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override("separation", 4)
+			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_upgrade_rows.add_child(row)
+		var family: String = _last_upgrade_order[i]
+		row.add_child(_make_upgrade_tile(_upgrade_icons.get(family, ""), _last_upgrade_counts[family]))
+	_upgrades_bar.visible = not _last_upgrade_order.is_empty()
 
 func _make_upgrade_tile(icon_path: String, count: int) -> Control:
 	var tile := TextureRect.new()

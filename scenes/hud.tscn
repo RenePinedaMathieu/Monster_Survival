@@ -69,18 +69,18 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="HPValue" type="Label" parent="."]
-offset_left = 270.0
-offset_top = 26.0
-offset_right = 380.0
-offset_bottom = 48.0
+offset_left = 94.0
+offset_top = 84.0
+offset_right = 220.0
+offset_bottom = 104.0
 mouse_filter = 2
 text = "100 / 100"
 
 [node name="InfoPanel" type="PanelContainer" parent="."]
 offset_left = 12.0
-offset_top = 114.0
+offset_top = 120.0
 offset_right = 196.0
-offset_bottom = 200.0
+offset_bottom = 206.0
 mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="InfoPanel"]
@@ -186,7 +186,7 @@ visible = false
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Slots" type="HBoxContainer" parent="UpgradesArea/UpgradesBar"]
+[node name="Rows" type="VBoxContainer" parent="UpgradesArea/UpgradesBar"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4

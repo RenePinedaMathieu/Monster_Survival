@@ -21,6 +21,7 @@ Realtime="*uid://bhdn3haenx20g"
 Supabase="*uid://dyju2v7pxnojp"
 GameState="*res://autoload/game_state.gd"
 Audio="*res://autoload/audio.gd"
+Screen="*res://autoload/screen.gd"
 
 [debug]
 

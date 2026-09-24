@@ -72,6 +72,14 @@ func _ready() -> void:
 
 	_show_view(_main_view)
 	_resume_button.grab_focus()
+	Screen.layout_changed.connect(_apply_layout)
+	_apply_layout(Screen.compact)
+
+## En teléfono el panel (420) y la lista (380) no pueden pasar del ancho.
+func _apply_layout(_compact: bool) -> void:
+	var vp := Screen.view_size()
+	_panel.custom_minimum_size.x = minf(420.0, vp.x - 24.0)
+	$Center/Panel/Margin/VBox/PowerupsView/Scroll.custom_minimum_size.x = minf(380.0, vp.x - 84.0)
 
 func setup(player: Node) -> void:
 	_player = player

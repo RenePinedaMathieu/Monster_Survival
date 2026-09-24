@@ -69,7 +69,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="TopRow" type="HBoxContainer" parent="Window/Body"]
+[node name="TopRow" type="BoxContainer" parent="Window/Body"]
 layout_mode = 2
 theme_override_constants/separation = 8
 

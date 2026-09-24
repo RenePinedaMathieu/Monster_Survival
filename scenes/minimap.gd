@@ -10,10 +10,13 @@ extends Control
 ## Es "top-down" en coordenadas de mundo, no rota con la cámara.
 
 const WORLD_BOUND := 950.0    # match world.gd
-const SIZE := 150.0
-# Escala mundo → minimap. WORLD_BOUND es medio-mundo, así que
-# lo pasamos a [0..SIZE].
-const SCALE := SIZE / (WORLD_BOUND * 2.0)
+const DEFAULT_SIZE := 150.0
+
+## Lado del minimapa en píxeles — el HUD lo achica en teléfono vertical
+## (ver set_side). La escala mundo → minimapa sale de acá: WORLD_BOUND
+## es medio mundo, así que el mundo entero entra en [0.._side].
+var _side: float = DEFAULT_SIZE
+var _scale: float = DEFAULT_SIZE / (WORLD_BOUND * 2.0)
 
 const BG_COLOR := Color(0.227, 0.157, 0.114, 0.8)
 const BORDER_COLOR := Color(0.243, 0.122, 0.114, 1.0)   # borde oscuro de la madera del pack (el marco lo pone hud.tscn)
@@ -22,8 +25,13 @@ const PLAYER_COLOR := Color(0.4, 1.0, 0.5)
 const REMOTE_COLOR := Color(0.55, 0.85, 1.0)
 const MONSTER_COLOR := Color(1.0, 0.35, 0.35)
 
+func set_side(side: float) -> void:
+	_side = side
+	_scale = side / (WORLD_BOUND * 2.0)
+	custom_minimum_size = Vector2(side, side)
+
 func _ready() -> void:
-	custom_minimum_size = Vector2(SIZE, SIZE)
+	set_side(_side)
 	# Redibujar cada frame es barato con pocos monsters.
 	set_process(true)
 
@@ -32,11 +40,11 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	# Fondo + marco
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SIZE, SIZE)), BG_COLOR, true)
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SIZE, SIZE)), BORDER_COLOR, false, 2.0)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(_side, _side)), BG_COLOR, true)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(_side, _side)), BORDER_COLOR, false, 2.0)
 	# Contorno del mundo (el borde real donde chocás)
-	var world_side := WORLD_BOUND * 2.0 * SCALE
-	var world_origin := (Vector2(SIZE, SIZE) - Vector2(world_side, world_side)) / 2.0
+	var world_side := WORLD_BOUND * 2.0 * _scale
+	var world_origin := (Vector2(_side, _side) - Vector2(world_side, world_side)) / 2.0
 	draw_rect(Rect2(world_origin, Vector2(world_side, world_side)),
 		WORLD_BORDER_COLOR, false, 1.5)
 
@@ -71,10 +79,10 @@ func _world_to_map(pos: Vector2) -> Vector2:
 	# Esto le da al minimap un feel de radar centrado.
 	var players := get_tree().get_nodes_in_group("player")
 	if players.is_empty():
-		return Vector2(SIZE / 2.0, SIZE / 2.0)
+		return Vector2(_side / 2.0, _side / 2.0)
 	var player: Node2D = players[0]
 	var rel: Vector2 = pos - player.global_position
-	return Vector2(SIZE / 2.0, SIZE / 2.0) + rel * SCALE
+	return Vector2(_side / 2.0, _side / 2.0) + rel * _scale
 
 func _in_bounds(p: Vector2) -> bool:
-	return p.x >= 0 and p.x <= SIZE and p.y >= 0 and p.y <= SIZE
+	return p.x >= 0 and p.x <= _side and p.y >= 0 and p.y <= _side

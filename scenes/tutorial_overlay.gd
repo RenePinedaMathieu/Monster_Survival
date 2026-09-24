@@ -126,8 +126,17 @@ func _ready() -> void:
 	_arrow.add_theme_color_override("font_outline_color", RpgTheme.COLOR_LIGHT_OUTLINE)
 	_arrow.add_theme_constant_override("outline_size", 4)
 
+	Screen.layout_changed.connect(_apply_layout)
+	_apply_layout(Screen.compact)
 	_render_page()
 	_next_button.grab_focus()
+
+## En teléfono el globo usa todo el ancho (560 no entra en 480).
+func _apply_layout(_compact: bool) -> void:
+	var w: float = minf(560.0, Screen.view_size().x - 24.0)
+	_bubble.custom_minimum_size.x = w
+	_bubble.offset_left = -w / 2.0
+	_bubble.offset_right = w / 2.0
 
 func _process(_delta: float) -> void:
 	# Recalcula el hueco cada frame mientras hay un target — así sigue
