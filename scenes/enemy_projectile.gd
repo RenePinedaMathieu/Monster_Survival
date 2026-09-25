@@ -5,7 +5,11 @@ extends Area2D
 ## pega al player una vez; no atraviesa. Esquivable: velocidad baja y
 ## bien visible (núcleo claro + halo del color del que lo tiró).
 
-const LIFE := 3.2
+## 3.2 → 4.4: las velocidades de disparo bajaron x0.72 junto con el
+## héroe (ver BASE_SPEED en player.gd); se alarga la vida en la misma
+## proporción para que el alcance quede igual (~540 caster, ~475
+## beholder, ~400 anillo del jefe) y la dificultad no baje.
+const LIFE := 4.4
 const RADIUS := 5.0
 
 var _velocity: Vector2 = Vector2.ZERO
