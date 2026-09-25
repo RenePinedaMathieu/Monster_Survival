@@ -53,8 +53,15 @@ const AXE_SCRIPT := preload("res://scenes/axe_weapon.gd")
 const LIGHTNING_SCRIPT := preload("res://scenes/lightning_weapon.gd")
 
 const BASE_SCALE := 0.5
-const BASE_SPEED := 175.0             # bajado de 220 — se sentía muy rápido/patinoso
-const ACCELERATION := 1600.0          # px/s² — llega a top speed en ~0.11s, no instantáneo
+## 220 → 175 → 125. A 175 se cruzaba la pantalla (335 unidades de alto
+## en PC, ver VIEW_SHORT_UNITS_DESKTOP) en ~1.9 s y los testers decían
+## que el héroe "cruza todo muy rápido". A 125 tarda ~2.7 s, más cerca
+## del ritmo de Vampire Survivors. Los monstruos y sus proyectiles se
+## bajaron en la misma proporción (ver monster.gd) para no volver el
+## juego más difícil, sólo más pausado. El dash (DASH_SPEED) queda
+## igual a propósito: el contraste con caminar lo hace sentir mejor.
+const BASE_SPEED := 125.0
+const ACCELERATION := 1150.0          # px/s² — llega a top speed en ~0.11s, igual que antes
 const RUN_FPS := 12.0
 
 # Auto-attack
@@ -909,7 +916,9 @@ func apply_upgrade(id: String) -> void:
 	match id:
 		"damage":     damage_mult *= 1.25
 		"atk_speed":  atk_speed_mult *= 1.20
-		"move_speed": move_speed *= 1.12
+		# +8% por carta, 5 niveles máx (ver upgrades.gd) = +47% en total.
+		# Antes +12% (hasta +76%) — al final de la run el héroe volaba.
+		"move_speed": move_speed *= 1.08
 		"max_hp":
 			max_hp *= 1.25
 			hp = min(max_hp, hp + max_hp * 0.20)

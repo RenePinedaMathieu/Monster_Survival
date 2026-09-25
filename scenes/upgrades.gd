@@ -24,7 +24,7 @@ const CARDS: Array = [
 	# ── Pasivas ──
 	{"id": "damage",       "title": "+25% DAÑO",          "desc": "Todas tus armas pegan más",           "icon": ICON + "skill_96.png"},
 	{"id": "atk_speed",    "title": "+20% VEL. ATAQUE",   "desc": "Atacas y disparas más seguido",       "icon": ICON + "skill_99.png"},
-	{"id": "move_speed",   "title": "+12% VELOCIDAD",     "desc": "Corres más rápido",                   "icon": ICON + "skill_80.png"},
+	{"id": "move_speed",   "title": "+8% VELOCIDAD",     "desc": "Corres más rápido",                   "icon": ICON + "skill_80.png"},
 	{"id": "max_hp",       "title": "+25% VIDA MÁXIMA",   "desc": "Aguantas más golpes",                 "icon": ICON + "skill_83.png"},
 	{"id": "hp_regen",     "title": "+1 VIDA/S",          "desc": "Regeneración pasiva",                 "icon": ICON + "skill_79.png"},
 	{"id": "magnet",       "title": "+40% IMÁN",          "desc": "Absorbes experiencia desde más lejos", "icon": ICON + "skill_30.png"},

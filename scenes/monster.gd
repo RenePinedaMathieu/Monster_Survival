@@ -49,12 +49,11 @@ const ELITE_HP_MULT := 7.0
 const ELITE_SCALE := 1.35
 const ELITE_COLOR := Color(1.0, 0.82, 0.3)
 
-## Bajado de 30/90 (y de nuevo de 20/62) — seguía sintiéndose
-## demasiado rápido apenas arranca la wave 1, antes de que el
-## speed_mult de main.gd sume nada. CHASE_SPEED ahora es ~21% de la
-## velocidad del player (220) para que esquivar sea viable de entrada.
-const WANDER_SPEED := 14.0
-const CHASE_SPEED  := 46.0
+## Escalados x0.72 junto con BASE_SPEED del player (175 → 125) para
+## bajar el ritmo general sin cambiar la dificultad: CHASE_SPEED sigue
+## siendo ~26% de la velocidad del héroe, así esquivar se siente igual.
+const WANDER_SPEED := 10.0
+const CHASE_SPEED  := 33.0
 const WANDER_CHANGE_MS := 2000
 const ATTACK_RANGE := 30.0   # a esta distancia empieza el windup (x collision_scale del kind)
 const DETECT_RANGE := 240.0
@@ -637,11 +636,12 @@ func _enter_charge_windup(dir: Vector2) -> void:
 func _shoot_at_player(dir: Vector2) -> void:
 	if behavior == "caster":
 		_behavior_cd = 2.6
-		_spawn_enemy_shot(dir, 170.0, SHOT_DAMAGE, Color("ff7a2e"))
+		# Velocidades de proyectil x0.72, igual que el héroe (ver BASE_SPEED).
+		_spawn_enemy_shot(dir, 122.0, SHOT_DAMAGE, Color("ff7a2e"))
 	else:
 		_behavior_cd = 3.2
 		for a in [-0.26, 0.0, 0.26]:
-			_spawn_enemy_shot(dir.rotated(a), 150.0, SHOT_DAMAGE * 0.85, Color("b36bff"))
+			_spawn_enemy_shot(dir.rotated(a), 108.0, SHOT_DAMAGE * 0.85, Color("b36bff"))
 
 func _spawn_enemy_shot(dir: Vector2, speed: float, dmg: float, color: Color) -> void:
 	var shot := Area2D.new()
@@ -672,7 +672,7 @@ func _boss_attack() -> void:
 	else:
 		var n: int = 10 + maxi(0, BOSS_KIND_IDS.find(_kind_id)) * 2
 		for i in range(n):
-			_spawn_enemy_shot(Vector2.RIGHT.rotated(TAU * i / n + _boss_cycle * 0.3), 125.0, BOSS_SHOT_DAMAGE, Color("ff4d2e"))
+			_spawn_enemy_shot(Vector2.RIGHT.rotated(TAU * i / n + _boss_cycle * 0.3), 90.0, BOSS_SHOT_DAMAGE, Color("ff4d2e"))
 
 ## Crea una cría (slime partido / rata invocada). Se registra en la
 ## escena YA (así main.gd la cuenta antes de que este monstruo avise
