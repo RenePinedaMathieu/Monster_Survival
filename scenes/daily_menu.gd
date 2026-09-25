@@ -8,6 +8,7 @@ extends Control
 
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const SELECT_SCRIPT := preload("res://scenes/character_select.gd")
+const NamePrompt := preload("res://scenes/name_prompt.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
@@ -109,6 +110,7 @@ func _build_challenge() -> void:
 	_name_edit.add_theme_color_override("font_color", RpgTheme.COLOR_INK)
 	_name_edit.text_submitted.connect(func(t): GameState.set_player_name(t))
 	_name_edit.focus_exited.connect(func(): GameState.set_player_name(_name_edit.text))
+	NamePrompt.attach(_name_edit)
 	name_row.add_child(_name_edit)
 
 func _build_board() -> void:

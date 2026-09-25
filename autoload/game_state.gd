@@ -42,6 +42,9 @@ var best_wave: int = 0
 var best_time: float = 0.0
 
 signal currency_changed(amount: int)
+## El nombre cambió y ya se actualizó en las partidas subidas (el
+## ranking lo usa para volver a pedir las filas).
+signal player_renamed
 
 const SAVE_PATH := "user://save.cfg"
 
@@ -384,11 +387,19 @@ func ensure_player_name() -> String:
 		_save()
 	return player_name
 
+## Cambia el nombre y, si hay sesión, también en las partidas que ya
+## subiste (si no, en el ranking seguías con el nombre viejo hasta
+## jugar otra). Necesita la política "rename own runs" de
+## docs/supabase_runs.sql; sin ella el PATCH no toca nada.
 func set_player_name(n: String) -> void:
 	n = n.strip_edges().substr(0, 16)
-	if n != "":
-		player_name = n
-		_save()
+	if n == "" or n == player_name:
+		return
+	player_name = n
+	_save()
+	if Supabase.is_signed_in() and Supabase.user_id != "":
+		Supabase.rest_update("/runs?user_id=eq.%s" % Supabase.user_id, {"player_name": n},
+			func(_code, _body): player_renamed.emit())
 
 ## Puntaje: oleadas pesan mucho, bajas desempatan y ganar suma un
 ## bonus grande. mult: en partidas normales, mapa x dificultad (el

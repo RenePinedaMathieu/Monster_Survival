@@ -20,6 +20,10 @@ var _text: String = ""
 var _color: Color = COLOR_NORMAL
 var _t: float = 0.0
 var _start: Vector2
+var _life: float = LIFE
+var _rise: float = RISE
+var _counts: bool = true   # si suma al tope de números vivos
+var _font_size: int = FONT_SIZE
 
 ## Enteros sin decimales ("5", no "5.0"); los golpes chicos con uno
 ## ("0.7") para que no se vean como 0 o 1.
@@ -46,26 +50,46 @@ static func spawn(script: Script, parent: Node, pos: Vector2, amount: float, cri
 	n.global_position = pos + Vector2(randf_range(-6.0, 6.0), -14.0)
 	n._start = n.position
 
+## Texto suelto que sube y se desvanece más lento que un número de
+## daño (ej. "+25 VIDA" al agarrar el premio de un barril). No cuenta
+## para el tope: son pocos y siempre importan.
+static func spawn_text(script: Script, parent: Node, pos: Vector2, text: String, color: Color, size: float = 1.5) -> void:
+	if parent == null:
+		return
+	var n = script.new()
+	n._text = text
+	n._color = color
+	n._life = 1.2
+	n._rise = 26.0
+	# Fuente más grande en vez de escalar: escalada se veía borrosa.
+	n._font_size = int(round(FONT_SIZE * size))
+	n._counts = false
+	parent.add_child(n)
+	n.global_position = pos + Vector2(0.0, -20.0)
+	n._start = n.position
+
 func _ready() -> void:
-	_alive += 1
+	if _counts:
+		_alive += 1
 	z_index = 450
 
 func _exit_tree() -> void:
-	_alive -= 1
+	if _counts:
+		_alive -= 1
 
 func _process(delta: float) -> void:
 	_t += delta
-	if _t >= LIFE:
+	if _t >= _life:
 		queue_free()
 		return
-	var k: float = _t / LIFE
-	position = _start + Vector2(0.0, -RISE * ease(k, 0.4))
+	var k: float = _t / _life
+	position = _start + Vector2(0.0, -_rise * ease(k, 0.4))
 	modulate.a = 1.0 if k < 0.6 else 1.0 - (k - 0.6) / 0.4
 	queue_redraw()
 
 func _draw() -> void:
 	var font := ThemeDB.fallback_font
-	var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
+	var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, _font_size).x
 	var p := Vector2(-w / 2.0, 0.0)
-	draw_string_outline(font, p, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, 3, COLOR_OUTLINE)
-	draw_string(font, p, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, _color)
+	draw_string_outline(font, p, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, _font_size, 3 if _counts else 4, COLOR_OUTLINE)
+	draw_string(font, p, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, _font_size, _color)

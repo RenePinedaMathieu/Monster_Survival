@@ -11,6 +11,7 @@ extends Control
 
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const SELECT_SCRIPT := preload("res://scenes/character_select.gd")
+const NamePrompt := preload("res://scenes/name_prompt.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 const DAILY_SCENE := "res://scenes/daily_menu.tscn"
@@ -62,6 +63,10 @@ func _ready() -> void:
 	_name_edit.add_theme_color_override("font_color", RpgTheme.COLOR_INK)
 	_name_edit.text_submitted.connect(func(t): GameState.set_player_name(t))
 	_name_edit.focus_exited.connect(func(): GameState.set_player_name(_name_edit.text))
+	NamePrompt.attach(_name_edit)
+	# Con el nombre nuevo ya guardado en tus partidas, se vuelve a pedir
+	# el ranking para verlo.
+	GameState.player_renamed.connect(_on_renamed)
 	RpgTheme.style_button(_back_button, 17)
 	RpgTheme.style_button(_daily_button, 17)
 	_back_button.pressed.connect(_on_back)
@@ -102,6 +107,10 @@ func _apply_layout(compact: bool) -> void:
 	# Con poca altura (teléfono acostado) la explicación sobra.
 	_hint.visible = vp.y >= 560.0
 	_render()
+
+func _on_renamed() -> void:
+	_fetch(Tab.DAILY)
+	_fetch(Tab.ALL_TIME)
 
 func _save_name() -> void:
 	GameState.set_player_name(_name_edit.text)

@@ -21,6 +21,16 @@ const TINTS: Dictionary = {
 }
 const BOMB_RADIUS := 300.0
 const LIFE := 30.0
+const FLOAT_TEXT := preload("res://scenes/damage_number.gd")
+
+## Al agarrarlo sale un texto que dice qué fue (antes no se sabía si
+## había sido vida o la bomba).
+const LABELS: Dictionary = {
+	"heal": ["+%d VIDA", Color("6ee06e")],
+	"magnet": ["¡IMÁN!", Color("9fd8ff")],
+	"bomb": ["¡BOMBA!", Color("ff8a2e")],
+	"coins": ["+15 MONEDAS", Color("ffd24a")],
+}
 
 var kind: String = "heal"
 var _t: float = 0.0
@@ -62,9 +72,12 @@ func _on_body_entered(body: Node) -> void:
 	_apply.call_deferred(body)
 
 func _apply(player: Node) -> void:
+	var text: String = LABELS[kind][0]
 	match kind:
 		"heal":
-			player.heal(player.max_hp * 0.25)
+			var amount: float = player.max_hp * 0.25
+			player.heal(amount)
+			text = text % int(round(amount))
 			Audio.play_sfx("level_up", global_position)
 		"magnet":
 			for orb in get_tree().get_nodes_in_group("xp_orb"):
@@ -79,8 +92,26 @@ func _apply(player: Node) -> void:
 					m.take_damage(60.0 if big else 9999.0, "bomba")
 			if player.has_method("shake"):
 				player.shake(9.0)
+			_spawn_blast()
 			Audio.play_sfx("meteor_impact", global_position)
 		"coins":
 			GameState.add_run_currency(15)
 			Audio.play_sfx("coin_pickup", global_position)
+	FLOAT_TEXT.spawn_text(FLOAT_TEXT, get_tree().current_scene, player.global_position, text, LABELS[kind][1])
 	queue_free()
+
+## Onda naranja que se expande hasta el radio de la bomba: muestra que
+## explotó y hasta dónde llegó.
+func _spawn_blast() -> void:
+	var ring := Node2D.new()
+	ring.z_index = 40
+	ring.global_position = global_position
+	ring.draw.connect(func():
+		ring.draw_circle(Vector2.ZERO, BOMB_RADIUS, Color(1.0, 0.55, 0.15, 0.22))
+		ring.draw_arc(Vector2.ZERO, BOMB_RADIUS, 0.0, TAU, 72, Color(1.0, 0.75, 0.3, 0.9), 10.0))
+	get_parent().add_child(ring)
+	ring.scale = Vector2.ONE * 0.1
+	var tw := ring.create_tween()
+	tw.tween_property(ring, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(ring, "modulate:a", 0.0, 0.45)
+	tw.tween_callback(ring.queue_free)

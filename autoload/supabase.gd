@@ -164,9 +164,14 @@ func rest_get(path: String, on_done: Callable) -> void:
 ## INSERT simple (sin upsert). Necesita sesión: las políticas de la
 ## tabla exigen que user_id sea el del token (se renueva si venció).
 func rest_insert(path: String, body_json: Dictionary, on_done := Callable()) -> void:
-	_with_fresh_token(_insert_now.bind(path, body_json, on_done))
+	_with_fresh_token(_write_now.bind(path, body_json, HTTPClient.METHOD_POST, on_done))
 
-func _insert_now(path: String, body_json: Dictionary, on_done: Callable) -> void:
+## UPDATE (PATCH) de las filas que matchea `path`; mismas reglas que
+## rest_insert (la tabla sólo deja tocar las propias).
+func rest_update(path: String, body_json: Dictionary, on_done := Callable()) -> void:
+	_with_fresh_token(_write_now.bind(path, body_json, HTTPClient.METHOD_PATCH, on_done))
+
+func _write_now(path: String, body_json: Dictionary, method: int, on_done: Callable) -> void:
 	var http := _new_http()
 	http.request_completed.connect(func(_r, code, _h, body):
 		http.queue_free()
@@ -177,7 +182,7 @@ func _insert_now(path: String, body_json: Dictionary, on_done: Callable) -> void
 		"Authorization: Bearer " + _bearer(),
 		"Content-Type: application/json",
 		"Prefer: return=minimal",
-	], HTTPClient.METHOD_POST, JSON.stringify(body_json))
+	], method, JSON.stringify(body_json))
 
 ## Postgres upsert (or insert with `Prefer: return=representation`).
 func rest_upsert(path: String, body_json: Dictionary, on_done := Callable()) -> void:

@@ -29,6 +29,13 @@ drop policy if exists "insert own runs" on public.runs;
 create policy "insert own runs" on public.runs for insert to authenticated
   with check (auth.uid() = user_id);
 
+-- Cambiar tu nombre: sólo tus filas y sólo la columna player_name.
+drop policy if exists "rename own runs" on public.runs;
+create policy "rename own runs" on public.runs for update to authenticated
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+revoke update on public.runs from anon, authenticated;
+grant update (player_name) on public.runs to authenticated;
+
 create index if not exists runs_daily_score_idx on public.runs (daily_date, score desc);
 create index if not exists runs_created_idx on public.runs (created_at desc);
 
