@@ -144,10 +144,20 @@ var _sfx_cache: Dictionary = {}
 var _current_music: AudioStreamPlayer = null
 var _current_music_id: String = ""
 
+## Pistas que se cargan una sola vez al arrancar y quedan en memoria
+## (~14 MB). En la versión web, cargar un MP3 de 2-5 MB a mitad de
+## partida (ej. la música de victoria al matar al jefe) obligaba a
+## agrandar la memoria del juego de golpe ~100 MB y iOS recargaba la
+## página. Al arrancar la memoria todavía es chica y crecer es barato.
+const PRELOAD_MUSIC: Array[String] = ["character_select", "gameplay_chill", "gameplay_intense", "boss"]
+var _music_cache: Dictionary = {}   # path -> AudioStream
+
 func _ready() -> void:
 	# Sonido debe seguir funcionando aunque el juego esté pausado
 	# (level-up modal, etc.)
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	for id in PRELOAD_MUSIC:
+		_music_stream(id)
 
 # ── SFX ─────────────────────────────────────────────────────────
 
@@ -215,16 +225,9 @@ func play_music(id: String, fade_ms: int = 800) -> void:
 		return
 	if not MUSIC_LIBRARY.has(id):
 		return
-	var path: String = MUSIC_LIBRARY[id]
-	if not ResourceLoader.exists(path):
+	var stream: AudioStream = _music_stream(id)
+	if stream == null:
 		return
-	var stream: AudioStream = load(path)
-	# Los MP3 no tienen loop por default cuando se cargan vía load().
-	# Lo prendemos acá así el track de fondo se repite sin quedar en
-	# silencio a los 2 min. AudioStreamMP3 y AudioStreamOggVorbis tienen
-	# la property "loop" — otros formatos ni loop tienen ni fallan.
-	if "loop" in stream:
-		stream.set("loop", true)
 	# Fade out del track anterior
 	if is_instance_valid(_current_music):
 		var old_music: AudioStreamPlayer = _current_music
@@ -244,6 +247,25 @@ func play_music(id: String, fade_ms: int = 800) -> void:
 	tw_in.tween_property(new_music, "volume_db", target_db, fade_ms / 1000.0)
 	_current_music = new_music
 	_current_music_id = id
+
+## El stream de una pista, cargado una sola vez (ver PRELOAD_MUSIC).
+func _music_stream(id: String) -> AudioStream:
+	var path: String = MUSIC_LIBRARY.get(id, "")
+	if path == "":
+		return null
+	if _music_cache.has(path):
+		return _music_cache[path]
+	if not ResourceLoader.exists(path):
+		return null
+	var stream: AudioStream = load(path)
+	# Los MP3 no tienen loop por default cuando se cargan vía load().
+	# Lo prendemos acá así el track de fondo se repite sin quedar en
+	# silencio a los 2 min. AudioStreamMP3 y AudioStreamOggVorbis tienen
+	# la property "loop" — otros formatos ni loop tienen ni fallan.
+	if "loop" in stream:
+		stream.set("loop", true)
+	_music_cache[path] = stream
+	return stream
 
 func stop_music(fade_ms: int = 500) -> void:
 	if not is_instance_valid(_current_music):

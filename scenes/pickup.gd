@@ -77,6 +77,7 @@ func _apply(player: Node) -> void:
 		"heal":
 			var amount: float = player.max_hp * 0.25
 			player.heal(amount)
+			player.flash(player.FLASH_GREEN)
 			text = text % int(round(amount))
 			Audio.play_sfx("level_up", global_position)
 		"magnet":
@@ -96,6 +97,7 @@ func _apply(player: Node) -> void:
 			Audio.play_sfx("meteor_impact", global_position)
 		"coins":
 			GameState.add_run_currency(15)
+			player.flash(player.FLASH_GOLD)
 			Audio.play_sfx("coin_pickup", global_position)
 	FLOAT_TEXT.spawn_text(FLOAT_TEXT, get_tree().current_scene, player.global_position, text, LABELS[kind][1])
 	queue_free()

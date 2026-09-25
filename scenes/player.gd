@@ -1064,6 +1064,23 @@ func _revive() -> void:
 	shake(8.0)
 	Audio.play_sfx("level_up", global_position)
 
+const FLASH_GOLD := Color(2.2, 1.7, 0.35)
+const FLASH_GREEN := Color(0.55, 2.2, 0.6)
+
+## Destello de color sobre el héroe: dorado al agarrar monedas, verde al
+## curarse (pickup.gd, cofres). Dos pulsos para que se note aunque haya
+## mucho pasando en pantalla.
+var _flash_tween: Tween
+
+func flash(color: Color) -> void:
+	if _flash_tween != null and _flash_tween.is_valid():
+		_flash_tween.kill()
+	_flash_tween = create_tween()
+	_sprite.modulate = color
+	_flash_tween.tween_property(_sprite, "modulate", Color.WHITE, 0.18)
+	_flash_tween.tween_property(_sprite, "modulate", color, 0.08)
+	_flash_tween.tween_property(_sprite, "modulate", Color.WHITE, 0.35)
+
 func heal(amount: float) -> void:
 	hp = min(max_hp, hp + amount)
 	emit_signal("hp_changed", hp, max_hp)

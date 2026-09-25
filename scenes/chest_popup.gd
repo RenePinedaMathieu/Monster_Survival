@@ -71,6 +71,7 @@ func open(player) -> void:
 			_desc.text = c["desc"]
 			player.apply_upgrade(id)
 	GameState.add_run_currency(CHEST_COINS)
+	player.flash(player.FLASH_GOLD)
 	extra.append("+%d monedas" % CHEST_COINS)
 	_extra.text = "\n".join(extra)
 

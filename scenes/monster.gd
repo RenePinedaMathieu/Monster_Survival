@@ -378,6 +378,17 @@ var _facing := "front"
 const DIRECTIONS: Array[String] = ["front", "back", "left", "right"]
 var _attack_range := ATTACK_RANGE
 var _anim_frames: Dictionary = {}   # "idle"/"run"/"attack"/"death" -> Array[Texture2D]
+
+## Frames recortados por tipo de monstruo, compartidos por todas las
+## instancias (sólo se leen). Antes cada monstruo armaba sus propias
+## ~130 AtlasTexture (4 animaciones x 4 direcciones): con 50 bichos y
+## las crías de slime eran más de 20.000 objetos al matar al jefe y la
+## memoria de la versión web saltaba ~100 MB justo ahí (iOS recargaba
+## la página). Se cuentan los monstruos vivos de cada tipo: cuando muere
+## el último, el tipo sale del caché y sus hojas se liberan como antes.
+static var _frames_cache: Dictionary = {}
+static var _frames_users: Dictionary = {}
+var _frames_kind: String = ""
 var _anim_name := ""
 var _anim_fps := ANIM_FPS
 var _anim_time := 0.0
@@ -409,28 +420,12 @@ func set_kind(kind_id: String) -> void:
 	var data: Dictionary = KIND_DATA.get(kind_id, KIND_DATA[KIND_IDS[0]])
 	var frame_size: Vector2 = data.get("frame_size", Vector2(64, 64))
 	var cols: int = data.get("cols", 4)
-	_anim_frames.clear()
-	for anim_name in ["idle", "run", "attack", "death"]:
-		if data.has(anim_name):
-			var info: Dictionary = data[anim_name]
-			# "cols" = frames por anim en las hojas horizontales (1 fila).
-			var anim_cols: int = info.get("cols", cols)
-			# Los packs nuevos traen SHEETS SEPARADAS por dirección con
-			# sufijo _front/_back/_left/_right en el filename. Cargamos
-			# las 4 y las guardamos en un dict por dirección; el
-			# _update_animation elige según _facing.
-			var front_path: String = info["file"]
-			var per_dir: Dictionary = {}
-			for dir_name in DIRECTIONS:
-				var dir_path: String = front_path.replace("_front", "_" + dir_name)
-				var full_path: String = data["base"] + dir_path
-				if not ResourceLoader.exists(full_path):
-					# Fallback al _front si no existe esa dirección
-					full_path = data["base"] + front_path
-				per_dir[dir_name] = _slice_frames(
-					full_path, frame_size, anim_cols, info["frames"], info.get("start", 0)
-				)
-			_anim_frames[anim_name] = per_dir
+	_release_frames()
+	if not _frames_cache.has(kind_id):
+		_frames_cache[kind_id] = _build_anim_frames(data, frame_size, cols)
+	_frames_users[kind_id] = int(_frames_users.get(kind_id, 0)) + 1
+	_frames_kind = kind_id
+	_anim_frames = _frames_cache[kind_id]
 
 	_base_sprite_scale = Vector2.ONE * float(data.get("scale", 1.0))
 	_sprite.scale = _base_sprite_scale
@@ -457,11 +452,54 @@ func set_kind(kind_id: String) -> void:
 
 	_set_animation("idle")
 
+func _exit_tree() -> void:
+	_release_frames()
+
+## Este monstruo deja de usar los frames de su tipo (sigue teniendo su
+## referencia en _anim_frames, así que la animación de muerte no se corta).
+func _release_frames() -> void:
+	if _frames_kind == "":
+		return
+	var n: int = int(_frames_users.get(_frames_kind, 1)) - 1
+	if n <= 0:
+		_frames_users.erase(_frames_kind)
+		_frames_cache.erase(_frames_kind)
+	else:
+		_frames_users[_frames_kind] = n
+	_frames_kind = ""
+
+## Arma los frames de todas las animaciones de un tipo (una vez por tipo,
+## ver _frames_cache).
+static func _build_anim_frames(data: Dictionary, frame_size: Vector2, cols: int) -> Dictionary:
+	var anim_frames := {}
+	for anim_name in ["idle", "run", "attack", "death"]:
+		if data.has(anim_name):
+			var info: Dictionary = data[anim_name]
+			# "cols" = frames por anim en las hojas horizontales (1 fila).
+			var anim_cols: int = info.get("cols", cols)
+			# Los packs nuevos traen SHEETS SEPARADAS por dirección con
+			# sufijo _front/_back/_left/_right en el filename. Cargamos
+			# las 4 y las guardamos en un dict por dirección; el
+			# _update_animation elige según _facing.
+			var front_path: String = info["file"]
+			var per_dir: Dictionary = {}
+			for dir_name in DIRECTIONS:
+				var dir_path: String = front_path.replace("_front", "_" + dir_name)
+				var full_path: String = data["base"] + dir_path
+				if not ResourceLoader.exists(full_path):
+					# Fallback al _front si no existe esa dirección
+					full_path = data["base"] + front_path
+				per_dir[dir_name] = _slice_frames(
+					full_path, frame_size, anim_cols, info["frames"], info.get("start", 0)
+				)
+			anim_frames[anim_name] = per_dir
+	return anim_frames
+
 ## "start" es el índice (fila*cols + columna) del primer frame — 0
 ## para los packs de un archivo por animación (todos los actuales);
 ## sirve para un pack que comparta una única hoja grande con varias
 ## animaciones en filas distintas, si se suma alguno más adelante.
-func _slice_frames(path: String, frame_size: Vector2, cols: int, frame_count: int, start: int = 0) -> Array[Texture2D]:
+static func _slice_frames(path: String, frame_size: Vector2, cols: int, frame_count: int, start: int = 0) -> Array[Texture2D]:
 	var sheet: Texture2D = load(path)
 	var frames: Array[Texture2D] = []
 	for i in range(frame_count):
