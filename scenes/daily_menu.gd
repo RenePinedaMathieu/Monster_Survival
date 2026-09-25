@@ -44,6 +44,9 @@ func _ready() -> void:
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
 	_play_button.grab_focus()
+	# Con la sesión guardada se sabe tu user_id y se marca tu fila.
+	if FileAccess.file_exists(Supabase.SESSION_PATH):
+		Supabase.ensure_session(GameState.ensure_player_name())
 	_fetch_board()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -122,7 +125,8 @@ func _on_board(code: int, body: String) -> void:
 	if not is_inside_tree():
 		return
 	if code < 200 or code >= 300:
-		_board_status.text = "El ranking no está disponible todavía."
+		_board_status.text = "El ranking todavía no está activado." if code == 404 \
+			else "No se pudo cargar el ranking. Revisa tu conexión."
 		return
 	var rows = JSON.parse_string(body)
 	if typeof(rows) != TYPE_ARRAY or rows.is_empty():

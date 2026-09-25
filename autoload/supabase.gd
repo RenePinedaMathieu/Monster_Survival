@@ -22,21 +22,38 @@ signal auth_ready
 const SESSION_PATH := "user://session.cfg"
 var _authing: bool = false
 
+## El access_token de Supabase dura 1 hora (expires_in). Una pestaña
+## abierta más que eso seguía mandando el token vencido: PostgREST
+## respondía 401 y el ranking salía vacío y las partidas no se subían.
+## Se renueva un minuto antes de que venza.
+var expires_at: float = 0.0
+const TOKEN_MARGIN := 60.0
+
 func _ready() -> void:
 	pass
 
 func is_signed_in() -> bool:
 	return access_token != ""
 
-## Deja una sesión lista: la ya abierta, la guardada (renovándola) o
-## una anónima nueva si no hay ninguna.
+## Hay token y todavía no está por vencer.
+func has_fresh_token() -> bool:
+	return access_token != "" and Time.get_unix_time_from_system() < expires_at - TOKEN_MARGIN
+
+## Deja una sesión lista: la ya abierta (si no venció), la renueva con
+## el refresh_token (el de memoria o el guardado) o abre una anónima
+## nueva si no hay ninguna.
 func ensure_session(name: String) -> void:
-	if is_signed_in():
+	if name != "":
+		username = name
+	if has_fresh_token():
 		auth_ready.emit()
 		return
 	if _authing:
 		return
 	_authing = true
+	if refresh_token != "":
+		_refresh(refresh_token, name)
+		return
 	var cfg := ConfigFile.new()
 	if cfg.load(SESSION_PATH) == OK:
 		var saved: String = cfg.get_value("session", "refresh_token", "")
@@ -52,8 +69,12 @@ func _refresh(token: String, name: String) -> void:
 		http.queue_free()
 		if code >= 200 and code < 300:
 			_on_auth(0, code, [], body, null)
+		elif code == 0 or code >= 500:
+			# Sin conexión o Supabase caído: se reintenta la próxima vez
+			# (abrir otra sesión acá crearía un usuario nuevo por nada).
+			_authing = false
 		else:
-			# Token vencido o borrado: se arranca una sesión nueva.
+			# Refresh token vencido o borrado: se arranca una sesión nueva.
 			sign_in_anonymous(name))
 	http.request(URL + "/auth/v1/token?grant_type=refresh_token", [
 		"apikey: " + ANON_KEY, "Content-Type: application/json",
@@ -64,10 +85,17 @@ func _save_session() -> void:
 	cfg.set_value("session", "refresh_token", refresh_token)
 	cfg.save(SESSION_PATH)
 
-## Bearer para PostgREST: el token de la sesión o, sin sesión, la anon
-## key (alcanza para leer tablas públicas como el ranking).
+## Bearer para escribir: el token de la sesión o, sin sesión, la anon key.
 func _bearer() -> String:
 	return access_token if access_token != "" else ANON_KEY
+
+## Corre fn con un token vigente: si venció, primero lo renueva.
+func _with_fresh_token(fn: Callable) -> void:
+	if has_fresh_token():
+		fn.call()
+		return
+	auth_ready.connect(fn, CONNECT_ONE_SHOT)
+	ensure_session(username)
 
 ## Anonymous signin with a display name stored in user_metadata.
 ## Requires anonymous auth enabled in dashboard → Authentication →
@@ -103,12 +131,15 @@ func _on_auth(_r, code, _h, body, http) -> void:
 	access_token  = data.access_token
 	refresh_token = data.get("refresh_token", "")
 	user_id       = data.user.id
+	expires_at    = Time.get_unix_time_from_system() + float(data.get("expires_in", 3600))
 	_save_session()
 	print("[supabase] auth ok, uid=", user_id)
 	emit_signal("auth_ready")
 
 ## Fire-and-forget Postgres SELECT via PostgREST. Callback gets
 ## (result_code, body_string) so you can parse per-request.
+## Sólo se usa para tablas públicas (el ranking), así que va siempre con
+## la anon key: no depende de que la sesión esté vigente.
 func rest_get(path: String, on_done: Callable) -> void:
 	var http = HTTPRequest.new()
 	add_child(http)
@@ -117,13 +148,16 @@ func rest_get(path: String, on_done: Callable) -> void:
 		on_done.call(code, body.get_string_from_utf8()))
 	http.request(URL + "/rest/v1" + path, [
 		"apikey: " + ANON_KEY,
-		"Authorization: Bearer " + _bearer(),
+		"Authorization: Bearer " + ANON_KEY,
 		"Accept: application/json",
 	], HTTPClient.METHOD_GET)
 
 ## INSERT simple (sin upsert). Necesita sesión: las políticas de la
-## tabla exigen que user_id sea el del token.
+## tabla exigen que user_id sea el del token (se renueva si venció).
 func rest_insert(path: String, body_json: Dictionary, on_done := Callable()) -> void:
+	_with_fresh_token(_insert_now.bind(path, body_json, on_done))
+
+func _insert_now(path: String, body_json: Dictionary, on_done: Callable) -> void:
 	var http = HTTPRequest.new()
 	add_child(http)
 	http.request_completed.connect(func(_r, code, _h, body):

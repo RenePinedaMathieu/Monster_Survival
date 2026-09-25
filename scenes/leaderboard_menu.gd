@@ -74,7 +74,7 @@ func _ready() -> void:
 	# La sesión (si ya jugaste) dice cuál es tu user_id para marcar tus
 	# filas; sin sesión igual se puede leer el ranking con la anon key.
 	Supabase.auth_ready.connect(_render)
-	if not Supabase.is_signed_in() and FileAccess.file_exists(Supabase.SESSION_PATH):
+	if FileAccess.file_exists(Supabase.SESSION_PATH):
 		Supabase.ensure_session(GameState.ensure_player_name())
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
@@ -114,6 +114,10 @@ func _on_back() -> void:
 func _select_tab(tab: int, sound: bool = true) -> void:
 	if sound and tab != _tab:
 		Audio.play_sfx("ui_click")
+	# Tocar una pestaña la vuelve a pedir: si la pantalla quedó abierta,
+	# así aparecen las partidas que se jugaron mientras tanto.
+	if sound:
+		_fetch(tab)
 	_tab = tab
 	RpgTheme.style_tab(_daily_tab, tab == Tab.DAILY, 15)
 	RpgTheme.style_tab(_all_tab, tab == Tab.ALL_TIME, 15)
