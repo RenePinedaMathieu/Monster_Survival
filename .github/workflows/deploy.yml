@@ -45,6 +45,10 @@ jobs:
 
       - name: Export project to Web
         run: |
+          # Commit corto en el menú (scenes/build_info.gd) para saber qué
+          # versión tiene cargada cada navegador.
+          sed -i "s/const COMMIT := \"dev\"/const COMMIT := \"${GITHUB_SHA::7}\"/" scenes/build_info.gd
+          grep COMMIT scenes/build_info.gd
           mkdir -p build
           godot --headless --export-release "${EXPORT_PRESET}" build/index.html
 

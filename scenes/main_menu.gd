@@ -8,6 +8,7 @@ extends Control
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
+const BuildInfo := preload("res://scenes/build_info.gd")
 
 const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
@@ -45,6 +46,7 @@ func _ready() -> void:
 	_background.texture = load(BACKGROUND_TEXTURE)
 	RpgTheme.style_light_label(_record_label, 16)
 	_record_label.modulate.a = 0.9
+	_add_version_label()
 	if GameState.best_wave > 0:
 		var mins := int(GameState.best_time) / 60
 		var secs := int(GameState.best_time) % 60
@@ -137,6 +139,21 @@ func _apply_layout(_compact: bool) -> void:
 		_background.offset_top = 0.0
 		_background.offset_right = 0.0
 		_background.offset_bottom = 0.0
+
+## Versión chica abajo a la izquierda (ver build_info.gd).
+func _add_version_label() -> void:
+	var v := Label.new()
+	v.text = "v " + BuildInfo.COMMIT
+	RpgTheme.style_light_label(v, 12)
+	v.modulate.a = 0.55
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.anchor_top = 1.0
+	v.anchor_bottom = 1.0
+	v.offset_left = 8.0
+	v.offset_top = -22.0
+	v.offset_bottom = -4.0
+	v.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(v)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _options_panel.visible and event.is_action_pressed("ui_cancel"):
