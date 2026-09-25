@@ -1032,6 +1032,23 @@ func take_damage(amount: float) -> void:
 		Audio.play_sfx("player_death", global_position)
 		emit_signal("died")
 
+## Muerte: el héroe deja de moverse y de atacar (se apaga su proceso y
+## con él las armas que cuelgan de él) y cae de costado en rojo. El
+## tween va por el árbol y sin time_scale, así corre aunque el player
+## esté apagado y el juego en cámara lenta (main.gd, pantalla MORISTE).
+func play_death() -> void:
+	$Camera2D.offset = Vector2.ZERO
+	_shake_strength = 0.0
+	_sprite.self_modulate.a = 1.0
+	velocity = Vector2.ZERO
+	process_mode = Node.PROCESS_MODE_DISABLED
+	var side: float = -1.0 if _last_move_dir.x < 0.0 else 1.0
+	_sprite.modulate = Color(2.0, 0.45, 0.4)
+	var tw := get_tree().create_tween().set_ignore_time_scale(true)
+	tw.tween_property(_sprite, "rotation", side * PI / 2.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(_sprite, "position:y", _sprite.position.y + 8.0, 0.45)
+	tw.parallel().tween_property(_sprite, "modulate", Color(0.6, 0.35, 0.35), 0.9)
+
 ## "Segunda vida" (árbol de habilidades): vuelve con media vida, un
 ## instante invulnerable y una onda que aleja a los que lo rodeaban.
 func _revive() -> void:

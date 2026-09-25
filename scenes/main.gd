@@ -11,6 +11,13 @@ const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 const RESULTS_SCENE := preload("res://scenes/results_screen.tscn")
+const RpgTheme := preload("res://scenes/rpg_theme.gd")
+
+## Muerte: cámara lenta, la pantalla se oscurece y aparece MORISTE;
+## recién después los resultados (antes saltaban casi al instante y no
+## se entendía que habías perdido).
+const DEATH_SLOWMO := 0.3
+const DEATH_SCREEN_SEC := 2.4   # segundos reales hasta los resultados
 
 ## La partida se gana al limpiar esta oleada (jefe en la 10 y jefe
 ## final en la 20). Después de ganar se puede seguir en modo infinito.
@@ -47,6 +54,7 @@ var _bosses_spawned: int = 0
 ## true después de ganar y elegir SEGUIR: oleadas sin final.
 var _endless: bool = false
 var _run_over: bool = false
+var _death_label: Label
 ## FINAL_WAVE salvo en el reto diario (más corto).
 var _final_wave: int = FINAL_WAVE
 ## Umbrales de dificultad. Debajo de MID sólo tier 1 (crías). Entre
@@ -106,7 +114,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		)
 	# ESC abre pausa — sólo si nada más ya pausó el juego (ej: el modal
 	# de level-up), para no apilar dos menús pausados a la vez.
-	if event.is_action_pressed("ui_cancel") and not get_tree().paused:
+	if event.is_action_pressed("ui_cancel") and not get_tree().paused and not _run_over:
 		var pause_menu = PAUSE_MENU_SCENE.instantiate()
 		add_child(pause_menu)
 		pause_menu.setup(_player)
@@ -270,6 +278,10 @@ func _on_monster_died() -> void:
 		get_tree().create_timer(WAVE_BREAK_SEC).timeout.connect(_start_next_wave)
 
 func _on_player_leveled_up(_new_level: int) -> void:
+	# Durante la muerte (o ya terminada la partida) no se sube de nivel:
+	# el pollo y las orbas que quedaban podían abrir el menú encima.
+	if _run_over:
+		return
 	# El swordman evoluciona de sprite con el nivel — el retrato lo sigue.
 	_hud.set_portrait(_player.portrait_texture())
 	# Instanciamos el modal, que se auto-pause y auto-destruye al elegir.
@@ -278,7 +290,48 @@ func _on_player_leveled_up(_new_level: int) -> void:
 	menu.show_for(_player)
 
 func _on_player_died() -> void:
+	_player.play_death()
+	_play_death_screen()
 	_finish_run(false)
+
+func _play_death_screen() -> void:
+	Engine.time_scale = DEATH_SLOWMO
+	Audio.stop_music(900)
+	var layer := CanvasLayer.new()
+	layer.layer = 15   # sobre HUD, level-up y pausa; bajo los resultados (20)
+	add_child(layer)
+	var dark := ColorRect.new()
+	dark.color = Color(0.06, 0.0, 0.0, 0.0)
+	dark.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(dark)
+	# Centrado en el 60 % de arriba: el héroe queda en el centro de la
+	# pantalla y el texto no tiene que taparlo cayendo.
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.anchor_bottom = 0.6
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(center)
+	_death_label = Label.new()
+	_death_label.text = "MORISTE"
+	RpgTheme.style_light_label(_death_label, 72)
+	_death_label.add_theme_color_override("font_color", Color("ff5a48"))
+	_death_label.add_theme_color_override("font_outline_color", Color("240807"))
+	_death_label.add_theme_constant_override("outline_size", 14)
+	_death_label.modulate.a = 0.0
+	center.add_child(_death_label)
+	_death_label.pivot_offset = _death_label.get_combined_minimum_size() / 2.0
+	_death_label.scale = Vector2(1.6, 1.6)
+	var tw := create_tween().set_ignore_time_scale(true)
+	tw.tween_property(dark, "color:a", 0.72, 0.9)
+	tw.parallel().tween_property(_death_label, "modulate:a", 1.0, 0.45).set_delay(0.35)
+	tw.parallel().tween_property(_death_label, "scale", Vector2.ONE, 0.45).set_delay(0.35) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func(): Engine.time_scale = 1.0).set_delay(0.3)
+
+func _exit_tree() -> void:
+	# Por si se sale de la escena en plena cámara lenta.
+	Engine.time_scale = 1.0
 
 ## Fin de la partida — por victoria (limpiar FINAL_WAVE) o por muerte.
 ## Banca la moneda, guarda récords y muestra la pantalla de resultados.
@@ -305,10 +358,15 @@ func _finish_run(victory: bool) -> void:
 		"evolutions": _player.evolutions, "cards": _player.upgrade_log.size(),
 		"level": _player.level,
 	})
-	# Pequeño delay para que se vea el golpe final / la muerte.
-	get_tree().create_timer(1.0 if victory else 1.2).timeout.connect(_show_results.bind(victory, score))
+	# Pequeño delay para que se vea el golpe final; al morir, lo que dura
+	# la pantalla MORISTE (en tiempo real: el juego va en cámara lenta).
+	get_tree().create_timer(1.0 if victory else DEATH_SCREEN_SEC, true, false, true) \
+		.timeout.connect(_show_results.bind(victory, score))
 
 func _show_results(victory: bool, score: int) -> void:
+	Engine.time_scale = 1.0
+	if _death_label != null:
+		_death_label.visible = false
 	var results = RESULTS_SCENE.instantiate()
 	add_child(results)
 	var hero: String = GameState.pending_character.get("name", GameState.CHARACTER_NAMES.get(GameState.selected_character_id, "El héroe"))
