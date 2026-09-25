@@ -63,8 +63,7 @@ func ensure_session(name: String) -> void:
 	sign_in_anonymous(name)
 
 func _refresh(token: String, name: String) -> void:
-	var http = HTTPRequest.new()
-	add_child(http)
+	var http := _new_http()
 	http.request_completed.connect(func(_r, code, _h, body):
 		http.queue_free()
 		if code >= 200 and code < 300:
@@ -85,6 +84,18 @@ func _save_session() -> void:
 	cfg.set_value("session", "refresh_token", refresh_token)
 	cfg.save(SESSION_PATH)
 
+## HTTPRequest sin descompresión propia (accept_gzip = false). En la
+## versión web el navegador ya descomprime la respuesta, pero Supabase
+## igual expone el header "Content-Encoding: gzip" y Godot intentaba
+## descomprimirla de nuevo: fallaba y el cuerpo llegaba vacío con
+## código 200 (el ranking decía "nadie jugó" teniendo filas). En PC,
+## sin gzip el servidor simplemente responde sin comprimir.
+func _new_http() -> HTTPRequest:
+	var http := HTTPRequest.new()
+	http.accept_gzip = false
+	add_child(http)
+	return http
+
 ## Bearer para escribir: el token de la sesión o, sin sesión, la anon key.
 func _bearer() -> String:
 	return access_token if access_token != "" else ANON_KEY
@@ -102,8 +113,7 @@ func _with_fresh_token(fn: Callable) -> void:
 ## Providers → Anonymous.
 func sign_in_anonymous(name: String) -> void:
 	username = name
-	var http = HTTPRequest.new()
-	add_child(http)
+	var http := _new_http()
 	http.request_completed.connect(_on_auth.bind(http))
 	var body = JSON.stringify({ "data": { "username": name } })
 	var headers = [
@@ -141,8 +151,7 @@ func _on_auth(_r, code, _h, body, http) -> void:
 ## Sólo se usa para tablas públicas (el ranking), así que va siempre con
 ## la anon key: no depende de que la sesión esté vigente.
 func rest_get(path: String, on_done: Callable) -> void:
-	var http = HTTPRequest.new()
-	add_child(http)
+	var http := _new_http()
 	http.request_completed.connect(func(_r, code, _h, body):
 		http.queue_free()
 		on_done.call(code, body.get_string_from_utf8()))
@@ -158,8 +167,7 @@ func rest_insert(path: String, body_json: Dictionary, on_done := Callable()) -> 
 	_with_fresh_token(_insert_now.bind(path, body_json, on_done))
 
 func _insert_now(path: String, body_json: Dictionary, on_done: Callable) -> void:
-	var http = HTTPRequest.new()
-	add_child(http)
+	var http := _new_http()
 	http.request_completed.connect(func(_r, code, _h, body):
 		http.queue_free()
 		if on_done.is_valid():
@@ -173,8 +181,7 @@ func _insert_now(path: String, body_json: Dictionary, on_done: Callable) -> void
 
 ## Postgres upsert (or insert with `Prefer: return=representation`).
 func rest_upsert(path: String, body_json: Dictionary, on_done := Callable()) -> void:
-	var http = HTTPRequest.new()
-	add_child(http)
+	var http := _new_http()
 	http.request_completed.connect(func(_r, code, _h, body):
 		http.queue_free()
 		if on_done.is_valid():
