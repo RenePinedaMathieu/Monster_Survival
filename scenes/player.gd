@@ -39,6 +39,11 @@ const ACTIVE_SKILLS: Dictionary = {
 }
 const DASH_SPEED := 900.0
 const DASH_DAMAGE := 8.0
+## Duración del empuje de la Embestida (Axel): 0.15 s a DASH_SPEED ≈
+## 135 unidades. Antes 0.19 s y además el héroe seguía deslizándose al
+## terminar (ver _physics_process): recorría ~525 unidades, más de dos
+## pantallas de ancho en el teléfono.
+const EMBESTIDA_TIME := 0.15
 const SHIELD_RADIUS := 110.0
 const SHIELD_DAMAGE := 10.0
 const VOLLEY_ARROWS := 12
@@ -1091,7 +1096,7 @@ func use_active_skill() -> void:
 	_skill_cd = active_skill["cooldown"]
 	match active_skill["id"]:
 		"dash":
-			_start_dash(0.19)
+			_start_dash(EMBESTIDA_TIME)
 			_invuln_t = maxf(_invuln_t, 0.3)
 			Audio.play_sfx("sword_swing", global_position)
 		"roll":
@@ -1149,6 +1154,11 @@ func _tick_active_skill(delta: float) -> void:
 	if _dash_t > 0.0:
 		_dash_t -= delta
 		velocity = _dash_dir * DASH_SPEED
+		# Al terminar se vuelve a velocidad de caminata: si no, la
+		# aceleración normal (ACCELERATION) tardaba ~0.8 s en frenar los
+		# 900 y el héroe se deslizaba ~350 unidades más.
+		if _dash_t <= 0.0:
+			velocity = _dash_dir * move_speed
 		if int(_dash_t * 60.0) % 4 == 0:
 			_spawn_afterimage()
 		if active_skill.get("id", "") == "dash":
