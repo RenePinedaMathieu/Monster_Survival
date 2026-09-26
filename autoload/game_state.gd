@@ -469,7 +469,22 @@ func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary) ->
 	return score
 
 func _ready() -> void:
+	_migrate_old_user_dir()
 	_load()
+
+## El proyecto se llamaba "Caelvar" y en PC guardaba en
+## %APPDATA%/Godot/app_userdata/Caelvar. Ahora tiene carpeta propia
+## (%APPDATA%/OneLastHero, ver project.godot): la primera vez se copian
+## ahí el guardado y la sesión viejos. En la web no aplica (user:// es
+## siempre el mismo almacenamiento del navegador).
+func _migrate_old_user_dir() -> void:
+	if OS.has_feature("web") or FileAccess.file_exists(SAVE_PATH):
+		return
+	var old_dir := OS.get_data_dir().path_join("Godot/app_userdata/Caelvar")
+	for f in ["save.cfg", "session.cfg"]:
+		var src := old_dir.path_join(f)
+		if FileAccess.file_exists(src):
+			DirAccess.copy_absolute(src, "user://" + f)
 
 func _load() -> void:
 	var cfg := ConfigFile.new()
