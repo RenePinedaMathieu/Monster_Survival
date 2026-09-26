@@ -12,7 +12,7 @@ extends Node
 ## sesiones del juego (funciona igual en editor, build de escritorio
 ## y export Web, que guarda esto en IndexedDB).
 
-var selected_character_id: String = "main_char1"
+var selected_character_id: String = "swordman"
 ## Mapa y dificultad de la próxima partida (los elige la pantalla de
 ## mapa, ver map_select). Transitorios: no se persisten.
 var selected_map: String = "pradera"
@@ -50,8 +50,8 @@ const SAVE_PATH := "user://save.cfg"
 
 ## Árbol de habilidades permanentes (pestaña MEJORAS de la tienda): 3
 ## ramas con nodos en orden — cada nodo pide su anterior a cierto nivel
-## ("requires"/"req_level"). Cada nivel sale "base_cost + nivel *
-## cost_step" monedas. Los bonos que dan están en get_bonus_*() más
+## ("requires"/"req_level"). Cada nivel sale base_cost x growth^nivel
+## monedas (get_shop_cost). Los bonos que dan están en get_bonus_*() más
 ## abajo; player.gd los aplica al arrancar cada run. Los ids de las 4
 ## mejoras originales (armor/max_hp/damage/regen) se mantienen para no
 ## perder lo ya comprado.
@@ -59,43 +59,54 @@ const SKILL_ICON := "res://assets/ui/skill_icons/"
 const SKILL_TREE: Dictionary = {
 	# ── Ataque ──
 	"damage":    {"branch": "attack", "tier": 1, "name": "Fuerza", "desc": "+5% daño",
-		"base_cost": 18, "cost_step": 12, "max_level": 10, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_96.png"},
+		"base_cost": 50, "growth": 1.4, "max_level": 10, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_96.png"},
 	"atk_speed_t": {"branch": "attack", "tier": 2, "name": "Celeridad", "desc": "+4% velocidad de ataque",
-		"base_cost": 40, "cost_step": 25, "max_level": 5, "requires": "damage", "req_level": 3, "icon": SKILL_ICON + "skill_99.png"},
+		"base_cost": 150, "growth": 1.5, "max_level": 5, "requires": "damage", "req_level": 3, "icon": SKILL_ICON + "skill_99.png"},
 	"crit":      {"branch": "attack", "tier": 3, "name": "Crítico", "desc": "+3% de golpe crítico (doble daño)",
-		"base_cost": 60, "cost_step": 40, "max_level": 5, "requires": "atk_speed_t", "req_level": 2, "icon": SKILL_ICON + "skill_88.png"},
+		"base_cost": 250, "growth": 1.5, "max_level": 5, "requires": "atk_speed_t", "req_level": 2, "icon": SKILL_ICON + "skill_88.png"},
 	"hunter":    {"branch": "attack", "tier": 4, "name": "Cazador", "desc": "+10% daño a jefes y élites",
-		"base_cost": 80, "cost_step": 60, "max_level": 3, "requires": "crit", "req_level": 3, "icon": SKILL_ICON + "skill_38.png"},
+		"base_cost": 500, "growth": 1.8, "max_level": 3, "requires": "crit", "req_level": 3, "icon": SKILL_ICON + "skill_38.png"},
 	# ── Defensa ──
 	"max_hp":    {"branch": "defense", "tier": 1, "name": "Vitalidad", "desc": "+15 vida máxima",
-		"base_cost": 15, "cost_step": 10, "max_level": 10, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_83.png"},
+		"base_cost": 40, "growth": 1.4, "max_level": 10, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_83.png"},
 	"armor":     {"branch": "defense", "tier": 2, "name": "Armadura", "desc": "+8 de defensa (absorbe daño antes que la vida)",
-		"base_cost": 20, "cost_step": 15, "max_level": 10, "requires": "max_hp", "req_level": 3, "icon": SKILL_ICON + "skill_76.png"},
+		"base_cost": 60, "growth": 1.4, "max_level": 10, "requires": "max_hp", "req_level": 3, "icon": SKILL_ICON + "skill_76.png"},
 	"regen":     {"branch": "defense", "tier": 3, "name": "Vigor", "desc": "+0.3 vida por segundo",
-		"base_cost": 25, "cost_step": 18, "max_level": 5, "requires": "armor", "req_level": 3, "icon": SKILL_ICON + "skill_79.png"},
+		"base_cost": 150, "growth": 1.5, "max_level": 5, "requires": "armor", "req_level": 3, "icon": SKILL_ICON + "skill_79.png"},
 	"revive":    {"branch": "defense", "tier": 4, "name": "Segunda vida", "desc": "Revives una vez por partida con media vida",
-		"base_cost": 400, "cost_step": 0, "max_level": 1, "requires": "regen", "req_level": 3, "icon": SKILL_ICON + "skill_44.png"},
+		"base_cost": 4000, "growth": 1.0, "max_level": 1, "requires": "regen", "req_level": 3, "icon": SKILL_ICON + "skill_44.png"},
 	# ── Utilidad ──
 	"magnet_t":  {"branch": "utility", "tier": 1, "name": "Imán", "desc": "+10% radio para juntar experiencia",
-		"base_cost": 25, "cost_step": 15, "max_level": 5, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_30.png"},
+		"base_cost": 60, "growth": 1.5, "max_level": 5, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_30.png"},
 	"greed":     {"branch": "utility", "tier": 2, "name": "Codicia", "desc": "+10% monedas",
-		"base_cost": 50, "cost_step": 40, "max_level": 5, "requires": "magnet_t", "req_level": 2, "icon": "res://assets/ui/rpg/coin.png"},
+		"base_cost": 200, "growth": 1.6, "max_level": 5, "requires": "magnet_t", "req_level": 2, "icon": "res://assets/ui/rpg/coin.png"},
 	"wisdom":    {"branch": "utility", "tier": 3, "name": "Sabiduría", "desc": "+8% experiencia",
-		"base_cost": 60, "cost_step": 45, "max_level": 5, "requires": "greed", "req_level": 2, "icon": SKILL_ICON + "skill_72.png"},
+		"base_cost": 250, "growth": 1.55, "max_level": 5, "requires": "greed", "req_level": 2, "icon": SKILL_ICON + "skill_72.png"},
 	"reroll":    {"branch": "utility", "tier": 4, "name": "Relanzar", "desc": "+1 relanzamiento de cartas por partida",
-		"base_cost": 120, "cost_step": 100, "max_level": 3, "requires": "wisdom", "req_level": 2, "icon": SKILL_ICON + "skill_41.png"},
+		"base_cost": 600, "growth": 1.8, "max_level": 3, "requires": "wisdom", "req_level": 2, "icon": SKILL_ICON + "skill_41.png"},
+	# ── Legendarias: se abren superando la oleada 30 de un mapa (el
+	# nivel 1 viene de regalo; los otros se compran). "legend" = mapa.
+	"venom":     {"branch": "attack", "tier": 5, "name": "Veneno", "legend": "pantano",
+		"desc": "Tus golpes envenenan: 10/15/20% del golpe por segundo durante 3 s",
+		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_33.png"},
+	"mirage":    {"branch": "defense", "tier": 5, "name": "Espejismo", "legend": "desierto",
+		"desc": "6/12/18% de probabilidad de esquivar un golpe",
+		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_77.png"},
+	"companionship": {"branch": "utility", "tier": 6, "name": "Compañerismo", "legend": "pradera",
+		"desc": "Nivel 1: llevas 2 acompañantes. Niveles 2 y 3: +25% de fuerza a sus habilidades cada uno",
+		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_15.png"},
 	"luck":      {"branch": "utility", "tier": 5, "name": "Suerte", "desc": "Una 4ª carta en cada subida de nivel",
-		"base_cost": 500, "cost_step": 0, "max_level": 1, "requires": "reroll", "req_level": 1, "icon": SKILL_ICON + "skill_7.png"},
+		"base_cost": 6000, "growth": 1.0, "max_level": 1, "requires": "reroll", "req_level": 1, "icon": SKILL_ICON + "skill_7.png"},
 }
 ## Mapas (pantalla de mapa, map_select.tscn). "mult" escala la vida y
 ## el daño de los monstruos Y las monedas; "pools" son los bichos de
-## las oleadas 1-3 / 4-6 / 7+; "bosses" el jefe de la oleada 10 y el
-## final (20); "hazard" el peligro propio (ver painted_world.gd).
+## las oleadas 1-3 / 4-6 / 7+; "bosses" los jefes de las oleadas 10, 20
+## y 30 (desafío); "hazard" el peligro propio (ver painted_world.gd).
 const MAPS: Dictionary = {
 	"pradera": {
 		"name": "Pradera", "desc": "Donde empieza todo: ratas, imps y lizardmen.",
 		"mult": 1.0, "scene": "res://scenes/Grass1.tscn", "tileset": "res://assets/tiles/overworld_tileset_grass.png",
-		"tint": Color(1, 1, 1), "hazard": "", "bosses": ["demon1", "demon2"],
+		"tint": Color(1, 1, 1), "hazard": "", "bosses": ["demon1", "demon2", "demon3"],
 		"pools": [
 			["rat", "imp", "lizardman", "slime_1"],
 			["rat", "imp", "lizardman", "rat_2", "imp_2", "lizardman_2", "slime_1", "slime_2", "ghost_1"],
@@ -105,7 +116,7 @@ const MAPS: Dictionary = {
 	"pantano": {
 		"name": "Pantano", "desc": "Lodo que te frena, slimes que se parten y fantasmas.",
 		"mult": 1.35, "scene": "res://scenes/Swamp1.tscn", "tileset": "res://assets/tiles/overworld_tileset_swamp.png",
-		"tint": Color(0.84, 0.92, 0.86), "hazard": "mud", "bosses": ["demon2", "demon3"],
+		"tint": Color(0.84, 0.92, 0.86), "hazard": "mud", "bosses": ["demon2", "demon3", "demon3"],
 		"pools": [
 			["slime_1", "ghost_1", "rat", "imp"],
 			["slime_1", "slime_2", "ghost_1", "ghost_2", "imp_2", "rat_2"],
@@ -156,35 +167,55 @@ const SKILL_BRANCHES: Array = [
 ## el de la carta que desbloquean.
 const SHOP_POWERS: Dictionary = {
 	"meteors": {
-		"name": "Lluvia de meteoros", "cost": 60,
+		"name": "Lluvia de meteoros", "cost": 400,
 		"desc": "Desbloquea la carta: meteoritos caen solos sobre los enemigos",
 	},
 	"flying_swords": {
-		"name": "Espadas voladoras", "cost": 80,
+		"name": "Espadas voladoras", "cost": 700,
 		"desc": "Desbloquea la carta: 5 espadas te escoltan y atacan solas",
 	},
 	"aura": {
-		"name": "Aura sagrada", "cost": 100,
+		"name": "Aura sagrada", "cost": 1000,
 		"desc": "Desbloquea la carta: un aura que quema a los enemigos cercanos",
 	},
 	"hacha": {
-		"name": "Hacha giratoria", "cost": 150,
+		"name": "Hacha giratoria", "cost": 1600,
 		"desc": "Desbloquea la carta: hachas que van y vuelven atravesando todo",
 	},
 	"rayo": {
-		"name": "Rayo en cadena", "cost": 200,
+		"name": "Rayo en cadena", "cost": 2500,
 		"desc": "Desbloquea la carta: un rayo que salta entre enemigos",
 	},
 }
 
-## Acompañantes: se compran una vez y se lleva UNO equipado por run
-## (player.gd lo spawnea al arrancar, comportamiento en companion.gd).
+## Acompañantes: 9 líneas de animales que crecen. Se compran (nivel 1)
+## y se mejoran hasta el nivel 5 en la tienda; la cría se vuelve adulta
+## en el nivel de cada "stage". Cada línea tiene su habilidad (ability,
+## ver companion.gd) y se llevan tantos como espacios haya (1, o 2 con
+## la habilidad legendaria "Compañerismo").
 const COMPANIONS: Dictionary = {
-	"chicken": {
-		"name": "Pollo", "cost": 120,
-		"desc": "Te sigue a todos lados y le tira huevos al bicho más cercano",
-	},
+	"chicken": {"base_cost": 200, "ability": "eggs", "role": "Le tira huevos al enemigo más cercano",
+		"stages": [[1, "chick", "Pollito"], [3, "chicken", "Gallina"], [5, "rooster", "Gallo"]]},
+	"rabbit": {"base_cost": 250, "ability": "collector", "role": "Te junta la experiencia de alrededor",
+		"stages": [[1, "rabbit_cub", "Conejito"], [3, "rabbit", "Conejo"]]},
+	"piglet": {"base_cost": 300, "ability": "truffle", "role": "Desentierra monedas durante la partida",
+		"stages": [[1, "piglet", "Chanchito"]]},
+	"goat": {"base_cost": 300, "ability": "headbutt", "role": "Te cuida: embiste a los que se te acercan",
+		"stages": [[1, "goatling", "Cabrito"], [3, "goat", "Cabra"]]},
+	"goose": {"base_cost": 350, "ability": "honk", "role": "Grazna y frena a los enemigos cercanos",
+		"stages": [[1, "gosling", "Ansarino"], [3, "goose", "Ganso"]]},
+	"sheep": {"base_cost": 350, "ability": "wool", "role": "Escudo de lana: te da defensa que se regenera",
+		"stages": [[1, "lamb", "Cordero"], [3, "sheep", "Oveja"]]},
+	"turkey": {"base_cost": 400, "ability": "feast", "role": "Cada tanto deja comida que te cura",
+		"stages": [[1, "turkey", "Pavo"]]},
+	"horse": {"base_cost": 450, "ability": "gallop", "role": "Corres más rápido y patea a los que se acercan",
+		"stages": [[1, "foal", "Potrillo"], [3, "horse", "Caballo"]]},
+	"bull": {"base_cost": 500, "ability": "charge", "role": "Embiste al enemigo más cercano y lo manda a volar",
+		"stages": [[1, "calf", "Ternero"], [3, "bull", "Toro"]]},
 }
+const COMPANION_MAX_LEVEL := 5
+## Precio de llegar a cada nivel (1 = comprarlo) = base_cost x esto.
+const COMPANION_LEVEL_COST: Array = [1.0, 1.5, 2.5, 4.0, 6.5]
 
 var total_currency: int = 0
 ## Lo ganado DURANTE la run en curso — se banca a total_currency (y
@@ -194,8 +225,10 @@ var total_currency: int = 0
 var run_currency: int = 0
 var shop_levels: Dictionary = {}   # id -> nivel comprado (int), default 0
 var unlocked_powers: Array = []
-var owned_companions: Array = []
-var equipped_companion: String = ""
+## Acompañantes: id de línea -> nivel (0 o ausente = no comprado).
+var companion_levels: Dictionary = {}
+## Los que van a la partida (hasta companion_slots()).
+var equipped_companions: Array = []
 ## Evoluciones que el jugador ya consiguió alguna vez — a partir de ahí
 ## las cartas muestran la pista "• Evoluciona en ..." (upgrades.gd).
 var discovered_evolutions: Array = []
@@ -209,29 +242,31 @@ var discovered_evolutions: Array = []
 signal achievement_unlocked(achievement: Dictionary)
 
 const ACHIEVEMENTS: Array = [
-	{"id": "kills_100",   "name": "Primera sangre",   "desc": "Derrota 100 enemigos",               "stat": "kills",      "goal": 100,   "reward": {"coins": 50}},
+	{"id": "kills_100",   "name": "Primera sangre",   "desc": "Derrota 100 enemigos",               "stat": "kills",      "goal": 100,   "reward": {"coins": 150, "character": "main_char2"}},
 	{"id": "wave_10",     "name": "Superviviente",    "desc": "Llega a la oleada 10",               "stat": "best_wave",  "goal": 10,    "reward": {"character": "main_char2_female"}},
-	{"id": "boss_1",      "name": "Matagigantes",     "desc": "Derrota a un jefe",                  "stat": "bosses",     "goal": 1,     "reward": {"character": "swordman"}},
-	{"id": "evo_1",       "name": "Evolución",        "desc": "Consigue tu primera evolución",      "stat": "evolutions", "goal": 1,     "reward": {"coins": 100}},
-	{"id": "weapons_4",   "name": "Arsenal",          "desc": "Ten 4 armas a la vez",               "stat": "max_weapons", "goal": 4,    "reward": {"coins": 100}},
-	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 200, "map": "pantano"}},
-	{"id": "kills_1000",  "name": "Exterminador",     "desc": "Derrota 1.000 enemigos",             "stat": "kills",      "goal": 1000,  "reward": {"coins": 150}},
-	{"id": "elites_20",   "name": "Rompe-élites",     "desc": "Derrota 20 élites",                  "stat": "elites",     "goal": 20,    "reward": {"coins": 150}},
-	{"id": "chests_25",   "name": "Cazatesoros",      "desc": "Abre 25 cofres",                     "stat": "chests",     "goal": 25,    "reward": {"coins": 150}},
-	{"id": "level_20",    "name": "Veterano",         "desc": "Llega a nivel 20 en una partida",    "stat": "best_level", "goal": 20,    "reward": {"coins": 150}},
-	{"id": "no_hit_5",    "name": "Intocable",        "desc": "Llega a la oleada 5 sin recibir daño", "stat": "no_hit_wave", "goal": 5,  "reward": {"coins": 200}},
-	{"id": "boss_10",     "name": "Cazajefes",        "desc": "Derrota 10 jefes",                   "stat": "bosses",     "goal": 10,    "reward": {"coins": 300}},
-	{"id": "win_pantano", "name": "Señor del pantano", "desc": "Gana en el Pantano",                "stat": "wins_pantano", "goal": 1,   "reward": {"coins": 300, "map": "desierto"}},
-	{"id": "win_desierto", "name": "Rey del desierto", "desc": "Gana en el Desierto",               "stat": "wins_desierto", "goal": 1,  "reward": {"coins": 500}},
-	{"id": "hard_win",    "name": "Pesadilla",        "desc": "Gana en dificultad Difícil",         "stat": "hard_wins",  "goal": 1,     "reward": {"coins": 400}},
-	{"id": "wave_30",     "name": "Infinito",         "desc": "Llega a la oleada 30 en modo infinito", "stat": "best_wave", "goal": 30,  "reward": {"coins": 400}},
-	{"id": "evo_7",       "name": "Coleccionista",    "desc": "Descubre las 7 evoluciones",         "stat": "evolutions", "goal": 7,     "reward": {"character": "chicken"}},
-	{"id": "heroes_4",    "name": "Todos para uno",   "desc": "Gana con 4 héroes distintos",        "stat": "hero_wins",  "goal": 4,     "reward": {"coins": 500}},
-	{"id": "chicken_win", "name": "Gallina de oro",   "desc": "Gana jugando con el pollo",          "stat": "chicken_wins", "goal": 1,   "reward": {"coins": 300}},
-	{"id": "kills_10000", "name": "Leyenda",          "desc": "Derrota 10.000 enemigos",            "stat": "kills",      "goal": 10000, "reward": {"coins": 600}},
+	{"id": "boss_1",      "name": "Matagigantes",     "desc": "Derrota a un jefe",                  "stat": "bosses",     "goal": 1,     "reward": {"coins": 400}},
+	{"id": "evo_1",       "name": "Evolución",        "desc": "Consigue tu primera evolución",      "stat": "evolutions", "goal": 1,     "reward": {"coins": 250}},
+	{"id": "weapons_4",   "name": "Arsenal",          "desc": "Ten 4 armas a la vez",               "stat": "max_weapons", "goal": 4,    "reward": {"coins": 250}},
+	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 500, "character": "main_char1", "map": "pantano"}},
+	{"id": "kills_1000",  "name": "Exterminador",     "desc": "Derrota 1.000 enemigos",             "stat": "kills",      "goal": 1000,  "reward": {"coins": 400}},
+	{"id": "elites_20",   "name": "Rompe-élites",     "desc": "Derrota 20 élites",                  "stat": "elites",     "goal": 20,    "reward": {"coins": 400}},
+	{"id": "chests_25",   "name": "Cazatesoros",      "desc": "Abre 25 cofres",                     "stat": "chests",     "goal": 25,    "reward": {"coins": 400}},
+	{"id": "level_20",    "name": "Veterano",         "desc": "Llega a nivel 20 en una partida",    "stat": "best_level", "goal": 20,    "reward": {"coins": 400}},
+	{"id": "no_hit_5",    "name": "Intocable",        "desc": "Llega a la oleada 5 sin recibir daño", "stat": "no_hit_wave", "goal": 5,  "reward": {"coins": 500}},
+	{"id": "boss_10",     "name": "Cazajefes",        "desc": "Derrota 10 jefes",                   "stat": "bosses",     "goal": 10,    "reward": {"coins": 750}},
+	{"id": "win_pantano", "name": "Señor del pantano", "desc": "Gana en el Pantano",                "stat": "wins_pantano", "goal": 1,   "reward": {"coins": 750, "map": "desierto"}},
+	{"id": "win_desierto", "name": "Rey del desierto", "desc": "Gana en el Desierto",               "stat": "wins_desierto", "goal": 1,  "reward": {"coins": 1250}},
+	{"id": "hard_win",    "name": "Pesadilla",        "desc": "Gana en dificultad Difícil",         "stat": "hard_wins",  "goal": 1,     "reward": {"coins": 1000}},
+	{"id": "wave_30",     "name": "Desafío",          "desc": "Supera la oleada 30 en cualquier mapa", "stat": "challenge_wins", "goal": 1, "reward": {"coins": 1500}},
+	{"id": "evo_7",       "name": "Coleccionista",    "desc": "Descubre las 7 evoluciones",         "stat": "evolutions", "goal": 7,     "reward": {"coins": 2000}},
+	{"id": "heroes_4",    "name": "Todos para uno",   "desc": "Gana con 4 héroes distintos",        "stat": "hero_wins",  "goal": 4,     "reward": {"coins": 1250}},
+	{"id": "companion_5", "name": "Granjero",         "desc": "Sube un acompañante a nivel 5",      "stat": "companion_max", "goal": 5,  "reward": {"coins": 1000}},
+	{"id": "kills_10000", "name": "Leyenda",          "desc": "Derrota 10.000 enemigos",            "stat": "kills",      "goal": 10000, "reward": {"coins": 1500}},
 ]
 
-const DEFAULT_CHARACTERS: Array = ["main_char1", "main_char2"]
+## GAROTH es el héroe original (el que evoluciona desde cero); los demás
+## ya son guerreros en su forma final y se ganan con logros.
+const DEFAULT_CHARACTERS: Array = ["swordman"]
 const DEFAULT_MAPS: Array = ["pradera"]
 
 ## Estadísticas acumuladas de todas las partidas (kills, jefes, etc).
@@ -301,7 +336,7 @@ func reward_text(reward: Dictionary) -> String:
 
 const CHARACTER_NAMES: Dictionary = {
 	"main_char1": "AXEL", "main_char2": "KAY", "main_char2_female": "LINA",
-	"swordman": "GAROTH", "chicken": "POLLO",
+	"swordman": "GAROTH",
 }
 const MAP_NAMES: Dictionary = {"pradera": "Pradera", "pantano": "Pantano", "desierto": "Desierto"}
 
@@ -332,8 +367,6 @@ func report_win(hero_id: String, map_id: String, difficulty: String) -> void:
 	if not (hero_id in heroes):
 		heroes.append(hero_id)
 	stats["hero_wins"] = heroes
-	if hero_id == "chicken":
-		stats["chicken_wins"] = int(stats.get("chicken_wins", 0)) + 1
 	if difficulty != "normal":
 		stats["hard_wins"] = int(stats.get("hard_wins", 0)) + 1
 	check_achievements()
@@ -447,8 +480,17 @@ func _load() -> void:
 		best_wave = cfg.get_value("progress", "best_wave", 0)
 		best_time = cfg.get_value("progress", "best_time", 0.0)
 		unlocked_powers = cfg.get_value("progress", "unlocked_powers", [])
-		owned_companions = cfg.get_value("progress", "owned_companions", [])
-		equipped_companion = cfg.get_value("progress", "equipped_companion", "")
+		companion_levels = cfg.get_value("progress", "companion_levels", {})
+		equipped_companions = cfg.get_value("progress", "equipped_companions", [])
+		# Partidas de antes de las líneas: el pollo comprado queda como
+		# gallina adulta (nivel 3) y, si estaba equipado, sigue equipado.
+		if cfg.has_section_key("progress", "owned_companions") and not cfg.has_section_key("progress", "companion_levels"):
+			for old_id in cfg.get_value("progress", "owned_companions", []):
+				if COMPANIONS.has(old_id):
+					companion_levels[old_id] = 3
+			var old_eq: String = cfg.get_value("progress", "equipped_companion", "")
+			if COMPANIONS.has(old_eq):
+				equipped_companions = [old_eq]
 		discovered_evolutions = cfg.get_value("progress", "discovered_evolutions", [])
 		stats = cfg.get_value("progress", "stats", {})
 		achievements_unlocked = cfg.get_value("progress", "achievements_unlocked", [])
@@ -457,6 +499,12 @@ func _load() -> void:
 		# los sacamos (sólo los jugadores nuevos los desbloquean).
 		if not cfg.has_section_key("progress", "unlocked_characters") and (best_wave > 0 or total_currency > 0):
 			unlocked_characters = ["main_char1", "main_char2", "main_char2_female", "swordman"]
+		# GAROTH pasó a ser el héroe de base: todos lo tienen. El pollo
+		# dejó de ser héroe (ahora es sólo acompañante). A nadie se le
+		# saca un héroe que ya tenía.
+		if not ("swordman" in unlocked_characters):
+			unlocked_characters.append("swordman")
+		unlocked_characters.erase("chicken")
 		unlocked_maps = cfg.get_value("progress", "unlocked_maps", DEFAULT_MAPS.duplicate())
 		player_name = cfg.get_value("progress", "player_name", "")
 		daily_best = cfg.get_value("progress", "daily_best", {})
@@ -473,8 +521,8 @@ func _save() -> void:
 	cfg.set_value("progress", "best_wave", best_wave)
 	cfg.set_value("progress", "best_time", best_time)
 	cfg.set_value("progress", "unlocked_powers", unlocked_powers)
-	cfg.set_value("progress", "owned_companions", owned_companions)
-	cfg.set_value("progress", "equipped_companion", equipped_companion)
+	cfg.set_value("progress", "companion_levels", companion_levels)
+	cfg.set_value("progress", "equipped_companions", equipped_companions)
 	cfg.set_value("progress", "discovered_evolutions", discovered_evolutions)
 	cfg.set_value("progress", "stats", stats)
 	cfg.set_value("progress", "achievements_unlocked", achievements_unlocked)
@@ -569,14 +617,55 @@ func bank_run_currency() -> void:
 func get_shop_level(id: String) -> int:
 	return shop_levels.get(id, 0)
 
+## Cada nivel cuesta base_cost x growth^nivel (redondeado): los
+## primeros niveles se compran rápido y los últimos piden varias
+## partidas buenas. Antes era lineal y la tienda entera se vaciaba en
+## una hora de juego.
 func get_shop_cost(id: String) -> int:
 	var item: Dictionary = SKILL_TREE[id]
-	return item["base_cost"] + get_shop_level(id) * item["cost_step"]
+	return nice_cost(float(item["base_cost"]) * pow(float(item.get("growth", 1.0)), get_shop_level(id)))
+
+## Redondeo "de tienda": 5 en 5 bajo 100, 10 en 10 bajo 1.000, 50 en 50 arriba.
+static func nice_cost(x: float) -> int:
+	if x < 100.0:
+		return int(round(x / 5.0)) * 5
+	if x < 1000.0:
+		return int(round(x / 10.0)) * 10
+	return int(round(x / 50.0)) * 50
 
 ## ¿Está desbloqueado el nodo? (su anterior en la rama al nivel pedido)
 func is_skill_available(id: String) -> bool:
 	var item: Dictionary = SKILL_TREE[id]
+	if item.has("legend"):
+		return is_challenge_cleared(item["legend"])
 	return item["requires"] == "" or get_shop_level(item["requires"]) >= item["req_level"]
+
+# ── Desafío (oleadas 21-30) ──────────────────────────────────────
+## Oleada final del desafío que se abre después de ganar un mapa.
+const CHALLENGE_WAVE := 30
+
+func is_challenge_cleared(map_id: String) -> bool:
+	return int(stats.get("challenge_" + map_id, 0)) > 0
+
+## La habilidad legendaria de un mapa (o "").
+func legend_skill_for(map_id: String) -> String:
+	for id in SKILL_TREE:
+		if SKILL_TREE[id].get("legend", "") == map_id:
+			return id
+	return ""
+
+## Superaste la oleada 30: se abre la legendaria del mapa con el nivel 1
+## de regalo. Devuelve su id si es la primera vez (para avisarlo).
+func report_challenge_win(map_id: String) -> String:
+	var first := not is_challenge_cleared(map_id)
+	stats["challenge_" + map_id] = int(stats.get("challenge_" + map_id, 0)) + 1
+	stats["challenge_wins"] = int(stats.get("challenge_wins", 0)) + 1
+	var legend := legend_skill_for(map_id)
+	if first and legend != "" and get_shop_level(legend) < 1:
+		shop_levels[legend] = 1
+	check_achievements()
+	_save()
+	return legend if first else ""
 
 func can_afford(id: String) -> bool:
 	var item: Dictionary = SKILL_TREE[id]
@@ -622,27 +711,83 @@ func discover_evolution(id: String) -> bool:
 
 # ── Acompañantes ─────────────────────────────────────────────────
 
-func owns_companion(id: String) -> bool:
-	return id in owned_companions
+func companion_level(id: String) -> int:
+	return int(companion_levels.get(id, 0))
 
-## Al comprar queda equipado directo — es lo que el jugador quiere en
-## el 99% de los casos, y se ahorra un clic.
-func buy_companion(id: String) -> bool:
-	var cost: int = COMPANIONS[id]["cost"]
-	if owns_companion(id) or total_currency < cost:
+func owns_companion(id: String) -> bool:
+	return companion_level(id) > 0
+
+## Precio del próximo nivel (el primero es comprarlo); -1 si ya está al máximo.
+func companion_next_cost(id: String) -> int:
+	var lvl := companion_level(id)
+	if lvl >= COMPANION_MAX_LEVEL:
+		return -1
+	return nice_cost(float(COMPANIONS[id]["base_cost"]) * COMPANION_LEVEL_COST[lvl])
+
+## Forma según el nivel: [nivel_desde, sprite, nombre] de "stages".
+func companion_stage(id: String, level: int = -1) -> Array:
+	if level < 0:
+		level = maxi(1, companion_level(id))
+	var current: Array = COMPANIONS[id]["stages"][0]
+	for st in COMPANIONS[id]["stages"]:
+		if level >= int(st[0]):
+			current = st
+	return current
+
+## Próxima forma (o [] si ya es la última): para "crece a X en nivel N".
+func companion_next_stage(id: String) -> Array:
+	var lvl := maxi(1, companion_level(id))
+	for st in COMPANIONS[id]["stages"]:
+		if int(st[0]) > lvl:
+			return st
+	return []
+
+## Cuántos acompañantes se llevan a la vez: 1, o 2 con "Compañerismo".
+func companion_slots() -> int:
+	return 2 if get_shop_level("companionship") >= 1 else 1
+
+## Compra el nivel siguiente. Al comprarlo por primera vez queda
+## equipado si hay lugar (es lo que se quiere casi siempre).
+func upgrade_companion(id: String) -> bool:
+	var cost := companion_next_cost(id)
+	if cost < 0 or total_currency < cost:
 		return false
 	total_currency -= cost
-	owned_companions.append(id)
-	equipped_companion = id
+	var first := not owns_companion(id)
+	companion_levels[id] = companion_level(id) + 1
+	report_max("companion_max", companion_level(id))
+	if first:
+		if equipped_companions.size() >= companion_slots():
+			equipped_companions.pop_front()
+		equipped_companions.append(id)
 	_save()
 	return true
 
-## Equipa el acompañante, o lo desequipa si ya era el equipado.
+## Equipa o desequipa. Si no hay espacio, sale el que se equipó primero.
 func toggle_companion(id: String) -> void:
 	if not owns_companion(id):
 		return
-	equipped_companion = "" if equipped_companion == id else id
+	if id in equipped_companions:
+		equipped_companions.erase(id)
+	else:
+		while equipped_companions.size() >= companion_slots():
+			equipped_companions.pop_front()
+		equipped_companions.append(id)
 	_save()
+
+## Fuerza de las habilidades de los acompañantes: +25% por nivel de
+## "Compañerismo" después del primero (el primero da el 2do espacio).
+func companion_power() -> float:
+	return 1.0 + 0.25 * maxi(0, get_shop_level("companionship") - 1)
+
+## Los equipados que valen para esta partida (por si sobró alguno de
+## cuando había más espacios).
+func active_companions() -> Array:
+	var out: Array = []
+	for id in equipped_companions:
+		if COMPANIONS.has(id) and owns_companion(id) and out.size() < companion_slots():
+			out.append(id)
+	return out
 
 # ── Bonos permanentes — player.gd los aplica al arrancar cada run ──
 
@@ -679,6 +824,9 @@ var run_crit_chance: float = 0.0
 var run_hunter_bonus: float = 0.0
 var run_coin_mult: float = 1.0
 var run_xp_mult: float = 1.0
+## Legendarias: veneno (fracción del golpe por segundo) y esquiva.
+var run_poison: float = 0.0
+var run_dodge: float = 0.0
 var _coin_frac: float = 0.0
 
 func _compute_run_bonuses() -> void:
@@ -686,4 +834,6 @@ func _compute_run_bonuses() -> void:
 	run_hunter_bonus = get_shop_level("hunter") * 0.10
 	run_coin_mult = 1.0 + get_shop_level("greed") * 0.10
 	run_xp_mult = 1.0 + get_shop_level("wisdom") * 0.08
+	run_poison = [0.0, 0.10, 0.15, 0.20][clampi(get_shop_level("venom"), 0, 3)]
+	run_dodge = get_shop_level("mirage") * 0.06
 	_coin_frac = 0.0

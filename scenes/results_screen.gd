@@ -159,6 +159,16 @@ func _build_damage_rows(damage: Dictionary) -> void:
 
 ## Logros conseguidos en esta partida (con su premio) — es lo que hace
 ## que perder igual se sienta como avanzar.
+## Línea destacada arriba de los datos (la legendaria que se abrió).
+func add_highlight(text: String) -> void:
+	var l := Label.new()
+	l.text = text
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	RpgTheme.style_ink_label(l, 15, true)
+	l.add_theme_color_override("font_color", Color("9a6a10"))
+	_subtitle.add_sibling(l)
+
 func _build_new_achievements() -> void:
 	var list: Array = GameState.run_new_achievements
 	if list.is_empty():

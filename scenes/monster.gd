@@ -530,6 +530,7 @@ func _physics_process(delta: float) -> void:
 	# un jefe pegado al player vive en windup→strike→cooldown y pasaba
 	# por chase un solo frame por ciclo — nunca llegaba a atacar.
 	_behavior_cd -= delta
+	_tick_status(delta)
 
 	# Empujón (escudo divino de GAROTH): mientras dura no persigue.
 	if _knock_t > 0.0:
@@ -559,7 +560,7 @@ func _tick_wander(_delta: float) -> void:
 	var now := Time.get_ticks_msec()
 	if now - _last_wander_change > WANDER_CHANGE_MS:
 		_pick_new_wander()
-	velocity = _wander_dir * WANDER_SPEED * speed_mult
+	velocity = _wander_dir * WANDER_SPEED * _move_mult()
 
 func _tick_chase(delta: float) -> void:
 	if target == null:
@@ -580,11 +581,11 @@ func _tick_chase(delta: float) -> void:
 			if _behavior_cd <= 0.0 and d < far + 70.0:
 				_shoot_at_player(dir)
 			if d > far:
-				velocity = dir * CHASE_SPEED * speed_mult
+				velocity = dir * CHASE_SPEED * _move_mult()
 			elif d < near:
-				velocity = -dir * CHASE_SPEED * 0.8 * speed_mult
+				velocity = -dir * CHASE_SPEED * 0.8 * _move_mult()
 			else:
-				velocity = dir.orthogonal() * CHASE_SPEED * 0.5 * speed_mult * _strafe_sign
+				velocity = dir.orthogonal() * CHASE_SPEED * 0.5 * _move_mult() * _strafe_sign
 			_update_facing(dir)
 			return
 		"charger":
@@ -601,7 +602,7 @@ func _tick_chase(delta: float) -> void:
 		_enter_windup()
 		return
 	# Sin techo de distancia — persigue eternamente al player.
-	velocity = dir * CHASE_SPEED * speed_mult
+	velocity = dir * CHASE_SPEED * _move_mult()
 	# Actualiza el _facing por eje dominante del vector velocity.
 	_update_facing(dir)
 
@@ -640,7 +641,7 @@ func _tick_charge_windup(delta: float) -> void:
 		_set_animation("run", ANIM_FPS * 2.0)
 
 func _tick_charge(delta: float) -> void:
-	velocity = _charge_dir * CHASE_SPEED * CHARGE_SPEED_MULT * speed_mult
+	velocity = _charge_dir * CHASE_SPEED * CHARGE_SPEED_MULT * _move_mult()
 	_state_timer += delta
 	if not _did_hit_this_strike and target != null \
 			and global_position.distance_to(target.global_position) < _attack_range + 8.0:
@@ -865,7 +866,7 @@ func _on_body_exited(_body: Node) -> void:
 ## `source` = id del arma que pegó (ver weapons.gd) — alimenta el
 ## "daño por arma" de la pantalla de resultados. El daño que sobra
 ## después de matar no cuenta.
-func take_damage(amount: float, source: String = "otro") -> void:
+func take_damage(amount: float, source: String = "otro", show_number: bool = true) -> void:
 	if _dead: return
 	# Árbol de habilidades: "Cazador" (jefes/élites) y "Crítico" (x2).
 	if is_elite or is_boss():
@@ -876,9 +877,13 @@ func take_damage(amount: float, source: String = "otro") -> void:
 	GameState.record_damage(source, minf(amount, hp))
 	_last_hit_source = source
 	hp -= amount
-	DAMAGE_NUMBER.spawn(DAMAGE_NUMBER, get_tree().current_scene, global_position, amount, crit)
+	if show_number or crit:
+		DAMAGE_NUMBER.spawn(DAMAGE_NUMBER, get_tree().current_scene, global_position, amount, crit)
 	emit_signal("hp_changed", max(0.0, hp), max_hp)
-	_sprite.modulate = Color(2.0, 2.0, 2.0)
+	# Habilidad legendaria "Veneno" (Pantano): los golpes envenenan.
+	if GameState.run_poison > 0.0 and source != "veneno":
+		apply_poison(amount * GameState.run_poison, 3.0)
+	_sprite.modulate = Color(0.6, 1.6, 0.6) if source == "veneno" else Color(2.0, 2.0, 2.0)
 	create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.12)
 	Audio.play_sfx("monster_hit", global_position, 0.15)
 	if hp <= 0.0:
@@ -889,6 +894,49 @@ func is_boss() -> bool:
 
 var _knock_vel := Vector2.ZERO
 var _knock_t := 0.0
+
+# ── Estados: frenado (graznido del ganso) y veneno (habilidad Veneno) ──
+var _slow_t := 0.0
+var _slow_factor := 1.0
+var _poison_t := 0.0
+var _poison_dps := 0.0
+var _poison_tick := 0.0
+
+## Multiplicador de velocidad de este momento (oleada x frenado).
+func _move_mult() -> float:
+	return speed_mult * (_slow_factor if _slow_t > 0.0 else 1.0)
+
+## Lo frena (factor 0.5 = mitad de velocidad). A los jefes, la mitad.
+func apply_slow(factor: float, duration: float) -> void:
+	if _dead:
+		return
+	if is_boss():
+		factor = lerpf(factor, 1.0, 0.5)
+	_slow_factor = minf(factor, _slow_factor) if _slow_t > 0.0 else factor
+	_slow_t = maxf(_slow_t, duration)
+	modulate = Color(0.7, 0.85, 1.35)
+
+## Veneno: daño por segundo durante `duration` (se renueva, no se apila).
+func apply_poison(dps: float, duration: float) -> void:
+	if _dead:
+		return
+	_poison_dps = maxf(_poison_dps if _poison_t > 0.0 else 0.0, dps)
+	_poison_t = maxf(_poison_t, duration)
+
+func _tick_status(delta: float) -> void:
+	if _slow_t > 0.0:
+		_slow_t -= delta
+		if _slow_t <= 0.0:
+			_slow_factor = 1.0
+			modulate = Color.WHITE
+	if _poison_t > 0.0:
+		_poison_t -= delta
+		_poison_tick += delta
+		if _poison_tick >= 0.5:
+			_poison_tick = 0.0
+			# Verde mientras está envenenado; el golpe va sin número para
+			# no llenar la pantalla (sí cuenta en las estadísticas).
+			take_damage(_poison_dps * 0.5, "veneno", false)
 
 ## Lo empuja en `dir`. A los jefes casi no los mueve.
 func knockback(dir: Vector2, strength: float) -> void:

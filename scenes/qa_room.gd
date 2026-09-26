@@ -108,7 +108,7 @@ func _wire_touch_buttons() -> void:
 	root.get_node("Unlocks/SwordsBtn").pressed.connect(_unlock.bind("flying_swords"))
 	root.get_node("Unlocks/RangedBtn").pressed.connect(_unlock.bind("ranged_bonus"))
 	root.get_node("Unlocks/MeteorsBtn").pressed.connect(_unlock.bind("meteors"))
-	root.get_node("Unlocks/ChickenBtn").pressed.connect(_player.spawn_companion.bind("chicken"))
+	root.get_node("Unlocks/ChickenBtn").pressed.connect(_next_companion)
 	root.get_node("Unlocks/CoinsBtn").pressed.connect(GameState.grant_currency.bind(500))
 	root.get_node("Unlocks/AuraBtn").pressed.connect(_unlock.bind("aura"))
 	root.get_node("Unlocks/AxeBtn").pressed.connect(_unlock.bind("hacha"))
@@ -144,7 +144,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key == KEY_M:
 		_unlock("meteors")
 	elif key == KEY_C:
-		_player.spawn_companion("chicken")
+		_next_companion()
 	elif key == KEY_V:
 		_spawn_chest()
 	elif key == KEY_B:
@@ -234,3 +234,14 @@ Teclado:
   +/-  ±10 hp · Esc  volver
 
 Móvil: joystick izq. + panel dcha."""
+
+## Botón "Acompañante" / tecla C: va pasando por las 9 líneas a nivel 5.
+var _companion_i: int = -1
+
+func _next_companion() -> void:
+	var ids: Array = GameState.COMPANIONS.keys()
+	_companion_i = (_companion_i + 1) % ids.size()
+	_player.spawn_companion(ids[_companion_i], GameState.COMPANION_MAX_LEVEL)
+	var btn: Button = get_node_or_null("UI/TouchPanel/Content/Unlocks/ChickenBtn")
+	if btn:
+		btn.text = GameState.companion_stage(ids[_companion_i], GameState.COMPANION_MAX_LEVEL)[2]

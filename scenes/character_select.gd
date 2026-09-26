@@ -31,6 +31,20 @@ const IDLE_FPS := 7.0
 ## calculado de player.gd — es sólo orientativo para el jugador.
 const CHARACTERS: Array[Dictionary] = [
 	{
+		"id": "swordman",
+		"name": "GAROTH",
+		"portrait": "res://assets/main_characters/swordman_char.png",
+		# Preview con lvl3 — el tier del medio, para que el jugador vea
+		# a qué evoluciona (lvl1 se ve muy débil, lvl6 spoilería el
+		# clímax visual).
+		"idle_sheet": "res://assets/sprites/swordman/Swordsman_lvl3/Swordsman_lvl3_Idle/Swordsman_lvl3_Idle_front.png",
+		"idle_frames": 12,
+		"accent": Color("d4a648"),
+		"role": "CUERPO A CUERPO · EVOLUTIVO",
+		"blurb": "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final.",
+		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
+	},
+	{
 		"id": "main_char1",
 		"name": "AXEL",
 		"portrait": "res://assets/main_characters/main_char1_selectwindow.png",
@@ -59,34 +73,6 @@ const CHARACTERS: Array[Dictionary] = [
 		"role": "A DISTANCIA",
 		"blurb": "Tan letal como KAY pero más ligera de pies — prioriza esquivar por sobre plantarse a pelear.",
 		"stats": {"Daño": 2, "Velocidad": 4, "Alcance": 4, "Dificultad": 2},
-	},
-	{
-		"id": "swordman",
-		"name": "GAROTH",
-		"portrait": "res://assets/main_characters/swordman_char.png",
-		# Preview con lvl3 — el tier del medio, para que el jugador vea
-		# a qué evoluciona (lvl1 se ve muy débil, lvl6 spoilería el
-		# clímax visual).
-		"idle_sheet": "res://assets/sprites/swordman/Swordsman_lvl3/Swordsman_lvl3_Idle/Swordsman_lvl3_Idle_front.png",
-		"idle_frames": 12,
-		"accent": Color("d4a648"),
-		"role": "CUERPO A CUERPO · EVOLUTIVO",
-		"blurb": "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final.",
-		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
-	},
-	# Secreto: se desbloquea con el logro "Coleccionista" (las 7
-	# evoluciones). Mientras tanto se ve como silueta "???".
-	{
-		"id": "chicken",
-		"name": "POLLO",
-		"portrait": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
-		"portrait_region": Rect2(6, 9, 20, 20),
-		"idle_sheet": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
-		"idle_frames": 6,
-		"accent": Color("ffd24a"),
-		"role": "A DISTANCIA · SECRETO",
-		"blurb": "Nadie lo tomaba en serio. Tira huevos, esquiva aleteando y no le teme a nada.",
-		"stats": {"Daño": 2, "Velocidad": 5, "Alcance": 3, "Dificultad": 5},
 	},
 ]
 
@@ -256,13 +242,10 @@ func _setup_card(i: int) -> void:
 	_portraits[i].texture = portrait_texture(data)
 	_name_labels[i].text = data["name"]
 	RpgTheme.style_light_label(_name_labels[i], 24)
-	# Bloqueado: silueta oscura + qué logro lo desbloquea. El secreto ni
-	# siquiera muestra el nombre.
+	# Bloqueado: silueta oscura + qué logro lo desbloquea.
 	if not GameState.is_character_unlocked(data["id"]):
 		_portraits[i].modulate = Color(0.05, 0.05, 0.08, 0.9)
 		_idle_previews[i].visible = false
-		if data["id"] == "chicken":
-			_name_labels[i].text = "???"
 		var hint: Label = _lock_hints[i]
 		hint.text = "BLOQUEADO\n" + GameState.unlock_hint_for_character(data["id"])
 		RpgTheme.style_ink_label(hint, 13, true)
@@ -336,7 +319,7 @@ func _update_card_glow(i: int, active: bool) -> void:
 
 # ── Selección ────────────────────────────────────────────────────
 
-## Textura del retrato (con recorte si es un frame de sprite, el pollo).
+## Textura del retrato (con recorte si "portrait_region" lo pide).
 static func portrait_texture(data: Dictionary) -> Texture2D:
 	var tex: Texture2D = load(data["portrait"])
 	if data.has("portrait_region"):

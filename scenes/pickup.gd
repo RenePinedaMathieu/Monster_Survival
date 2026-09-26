@@ -33,6 +33,9 @@ const LABELS: Dictionary = {
 }
 
 var kind: String = "heal"
+## Cuánto cura "heal" (fracción de la vida máxima): 25% del barril; la
+## comida del pavo acompañante cura menos (ver companion.gd).
+var heal_frac: float = 0.25
 var _t: float = 0.0
 var _sprite: Sprite2D
 var _taken: bool = false
@@ -75,7 +78,7 @@ func _apply(player: Node) -> void:
 	var text: String = LABELS[kind][0]
 	match kind:
 		"heal":
-			var amount: float = player.max_hp * 0.25
+			var amount: float = player.max_hp * heal_frac
 			player.heal(amount)
 			player.flash(player.FLASH_GREEN)
 			text = text % int(round(amount))

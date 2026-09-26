@@ -167,7 +167,7 @@ text = "Meteors"
 [node name="ChickenBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
 custom_minimum_size = Vector2(0, 34)
 size_flags_horizontal = 3
-text = "Pollo"
+text = "Mascota"
 
 [node name="CoinsBtn" type="Button" parent="UI/TouchPanel/Content/Unlocks"]
 custom_minimum_size = Vector2(0, 34)

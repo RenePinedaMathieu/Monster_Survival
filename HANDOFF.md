@@ -163,6 +163,16 @@ locally with any browser and it works. Kept because Godot's built-
 in TileMap editor is fine, but this one might still be useful for
 sketching layouts quickly outside the editor.
 
+### `tools/ase2png.py`
+
+Converts `.aseprite` files to horizontal PNG strips (Pillow only, no
+Aseprite needed). `python tools/ase2png.py file.aseprite` writes a PNG
+next to it. `python tools/ase2png.py --companions` regenerates
+`assets/companions/<id>/{idle,walk}_{front,back,left,right}.png` from
+the animal folders in `assets/sprites/` (cropped to the animal) and
+prints each frame size for `SPRITES` in `scenes/companion.gd`. Run it
+again after editing an animal's `.aseprite`.
+
 ## 5. Game design (values I iterated hard on)
 
 ### Combat (feel took a long time to tune)

@@ -51,8 +51,9 @@ var _monsters_alive: int = 0
 var _in_break: bool = false
 ## Cuenta cuántos bosses ya spawneó la run — para elegir demon1/2/3.
 var _bosses_spawned: int = 0
-## true después de ganar y elegir SEGUIR: oleadas sin final.
-var _endless: bool = false
+## true después de ganar y elegir SEGUIR: el desafío de las oleadas
+## 21-30 (mucho más duro). Superarlo abre la legendaria del mapa.
+var _challenge: bool = false
 var _run_over: bool = false
 var _death_label: Label
 ## FINAL_WAVE salvo en el reto diario (más corto).
@@ -132,6 +133,8 @@ func _start_next_wave() -> void:
 	_current_wave += 1
 	_in_break = false
 	var count := BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE
+	# En el desafío NO hay más bichos (en el teléfono 180 a la vez era
+	# mucho): son más duros (CHALLENGE_*_STEP) y traen más élites.
 	if GameState.daily_modifier() == "horda":
 		count = int(count * 1.5)
 	# Cada 10 waves aparece 1 boss extra, bastante más grande y duro
@@ -154,6 +157,8 @@ func _start_next_wave() -> void:
 		elite_count = 2 if _current_wave >= 12 else 1
 	if GameState.daily_modifier() == "elites":
 		elite_count = 2
+	if _challenge:
+		elite_count = 2 if _current_wave < 25 else 3
 	for i in range(count):
 		_spawn_monster(false, i < elite_count)
 	for i in range(boss_count):
@@ -181,6 +186,9 @@ func _pick_spawn_position() -> Vector2:
 ## fuerte a medida que avanza la run (además de ser más y más rápidos).
 const WAVE_HP_STEP := 0.07      # oleada 20 ≈ x2.3 de vida
 const WAVE_POWER_STEP := 0.04   # oleada 20 ≈ x1.76 de daño
+## Desafío (oleadas 21-30): cada oleada suma bastante más.
+const CHALLENGE_HP_STEP := 0.25     # oleada 30 ≈ x4.8 de vida
+const CHALLENGE_POWER_STEP := 0.08  # oleada 30 ≈ x2.6 de daño
 ## Vida base de los jefes por tier (x la escala de la oleada) — tienen
 ## que aguantar lo suficiente como para ser una pelea, no un trámite.
 const BOSS_BASE_HP := 900.0
@@ -197,7 +205,12 @@ func _coin_mult() -> float:
 	return float(_map["mult"]) * float(_difficulty["coins"])
 
 func _wave_hp_mult() -> float:
-	return (1.0 + (_current_wave - 1) * WAVE_HP_STEP) * _stat_mult()
+	var extra: float = maxi(0, _current_wave - FINAL_WAVE) * CHALLENGE_HP_STEP
+	return (1.0 + (_current_wave - 1) * WAVE_HP_STEP + extra) * _stat_mult()
+
+func _wave_power_mult() -> float:
+	var extra: float = maxi(0, _current_wave - FINAL_WAVE) * CHALLENGE_POWER_STEP
+	return (1.0 + (_current_wave - 1) * WAVE_POWER_STEP + extra) * _stat_mult()
 
 func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 	var m = MONSTER_SCENE.instantiate()
@@ -205,7 +218,7 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 	_monsters_container.add_child(m)
 	# set_kind necesita @onready resuelto — sólo funciona DESPUÉS de
 	# add_child (mismo motivo por el que antes set_sprite iba después).
-	m.power_mult = (1.0 + (_current_wave - 1) * WAVE_POWER_STEP) * _stat_mult()
+	m.power_mult = _wave_power_mult()
 	if is_boss:
 		# 1er jefe (oleada 10) y jefe final (oleada 20) según el mapa.
 		var bosses: Array = _map["bosses"]
@@ -259,14 +272,14 @@ func _on_monster_hit_player(damage: float) -> void:
 	_player.take_damage(damage)
 
 func _update_wave_hud() -> void:
-	_hud.set_wave(_current_wave, _monsters_alive, 0 if _endless else _final_wave)
+	_hud.set_wave(_current_wave, _monsters_alive, _final_wave)
 
 func _on_monster_died() -> void:
 	_monsters_alive = max(0, _monsters_alive - 1)
 	_update_wave_hud()
 	if _monsters_alive == 0 and not _in_break and not _run_over:
 		_in_break = true
-		if _current_wave == _final_wave and not _endless:
+		if _current_wave == _final_wave:
 			_finish_run(true)
 			return
 		Audio.play_sfx("wave_clear")
@@ -348,7 +361,10 @@ func _finish_run(victory: bool) -> void:
 	GameState.report_run_result(_current_wave, _hud.get_run_time())
 	# El reto diario (10 oleadas) no cuenta como victoria del mapa para
 	# los logros — sería un atajo para abrir mapas y dificultades.
-	if victory and not GameState.daily_active:
+	_new_legend = ""
+	if victory and _challenge:
+		_new_legend = GameState.report_challenge_win(GameState.selected_map)
+	elif victory and not GameState.daily_active:
 		GameState.report_win(GameState.selected_character_id, GameState.selected_map, GameState.selected_difficulty)
 	if victory:
 		Audio.play_music("gameplay_chill", 1200)
@@ -363,6 +379,9 @@ func _finish_run(victory: bool) -> void:
 	get_tree().create_timer(1.0 if victory else DEATH_SCREEN_SEC, true, false, true) \
 		.timeout.connect(_show_results.bind(victory, score))
 
+## Legendaria que se abrió al superar la oleada 30 (para los resultados).
+var _new_legend: String = ""
+
 func _show_results(victory: bool, score: int) -> void:
 	Engine.time_scale = 1.0
 	if _death_label != null:
@@ -371,12 +390,16 @@ func _show_results(victory: bool, score: int) -> void:
 	add_child(results)
 	var hero: String = GameState.pending_character.get("name", GameState.CHARACTER_NAMES.get(GameState.selected_character_id, "El héroe"))
 	results.show_results(victory, _current_wave, _hud.get_run_time(), hero,
-		victory and not _endless and not GameState.daily_active, score if GameState.daily_active else -1)
-	results.continue_pressed.connect(_on_continue_endless)
+		victory and not _challenge and not GameState.daily_active, score if GameState.daily_active else -1)
+	if _new_legend != "":
+		var skill: Dictionary = GameState.SKILL_TREE[_new_legend]
+		results.add_highlight("¡HABILIDAD LEGENDARIA: %s! %s (ya tienes el nivel 1, mejórala en la tienda)" % [skill["name"].to_upper(), skill["desc"]])
+	results.continue_pressed.connect(_on_continue_challenge)
 
-## SEGUIR tras la victoria: oleadas infinitas para estirar el récord.
-func _on_continue_endless() -> void:
-	_endless = true
+## SEGUIR tras la victoria: el desafío de las oleadas 21-30.
+func _on_continue_challenge() -> void:
+	_challenge = true
+	_final_wave = GameState.CHALLENGE_WAVE
 	_run_over = false
 	get_tree().paused = false
 	_hud.resume_timer()

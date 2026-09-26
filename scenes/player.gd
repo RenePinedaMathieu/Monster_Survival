@@ -34,8 +34,6 @@ const ACTIVE_SKILLS: Dictionary = {
 		"desc": "Ruedas lejos y eres invulnerable un instante"},
 	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_76.png",
 		"desc": "2 s invulnerable y empujas a los enemigos cercanos"},
-	"chicken": {"id": "roll", "name": "Aleteo", "cooldown": 3.0, "icon": SKILL_ICON + "skill_15.png",
-		"desc": "Aleteas lejos y nadie te puede tocar un instante"},
 }
 const DASH_SPEED := 900.0
 const DASH_DAMAGE := 8.0
@@ -52,6 +50,7 @@ const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
 const FLYING_SWORDS_RIG_SCRIPT := preload("res://scenes/flying_swords_rig.gd")
 const COMPANION_SCRIPT := preload("res://scenes/companion.gd")
+const FLOAT_TEXT := preload("res://scenes/damage_number.gd")
 const Upgrades := preload("res://scenes/upgrades.gd")
 const AURA_SCRIPT := preload("res://scenes/aura_weapon.gd")
 const AXE_SCRIPT := preload("res://scenes/axe_weapon.gd")
@@ -168,24 +167,7 @@ const RANGED_SKINS := {
 			"right_down": "Walk/walk_Right_Down.png", "right_up": "Walk/walk_Right_Up.png",
 		},
 	},
-	# Personaje secreto (logro "Coleccionista"): el pollo. Sus hojas son
-	# de 4 direcciones, 6 frames de 32x32 — las diagonales usan el lado.
-	"chicken": {
-		"base_path": "res://assets/sprites/Chicken/",
-		"frame_size": Vector2(32, 32), "frame_count": 6, "scale": 2.2,
-		"idle_files": {
-			"down": "Idle/Chicken_front_Idle.png", "up": "Idle/Chicken_back_Idle.png",
-			"left_down": "Idle/Chicken_left_Idle.png", "left_up": "Idle/Chicken_left_Idle.png",
-			"right_down": "Idle/Chicken_right_Idle.png", "right_up": "Idle/Chicken_right_Idle.png",
-		},
-		"run_files": {
-			"down": "Walk/Chicken_front_Walk.png", "up": "Walk/Chicken_back_Walk.png",
-			"left_down": "Walk/Chicken_left_Walk.png", "left_up": "Walk/Chicken_left_Walk.png",
-			"right_down": "Walk/Chicken_right_Walk.png", "right_up": "Walk/Chicken_right_Walk.png",
-		},
-	},
 }
-const EGG_SCRIPT := preload("res://scenes/egg_projectile.gd")
 
 # Stats — se modifican con upgrades
 var max_hp: float = 100.0
@@ -223,10 +205,8 @@ var _meteor_cd: float = 3.0
 ## tiparlo como Node2D rompería la build (warnings-as-errors) al
 ## llamar .setup()/.buff(), que no existen en la clase base.
 var _swords_rig = null
-## Acompañante equipado en la tienda (companion.gd) — sin tipo por el
-## mismo motivo que _swords_rig.
-var _companion = null
-var _companion_id: String = ""
+## Acompañantes equipados en la tienda (companion.gd), uno por espacio.
+var _companions: Array = []
 ## Armas nuevas (aura/hacha/rayo) — mismo patrón que _swords_rig.
 var _aura = null
 var _axes = null
@@ -243,7 +223,6 @@ var _arrow_pierce: int = 0
 var _meteors_evolved: bool = false
 
 var took_damage: bool = false
-var _is_chicken: bool = false
 var _xp_frac: float = 0.0
 ## "Segunda vida" del árbol de habilidades.
 var _revives_left: int = 0
@@ -392,7 +371,6 @@ func _ready() -> void:
 		_load_axel_textures()
 	elif _is_ranged_skin:
 		_sprite.scale = Vector2.ONE * float(RANGED_SKINS[skin_id].get("scale", RANGED_SCALE))
-		_is_chicken = skin_id == "chicken"
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_load_ranged_textures(skin_id)
 	else:
@@ -408,17 +386,25 @@ func _ready() -> void:
 	emit_signal("xp_changed", xp, xp_to_next, level)
 	# Deferred: durante el _ready del player la escena nueva todavía no
 	# es current_scene, y el acompañante se cuelga de ahí.
-	if GameState.equipped_companion != "":
-		spawn_companion.call_deferred(GameState.equipped_companion)
+	var slot := 0
+	for id in GameState.active_companions():
+		spawn_companion.call_deferred(id, GameState.companion_level(id), slot)
+		slot += 1
 
-func spawn_companion(id: String) -> void:
-	if _companion != null and is_instance_valid(_companion):
-		_companion.queue_free()
-	_companion = Node2D.new()
-	_companion.set_script(COMPANION_SCRIPT)
-	get_tree().current_scene.add_child(_companion)
-	_companion.setup(self, id)
-	_companion_id = id
+## Crea el acompañante en ese espacio (reemplaza al que hubiera). Sin
+## nivel usa el comprado, o 3 (adulto) si no lo tenés — la sala QA.
+func spawn_companion(id: String, lvl: int = -1, slot: int = 0) -> void:
+	if lvl < 1:
+		lvl = maxi(3, GameState.companion_level(id))
+	for c in _companions.duplicate():
+		if is_instance_valid(c) and c._slot == slot:
+			_companions.erase(c)
+			c.queue_free()
+	var comp := Node2D.new()
+	comp.set_script(COMPANION_SCRIPT)
+	get_tree().current_scene.add_child(comp)
+	comp.setup(self, id, lvl, slot)
+	_companions.append(comp)
 
 ## Los sheets son un archivo por dirección con N frames en fila, a
 ## diferencia del sprite "Man" que trae un archivo por frame. Se
@@ -743,10 +729,6 @@ func _fire_shot(to_target: Vector2, count: int) -> void:
 	for i in range(count):
 		var offset := (i - (count - 1) / 2.0) * AUTO_FIRE_SPREAD
 		var dir := to_target.rotated(offset)
-		# El pollo (personaje secreto) tira huevos en vez de flechas.
-		if _is_chicken:
-			_fire_egg(dir, 2.4 * damage_mult * (1.0 + ranged_power_level * 0.3) * (2.0 if charged and i == 0 else 1.0))
-			continue
 		var shot = SHOT_SCENE.instantiate()
 		get_tree().current_scene.add_child(shot)
 		shot.global_position = global_position + dir * 24.0
@@ -758,21 +740,6 @@ func _fire_shot(to_target: Vector2, count: int) -> void:
 		if _arrow_pierce > 0:
 			shot.pierce = _arrow_pierce
 			shot.source = "lluvia_flechas"
-
-func _fire_egg(dir: Vector2, dmg: float) -> void:
-	var egg := Area2D.new()
-	egg.set_script(EGG_SCRIPT)
-	egg.collision_layer = 0
-	egg.collision_mask = 2
-	var shape := CollisionShape2D.new()
-	var circle := CircleShape2D.new()
-	circle.radius = 6.0
-	shape.shape = circle
-	egg.add_child(shape)
-	get_tree().current_scene.add_child(egg)
-	egg.global_position = global_position + dir * 14.0
-	egg.setup(dir, dmg)
-	egg.source = "huevos"
 
 func _spawn_meteor() -> void:
 	# Evolución "apocalipsis": 3 meteoros por tanda, más grandes y fuertes.
@@ -1007,6 +974,10 @@ func take_damage(amount: float) -> void:
 	if hp <= 0.0: return
 	# Dash/voltereta/escudo: invulnerable mientras dura.
 	if _invuln_t > 0.0: return
+	# Legendaria "Espejismo" (Desierto): chance de esquivar el golpe.
+	if GameState.run_dodge > 0.0 and randf() < GameState.run_dodge:
+		FLOAT_TEXT.spawn_text(FLOAT_TEXT, get_tree().current_scene, global_position, "ESQUIVA", Color("9fd8ff"), 1.2)
+		return
 	## Para el logro "Intocable" (main.gd lo mira al empezar cada oleada).
 	took_damage = true
 	Audio.play_sfx("player_hurt", global_position, 0.1)
@@ -1245,7 +1216,10 @@ func has_evolution(id: String) -> bool:
 	return id in evolutions
 
 func has_companion(id: String) -> bool:
-	return _companion != null and is_instance_valid(_companion) and _companion_id == id
+	for c in _companions:
+		if is_instance_valid(c) and c.line_id == id:
+			return true
+	return false
 
 ## Aplica una evolución (la da el cofre, ver chest_popup.gd).
 func evolve(evo_id: String) -> void:
@@ -1271,8 +1245,9 @@ func evolve(evo_id: String) -> void:
 			if _lightning != null:
 				_lightning.evolve()
 		"gallina_dorada":
-			if _companion != null and is_instance_valid(_companion):
-				_companion.evolve()
+			for c in _companions:
+				if is_instance_valid(c):
+					c.evolve()
 	upgrades_changed.emit(build_summary())
 
 ## Casillas para la barra de mejoras del HUD: primero armas (con el
