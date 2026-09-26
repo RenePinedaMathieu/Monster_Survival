@@ -159,14 +159,31 @@ func _start_next_wave() -> void:
 		elite_count = 2
 	if _challenge:
 		elite_count = 2 if _current_wave < 25 else 3
+	# Se encolan y aparecen de a pocos por frame (ver _process): crear la
+	# oleada entera en un frame costaba 20-60 ms en PC y casi un segundo
+	# en el teléfono — el juego se "frenaba" al empezar cada oleada.
 	for i in range(count):
-		_spawn_monster(false, i < elite_count)
+		_spawn_queue.append([false, i < elite_count])
 	for i in range(boss_count):
-		_spawn_monster(true)
+		_spawn_queue.append([true, false])
 	# += y no =: si quedara alguna cría suelta de la oleada anterior,
-	# no se pierde de la cuenta.
+	# no se pierde de la cuenta. Cuenta también los que están en cola.
 	_monsters_alive += count + boss_count
 	_update_wave_hud()
+
+## Monstruos de la oleada que todavía no aparecieron: [es_jefe, es_élite].
+var _spawn_queue: Array = []
+const SPAWNS_PER_FRAME := 3
+
+func _process(_delta: float) -> void:
+	if _spawn_queue.is_empty() or get_tree().paused:
+		return
+	if _run_over:
+		_spawn_queue.clear()
+		return
+	for i in range(mini(SPAWNS_PER_FRAME, _spawn_queue.size())):
+		var entry: Array = _spawn_queue.pop_front()
+		_spawn_monster(entry[0], entry[1])
 
 ## Anillo alrededor del player, pero reintentando si cae en agua o
 ## fuera del mapa — antes tiraba el dado una sola vez y podía
