@@ -27,9 +27,10 @@ const CharSelect := preload("res://scenes/character_select.gd")
 const Pickup := preload("res://scenes/pickup.gd")
 const QA_SCENE := "res://scenes/qa_room.tscn"
 const EFFECTS_SCENE := "res://scenes/effects_viewer.tscn"
+const MAPS_SCENE := "res://scenes/map_viewer.tscn"
 
-enum Cat { HEROES, MONSTERS, COMPANIONS, WEAPONS, SKILLS, ITEMS, EFFECTS, ICONS }
-const CAT_NAMES := ["HÉROES", "MONSTRUOS", "ACOMPAÑANTES", "ARMAS Y CARTAS", "HABILIDADES Y TIENDA", "OBJETOS", "EFECTOS", "ÍCONOS"]
+enum Cat { HEROES, MONSTERS, COMPANIONS, WEAPONS, SKILLS, ITEMS, EFFECTS, ICONS, MAPS }
+const CAT_NAMES := ["HÉROES", "MONSTRUOS", "ACOMPAÑANTES", "ARMAS Y CARTAS", "HABILIDADES Y TIENDA", "OBJETOS", "EFECTOS", "ÍCONOS", "MAPAS"]
 const BACKGROUNDS := [Color("1c1b22"), Color("5b7a3a"), Color("d9b36b"), Color("e4d3a0")]
 const BG_NAMES := ["OSCURO", "PASTO", "ARENA", "PERGAMINO"]
 const ANIMS := ["idle", "run", "attack", "death"]
@@ -188,6 +189,9 @@ func _rebuild() -> void:
 		return
 	if _cat == Cat.EFFECTS:
 		get_tree().change_scene_to_file(EFFECTS_SCENE)
+		return
+	if _cat == Cat.MAPS:
+		get_tree().change_scene_to_file(MAPS_SCENE)
 		return
 	for c in _grid.get_children():
 		_grid.remove_child(c)
