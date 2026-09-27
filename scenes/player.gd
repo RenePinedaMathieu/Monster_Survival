@@ -32,7 +32,7 @@ const ACTIVE_SKILLS: Dictionary = {
 		"desc": "Disparas 12 flechas en círculo"},
 	"main_char2_female": {"id": "roll", "name": "Voltereta", "cooldown": 3.5, "icon": SKILL_ICON + "skill_77.png",
 		"desc": "Ruedas lejos y eres invulnerable un instante"},
-	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_76.png",
+	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_27.png",
 		"desc": "2 s invulnerable y empujas a los enemigos cercanos"},
 }
 const DASH_SPEED := 900.0

@@ -91,7 +91,7 @@ const SKILL_TREE: Dictionary = {
 		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_33.png"},
 	"mirage":    {"branch": "defense", "tier": 5, "name": "Espejismo", "legend": "desierto",
 		"desc": "6/12/18% de probabilidad de esquivar un golpe",
-		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_77.png"},
+		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_78.png"},
 	"companionship": {"branch": "utility", "tier": 6, "name": "Compañerismo", "legend": "pradera",
 		"desc": "Nivel 1: llevas 2 acompañantes. Niveles 2 y 3: +25% de fuerza a sus habilidades cada uno",
 		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_15.png"},

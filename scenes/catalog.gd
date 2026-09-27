@@ -41,6 +41,19 @@ const COLOR_SPRITE := Color("57c767")
 const COLOR_CODE := Color("ff9a3c")
 const COLOR_SHARED := Color("ff5a48")
 const COLOR_ICON := Color("7fc8ff")
+const COLOR_FAMILY := Color("b58cff")
+## Íconos compartidos A PROPÓSITO: el mismo concepto en distintos
+## sistemas (la carta y el nodo del árbol de "daño" usan el mismo puño).
+## Salen como FAMILIA (violeta), no como conflicto (rojo).
+const ICON_FAMILIES := {
+	"res://assets/ui/skill_icons/skill_96.png": "Daño",
+	"res://assets/ui/skill_icons/skill_99.png": "Velocidad de ataque",
+	"res://assets/ui/skill_icons/skill_83.png": "Vida máxima",
+	"res://assets/ui/skill_icons/skill_79.png": "Regeneración",
+	"res://assets/ui/skill_icons/skill_30.png": "Imán",
+	"res://assets/ui/skill_icons/skill_63.png": "Disparo",
+	"res://assets/ui/rpg/coin.png": "Monedas",
+}
 
 var _cat: int = Cat.HEROES
 var _anim: int = 0
@@ -417,9 +430,9 @@ func _build_weapons() -> void:
 				lines.append("Evoluciona a %s (con %s)" % [ev["name"], ev["passive"]])
 			else:
 				lines.append("SIN evolución")
-		var uses: Array = _icon_uses().get(c["icon"], [])
-		if _is_shared(uses):
-			lines.append("ÍCONO COMPARTIDO con: " + ", ".join(_other_names(uses, c["title"])))
+		var shared := _shared_line(c["icon"], c["title"])
+		if shared != "":
+			lines.append(shared)
 		_card(_icon_preview(_tex(c["icon"])), "%s · %s" % [kind, c["title"]], "ÍCONO", tag_color, lines)
 	for e in Upgrades.EVOLUTIONS:
 		var ev: Dictionary = Upgrades.EVOLUTIONS[e]
@@ -511,7 +524,10 @@ func _other_names(uses: Array, me: String) -> Array:
 
 func _shared_line(path: String, me: String) -> String:
 	var uses: Array = _icon_uses().get(path, [])
-	return ("ÍCONO COMPARTIDO con: " + ", ".join(_other_names(uses, me))) if _is_shared(uses) else ""
+	if not _is_shared(uses):
+		return ""
+	var head := ("Familia %s, con: " % ICON_FAMILIES[path]) if ICON_FAMILIES.has(path) else "CONFLICTO de ícono con: "
+	return head + ", ".join(_other_names(uses, me))
 
 ## "Carta LLUVIA DE METEOROS" y "Poder Lluvia de meteoros" son lo mismo.
 func _norm(s: String) -> String:
@@ -521,20 +537,28 @@ func _norm(s: String) -> String:
 			t = t.substr(pre.length())
 	return t.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").strip_edges()
 
+## 2 = conflicto (cosas distintas con el mismo ícono), 1 = familia, 0 = único.
+func _icon_rank(path: String, uses: Array) -> int:
+	if not _is_shared(uses):
+		return 0
+	return 1 if ICON_FAMILIES.has(path) else 2
+
 func _build_icons() -> void:
 	var uses := _icon_uses()
 	var paths: Array = uses.keys()
 	paths.sort_custom(func(a, b):
-		var sa := _is_shared(uses[a])
-		var sb := _is_shared(uses[b])
-		if sa != sb:
-			return sa
+		var ra := _icon_rank(a, uses[a])
+		var rb := _icon_rank(b, uses[b])
+		if ra != rb:
+			return ra > rb
 		return a < b)
-	var shared := paths.filter(func(p): return _is_shared(uses[p])).size()
-	_hint.text = "%d imágenes en uso · %d COMPARTIDAS por cosas distintas (arriba, en rojo)." % [paths.size(), shared]
+	var conflicts := paths.filter(func(p): return _icon_rank(p, uses[p]) == 2).size()
+	var families := paths.filter(func(p): return _icon_rank(p, uses[p]) == 1).size()
+	_hint.text = "%d imágenes en uso · %d CONFLICTOS (rojo: cosas distintas con el mismo ícono) · %d FAMILIAS (violeta: el mismo concepto a propósito)." % [paths.size(), conflicts, families]
 	for p in paths:
-		var is_shared := _is_shared(uses[p])
-		_card(_icon_preview(_tex(p), 64.0), _short(p), "COMPARTIDO" if is_shared else "único", COLOR_SHARED if is_shared else COLOR_ICON, uses[p])
+		var rank := _icon_rank(p, uses[p])
+		var tag: String = ["único", "FAMILIA: " + ICON_FAMILIES.get(p, ""), "CONFLICTO"][rank]
+		_card(_icon_preview(_tex(p), 64.0), _short(p), tag, [COLOR_ICON, COLOR_FAMILY, COLOR_SHARED][rank], uses[p])
 
 func _short(path: String) -> String:
 	return path.replace("res://assets/", "")
