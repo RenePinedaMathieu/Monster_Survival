@@ -93,6 +93,8 @@ func _wire_touch_buttons() -> void:
 	root.get_node("Actions/LevelUpBtn").pressed.connect(_trigger_level_up)
 	root.get_node("Actions/KillAllBtn").pressed.connect(_kill_all)
 	root.get_node("Actions/BackBtn").pressed.connect(_back_to_menu)
+	# Catálogo del universo: sprites, animaciones, íconos y efectos.
+	root.get_node("Actions/CatalogBtn").pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/catalog.tscn"))
 
 	root.get_node("Spawns/RatBtn").pressed.connect(_spawn_monster.bind("rat", false))
 	root.get_node("Spawns/ImpBtn").pressed.connect(_spawn_monster.bind("imp", false))

@@ -93,6 +93,9 @@ func _ready() -> void:
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 	_tutorial_button.pressed.connect(_on_tutorial_button_pressed)
 	_qa_room_button.pressed.connect(_on_qa_room_pressed)
+	var catalog_button: Button = $OptionsPanel/Content/CatalogButton
+	RpgTheme.style_button(catalog_button, 16)
+	catalog_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/catalog.tscn"))
 
 	# En Web no hay forma confiable de "cerrar" la pestaña del browser
 	# desde el juego — el botón no tiene sentido ahí.
