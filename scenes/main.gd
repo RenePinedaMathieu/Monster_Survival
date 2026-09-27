@@ -34,6 +34,18 @@ const WAVE_BREAK_SEC := 2.5
 # Densidad VS: mucho más volumen. Waves cortas y agresivas.
 const BASE_MONSTERS := 8
 const MONSTERS_PER_WAVE := 4
+## Ritmo de la etapa: cada oleada trae el triple de monstruos y los
+## suelta de a poco durante una ventana (43 s la 1ra … 62 s la 20);
+## termina al morir el último. Así una etapa de 20 oleadas dura ~25
+## minutos sin importar lo fuerte que sea la build (antes, con todos
+## de golpe, una build buena la terminaba en 7-8 minutos).
+const WAVE_COUNT_MULT := 3.0
+const SPAWN_WINDOW_BASE := 42.0
+const SPAWN_WINDOW_STEP := 1.0
+## Reto diario: la partida corta del día, la mitad de todo.
+const DAILY_PACE := 0.5
+## Tope de monstruos vivos a la vez: si se juntan muchos, la cola espera.
+const MAX_ALIVE := 140
 
 # La velocidad de los monstruos sube con cada wave, no sólo la
 # cantidad — 3.5% más rápido por wave, tope en 75% extra (wave ~21)
@@ -132,9 +144,11 @@ func _start_next_wave() -> void:
 		GameState.report_max("no_hit_wave", _current_wave)
 	_current_wave += 1
 	_in_break = false
-	var count := BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE
-	# En el desafío NO hay más bichos (en el teléfono 180 a la vez era
-	# mucho): son más duros (CHALLENGE_*_STEP) y traen más élites.
+	var pace: float = DAILY_PACE if GameState.daily_active else 1.0
+	# En el desafío los monstruos ya son mucho más duros (CHALLENGE_*_STEP):
+	# ahí el doble en vez del triple.
+	var count_mult: float = 2.0 if _challenge else WAVE_COUNT_MULT
+	var count := int((BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE) * count_mult * pace)
 	if GameState.daily_modifier() == "horda":
 		count = int(count * 1.5)
 	# Cada 10 waves aparece 1 boss extra, bastante más grande y duro
@@ -159,31 +173,52 @@ func _start_next_wave() -> void:
 		elite_count = 2
 	if _challenge:
 		elite_count = 2 if _current_wave < 25 else 3
-	# Se encolan y aparecen de a pocos por frame (ver _process): crear la
-	# oleada entera en un frame costaba 20-60 ms en PC y casi un segundo
-	# en el teléfono — el juego se "frenaba" al empezar cada oleada.
+	# Se encolan y salen repartidos en la ventana de la oleada (ver
+	# _process). El jefe va primero y sale apenas empieza; los élites,
+	# repartidos entre los demás.
+	var entries: Array = []
 	for i in range(count):
-		_spawn_queue.append([false, i < elite_count])
+		entries.append([false, i < elite_count])
+	entries.shuffle()
 	for i in range(boss_count):
-		_spawn_queue.append([true, false])
+		entries.push_front([true, false])
+	_spawn_queue.append_array(entries)
+	var window: float = (SPAWN_WINDOW_BASE + _current_wave * SPAWN_WINDOW_STEP) * pace
+	_spawn_interval = window / maxf(1.0, float(count))
+	_spawn_accum = _spawn_interval * 4.0   # unos pocos de entrada
 	# += y no =: si quedara alguna cría suelta de la oleada anterior,
 	# no se pierde de la cuenta. Cuenta también los que están en cola.
 	_monsters_alive += count + boss_count
 	_update_wave_hud()
 
 ## Monstruos de la oleada que todavía no aparecieron: [es_jefe, es_élite].
+## Salen de a uno cada _spawn_interval segundos (y como mucho de a 3
+## por frame: crearlos todos juntos trababa el juego).
 var _spawn_queue: Array = []
+var _spawn_interval: float = 0.0
+var _spawn_accum: float = 0.0
 const SPAWNS_PER_FRAME := 3
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _spawn_queue.is_empty() or get_tree().paused:
 		return
 	if _run_over:
 		_spawn_queue.clear()
 		return
-	for i in range(mini(SPAWNS_PER_FRAME, _spawn_queue.size())):
-		var entry: Array = _spawn_queue.pop_front()
+	# Si está en el tope de vivos no se acumula de más (saldrían de golpe).
+	_spawn_accum = minf(_spawn_accum + delta, _spawn_interval * 6.0 + delta)
+	var released := 0
+	while not _spawn_queue.is_empty() and released < SPAWNS_PER_FRAME:
+		var entry: Array = _spawn_queue[0]
+		if not entry[0]:   # el jefe no espera turno
+			if _spawn_accum < _spawn_interval:
+				break
+			if get_tree().get_nodes_in_group("monster").size() >= MAX_ALIVE:
+				break
+			_spawn_accum -= _spawn_interval
+		_spawn_queue.pop_front()
 		_spawn_monster(entry[0], entry[1])
+		released += 1
 
 ## Anillo alrededor del player, pero reintentando si cae en agua o
 ## fuera del mapa — antes tiraba el dado una sola vez y podía

@@ -453,7 +453,9 @@ func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary) ->
 		if score > int(daily_best.get(date, 0)):
 			daily_best = {date: score}   # sólo guarda el de hoy
 			_save()
-	if Supabase.is_signed_in():
+	# Desde el editor (pruebas, tests automáticos) no se sube nada: antes
+	# llenaban el ranking real de partidas falsas de 0 minutos.
+	if Supabase.is_signed_in() and not OS.has_feature("editor"):
 		Supabase.rest_insert("/runs", {
 			"player_name": ensure_player_name(),
 			"hero": selected_character_id,
