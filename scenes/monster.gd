@@ -24,6 +24,7 @@ const XP_ORB_SCENE := preload("res://scenes/xp_orb.tscn")
 const DAMAGE_NUMBER := preload("res://scenes/damage_number.gd")
 const CHEST_SCRIPT := preload("res://scenes/chest.gd")
 const ENEMY_SHOT_SCRIPT := preload("res://scenes/enemy_projectile.gd")
+const GROUND_FIRE_PROJECTILE_SCRIPT := preload("res://scenes/ground_fire_projectile.gd")
 ## El propio monster.tscn (para las crías de slime y las ratas que
 ## invocan los jefes). load() y no preload(): la escena usa este script.
 const MONSTER_SCENE_PATH := "res://scenes/monster.tscn"
@@ -359,12 +360,19 @@ var _elite_t := 0.0
 ## Lo setea main.gd según la oleada: multiplica el daño que hace.
 var power_mult: float = 1.0
 var behavior: String = "melee"
+var ground_fire_attacks: bool = false
 var _behavior_cd: float = 2.0
 var _charge_dir := Vector2.ZERO
 var _strafe_sign: float = 1.0
 var _boss_cycle: int = 0
 ## Crías (slime partido / ratas invocadas): no se vuelven a partir.
 var _is_minion := false
+var _burn_t: float = 0.0
+var _burn_dps_frac: float = 0.0
+var _burn_tick: float = 0.0
+var _burn_source: String = "quemadura"
+var _stun_t: float = 0.0
+var _freeze_t: float = 0.0
 ## Setup diferido para crías creadas en pleno callback de física
 ## (ver _spawn_minion): se aplica en _ready.
 var _pending_setup: Dictionary = {}
@@ -522,6 +530,16 @@ func _physics_process(delta: float) -> void:
 		_update_animation(delta)
 		return
 
+	var status_locked := _tick_status_effects(delta)
+	if _dead:
+		_update_animation(delta)
+		return
+	if status_locked:
+		velocity = Vector2.ZERO
+		move_and_slide()
+		_update_animation(delta)
+		return
+
 	if is_elite:
 		_elite_t += delta
 		queue_redraw()
@@ -672,6 +690,10 @@ func _enter_charge_windup(dir: Vector2) -> void:
 	_set_animation("idle")
 
 func _shoot_at_player(dir: Vector2) -> void:
+	if ground_fire_attacks and target != null and randf() < 0.45:
+		_behavior_cd = 4.0
+		_spawn_ground_fire(target.global_position)
+		return
 	if behavior == "caster":
 		_behavior_cd = 2.6
 		# Velocidades de proyectil x0.72, igual que el héroe (ver BASE_SPEED).
@@ -686,6 +708,12 @@ func _spawn_enemy_shot(dir: Vector2, speed: float, dmg: float, color: Color) -> 
 	shot.set_script(ENEMY_SHOT_SCRIPT)
 	get_tree().current_scene.add_child(shot)
 	shot.setup(global_position + dir * 12.0, dir, speed, dmg * power_mult, color)
+
+func _spawn_ground_fire(target_pos: Vector2) -> void:
+	var projectile := Node2D.new()
+	projectile.set_script(GROUND_FIRE_PROJECTILE_SCRIPT)
+	get_tree().current_scene.add_child(projectile)
+	projectile.setup(global_position, target_pos)
 
 ## Fantasma: se desvanece y reaparece a un costado del player.
 func _phase_teleport() -> void:
@@ -865,6 +893,39 @@ func _on_body_exited(_body: Node) -> void:
 ## `source` = id del arma que pegó (ver weapons.gd) — alimenta el
 ## "daño por arma" de la pantalla de resultados. El daño que sobra
 ## después de matar no cuenta.
+func apply_burn(dps_frac: float, duration: float, source: String = "quemadura") -> void:
+	if _dead:
+		return
+	_burn_dps_frac = maxf(_burn_dps_frac, dps_frac)
+	_burn_t = maxf(_burn_t, duration)
+	_burn_source = source
+
+func apply_stun(duration: float) -> void:
+	if _dead:
+		return
+	_stun_t = maxf(_stun_t, duration * (0.35 if is_boss() else 1.0))
+
+func apply_freeze(duration: float) -> void:
+	if _dead:
+		return
+	_freeze_t = maxf(_freeze_t, duration * (0.3 if is_boss() else 1.0))
+
+func _tick_status_effects(delta: float) -> bool:
+	if _burn_t > 0.0:
+		_burn_t = maxf(0.0, _burn_t - delta)
+		_burn_tick += delta
+		if _burn_tick >= 0.5:
+			var tick_len := _burn_tick
+			_burn_tick = 0.0
+			take_damage(max_hp * _burn_dps_frac * tick_len, _burn_source)
+			if _dead:
+				return false
+	if _stun_t > 0.0:
+		_stun_t = maxf(0.0, _stun_t - delta)
+	if _freeze_t > 0.0:
+		_freeze_t = maxf(0.0, _freeze_t - delta)
+	return _stun_t > 0.0 or _freeze_t > 0.0
+
 func take_damage(amount: float, source: String = "otro") -> void:
 	if _dead: return
 	# Árbol de habilidades: "Cazador" (jefes/élites) y "Crítico" (x2).

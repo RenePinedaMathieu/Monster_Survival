@@ -21,6 +21,7 @@ extends Node2D
 
 const TILE_SIZE := 16.0
 const MAP_SCALE := 2.0
+const IMAGE_MAP_SCALE := 2.0
 
 # Tiles del atlas que NO son caminables. Se sincroniza con la lista
 # usada al inyectar las colisiones en Grass1.tscn.
@@ -55,12 +56,15 @@ var _tilemap: TileMap = null
 var _map_rect_tiles: Rect2i = Rect2i(0, 0, 100, 80)   # se sobrescribe con used_rect real
 var _map_origin_world: Vector2 = Vector2.ZERO   # top-left del mapa en world coords
 var _map: Dictionary = {}
+var _image_map_size: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	# Mapa elegido en map_select: Pantano/Desierto son el mismo mapa
 	# pintado con el tileset recoloreado (mismas colisiones).
 	_map = GameState.map_data()
-	if _map["scene"] != "res://scenes/Grass1.tscn":
+	if _map.get("image", "") != "":
+		_setup_image_map(_map["image"], float(_map.get("playable_top", 0.0)))
+	elif _map["scene"] != "res://scenes/Grass1.tscn":
 		# Reemplazo a mano: replace_by() movería el TileMap de pasto adentro
 		# del mapa nuevo y se seguiría dibujando encima.
 		var other: Node2D = load(_map["scene"]).instantiate()
@@ -76,20 +80,44 @@ func _ready() -> void:
 		tint.color = _map["tint"]
 		add_child(tint)
 	# Encontrar el TileMap dentro del Grass1
-	_tilemap = _find_tilemap(_grass)
-	if _tilemap:
-		_map_rect_tiles = _tilemap.get_used_rect()
-	# Centrar el mapa en (0,0) del mundo — se corre después del ready
-	# porque necesitamos _map_rect_tiles ya cargado.
-	var map_w := _map_rect_tiles.size.x * TILE_SIZE * MAP_SCALE
-	var map_h := _map_rect_tiles.size.y * TILE_SIZE * MAP_SCALE
-	_grass.position = Vector2(-map_w * 0.5, -map_h * 0.5)
-	_map_origin_world = _grass.position
+	var map_w: float
+	var map_h: float
+	if _image_map_size != Vector2.ZERO:
+		map_w = _image_map_size.x
+		map_h = _image_map_size.y
+	else:
+		_tilemap = _find_tilemap(_grass)
+		if _tilemap:
+			_map_rect_tiles = _tilemap.get_used_rect()
+		map_w = _map_rect_tiles.size.x * TILE_SIZE * MAP_SCALE
+		map_h = _map_rect_tiles.size.y * TILE_SIZE * MAP_SCALE
+		_grass.position = Vector2(-map_w * 0.5, -map_h * 0.5)
+		_map_origin_world = _grass.position
 	# Paredes invisibles en el perímetro del mapa
 	_build_borders(map_w, map_h)
 	# Diferido: los barriles/charcos van al padre (la escena), que
 	# todavía está armándose mientras corre este _ready.
 	_populate.call_deferred()
+
+func _setup_image_map(path: String, playable_top: float) -> void:
+	var texture: Texture2D = load(path)
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.scale = Vector2.ONE * IMAGE_MAP_SCALE
+	sprite.z_index = -20
+	var skipped_px: float = texture.get_height() * clampf(playable_top, 0.0, 0.8)
+	var playable_h: float = (texture.get_height() - skipped_px) * IMAGE_MAP_SCALE
+	# Centra la zona de arena; el cielo permanece visible, pero queda
+	# fuera del terreno caminable.
+	sprite.position.y = -skipped_px * IMAGE_MAP_SCALE * 0.5
+	remove_child(_grass)
+	_grass.queue_free()
+	add_child(sprite)
+	move_child(sprite, 0)
+	_grass = sprite
+	_image_map_size = Vector2(texture.get_width() * IMAGE_MAP_SCALE, playable_h)
+	_map_origin_world = -_image_map_size * 0.5
 
 # ── Objetos y peligros del mapa ──────────────────────────────────
 
@@ -176,6 +204,12 @@ func _find_tilemap(root: Node) -> TileMap:
 ## Consultada por main.gd para decidir si un monster puede spawnear en
 ## esta posición. Rechaza fuera del mapa y encima de agua/árboles.
 func is_spawnable_at(world_pos: Vector2) -> bool:
+	if _image_map_size != Vector2.ZERO:
+		var margin := 36.0
+		var local := world_pos - _map_origin_world
+		return local.x >= margin and local.y >= margin \
+			and local.x <= _image_map_size.x - margin \
+			and local.y <= _image_map_size.y - margin
 	var effective := TILE_SIZE * MAP_SCALE
 	var tx := int(floor((world_pos.x - _map_origin_world.x) / effective))
 	var ty := int(floor((world_pos.y - _map_origin_world.y) / effective))

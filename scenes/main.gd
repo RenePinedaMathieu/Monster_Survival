@@ -226,7 +226,10 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 			pool = pools[1]
 		else:
 			pool = pools[0]
-		m.set_kind(pool[randi() % pool.size()])
+		var kind_id: String = pool[randi() % pool.size()]
+		m.set_kind(kind_id)
+		m.ground_fire_attacks = GameState.selected_map == "desierto" \
+			and (kind_id.begins_with("imp") or kind_id.begins_with("beholder"))
 		m.max_hp *= _wave_hp_mult()
 		m.hp = m.max_hp
 		if is_elite:

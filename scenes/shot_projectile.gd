@@ -67,6 +67,11 @@ var _damage: float = DAMAGE
 ## de desaparecer, y con qué id reporta el daño (ver weapons.gd).
 var pierce: int = 0
 var source: String = "disparo"
+var effect: String = ""
+var effect_duration: float = 0.0
+var effect_power: float = 0.0
+var effect_radius: float = 0.0
+var effect_chance: float = 0.0
 var _hit_ids: Array = []
 var _age: float = 0.0
 var _charged: bool = false
@@ -76,6 +81,13 @@ var _sparkles: Array = []   # [{pos: Vector2, age: float}]
 
 func set_damage(d: float) -> void:
 	_damage = d
+
+func set_effect(kind: String, duration: float, power: float = 0.0, radius: float = 0.0, chance: float = 0.0) -> void:
+	effect = kind
+	effect_duration = duration
+	effect_power = power
+	effect_radius = radius
+	effect_chance = chance
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -153,7 +165,29 @@ func _on_body_entered(body: Node) -> void:
 			return
 		_hit_ids.append(body.get_instance_id())
 		body.take_damage(_damage, source)
+		_apply_effect(body)
 		if pierce > 0:
 			pierce -= 1
 			return
 		queue_free()
+
+func _apply_effect(body: Node) -> void:
+	match effect:
+		"fire":
+			if body.has_method("apply_burn"):
+				body.apply_burn(effect_power, effect_duration, "quemadura")
+		"electric":
+			if body.has_method("apply_stun"):
+				body.apply_stun(effect_duration)
+			var body_2d := body as Node2D
+			if body_2d == null:
+				return
+			for m in get_tree().get_nodes_in_group("monster"):
+				if m == body or not is_instance_valid(m):
+					continue
+				if body_2d.global_position.distance_to(m.global_position) <= effect_radius and randf() < effect_chance:
+					if m.has_method("apply_stun"):
+						m.apply_stun(effect_duration * 0.75)
+		"freeze":
+			if body.has_method("apply_freeze"):
+				body.apply_freeze(effect_duration)

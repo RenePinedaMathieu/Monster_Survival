@@ -16,7 +16,7 @@ extends RefCounted
 
 const ICON := "res://assets/ui/skill_icons/"
 
-const MAX_WEAPONS := 4
+const MAX_WEAPONS := 6
 const MAX_PASSIVES := 5
 const MAX_LEVEL := 5
 
@@ -44,6 +44,12 @@ const CARDS: Array = [
 	{"id": "aura",         "title": "AURA SAGRADA",       "desc": "Quema a los enemigos que se te acercan", "icon": ICON + "skill_23.png"},
 	{"id": "hacha",        "title": "HACHA GIRATORIA",    "desc": "Lanza hachas que van y vuelven atravesando todo", "icon": ICON + "skill_25.png"},
 	{"id": "rayo",         "title": "RAYO EN CADENA",     "desc": "Un rayo que salta entre enemigos cercanos", "icon": ICON + "skill_70.png"},
+	{"id": "laser_cadena", "title": "LASER EN CADENA",    "desc": "Un laser rebota hacia dos enemigos cercanos", "icon": ICON + "skill_19.png"},
+	{"id": "disparo_fuego", "title": "DISPARO DE FUEGO",  "desc": "Disparo que quema 3% de vida por segundo durante 3 s", "icon": ICON + "skill_22.png"},
+	{"id": "disparo_electrico", "title": "DISPARO ELECTRICO", "desc": "Paraliza al objetivo y puede aturdir enemigos cercanos", "icon": ICON + "skill_70.png"},
+	{"id": "disparo_congelante", "title": "DISPARO CONGELANTE", "desc": "Congela al enemigo golpeado", "icon": ICON + "skill_30.png"},
+	{"id": "escudo_fuerza", "title": "ESCUDO DE FUERZA",  "desc": "Se recarga cada pocos segundos y bloquea un disparo", "icon": ICON + "skill_76.png"},
+	{"id": "pulso",        "title": "PULSO",              "desc": "Una onda expansiva golpea enemigos alrededor", "icon": ICON + "skill_62.png"},
 	# ── Relleno cuando no queda nada por mejorar ──
 	{"id": "coins",        "title": "BOLSA DE MONEDAS",   "desc": "+25 monedas para la tienda",         "icon": "res://assets/ui/rpg/coin.png"},
 	{"id": "heal",         "title": "POCIÓN",             "desc": "Recuperas 30% de tu vida",           "icon": ICON + "skill_86.png"},
@@ -69,6 +75,12 @@ const WEAPONS: Dictionary = {
 	"aura":     {"name": "Aura sagrada", "unlock": "aura", "level": "aura", "extras": [], "shop": "aura"},
 	"hacha":    {"name": "Hacha giratoria", "unlock": "hacha", "level": "hacha", "extras": [], "shop": "hacha"},
 	"rayo":     {"name": "Rayo en cadena", "unlock": "rayo", "level": "rayo", "extras": [], "shop": "rayo"},
+	"laser_cadena": {"name": "Laser en cadena", "unlock": "laser_cadena", "level": "laser_cadena", "extras": [], "shop": ""},
+	"disparo_fuego": {"name": "Disparo de fuego", "unlock": "disparo_fuego", "level": "disparo_fuego", "extras": [], "shop": ""},
+	"disparo_electrico": {"name": "Disparo electrico", "unlock": "disparo_electrico", "level": "disparo_electrico", "extras": [], "shop": ""},
+	"disparo_congelante": {"name": "Disparo congelante", "unlock": "disparo_congelante", "level": "disparo_congelante", "extras": [], "shop": ""},
+	"escudo_fuerza": {"name": "Escudo de fuerza", "unlock": "escudo_fuerza", "level": "escudo_fuerza", "extras": [], "shop": ""},
+	"pulso": {"name": "Pulso", "unlock": "pulso", "level": "pulso", "extras": [], "shop": ""},
 }
 
 ## Arma al nivel máximo + pasiva compañera → evolución (al abrir un
@@ -92,7 +104,11 @@ const EVOLUTIONS: Dictionary = {
 
 ## Cartas de desbloqueo — si todavía no las tenés, se prioriza que
 ## aparezca al menos una entre las 3 opciones.
-const UNLOCK_IDS: Array = ["ranged_bonus", "flying_swords", "meteors", "aura", "hacha", "rayo"]
+const UNLOCK_IDS: Array = [
+	"ranged_bonus", "flying_swords", "meteors", "aura", "hacha", "rayo",
+	"laser_cadena", "disparo_fuego", "disparo_electrico", "disparo_congelante",
+	"escudo_fuerza", "pulso",
+]
 
 static func card(id: String) -> Dictionary:
 	for c in CARDS:

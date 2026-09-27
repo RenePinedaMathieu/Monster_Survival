@@ -99,10 +99,13 @@ func _map_card(id: String) -> Button:
 	box.add_theme_constant_override("separation", 8)
 	card.add_child(box)
 	var thumb := TextureRect.new()
-	var atlas := AtlasTexture.new()
-	atlas.atlas = load(data["tileset"])
-	atlas.region = PREVIEW_REGION
-	thumb.texture = atlas
+	if data.get("preview_full", false):
+		thumb.texture = load(data["tileset"])
+	else:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = load(data["tileset"])
+		atlas.region = PREVIEW_REGION
+		thumb.texture = atlas
 	thumb.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	thumb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	thumb.custom_minimum_size = Vector2(140, 92)

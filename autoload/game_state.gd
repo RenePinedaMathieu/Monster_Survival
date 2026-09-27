@@ -113,8 +113,9 @@ const MAPS: Dictionary = {
 		],
 	},
 	"desierto": {
-		"name": "Desierto", "desc": "Tormentas de arena, lizardmen que embisten y beholders.",
-		"mult": 1.7, "scene": "res://scenes/Desert1.tscn", "tileset": "res://assets/tiles/overworld_tileset_desert.png",
+		"name": "Desierto", "desc": "Una etapa hostil: tormentas de arena y enemigos que incendian el suelo.",
+		"mult": 1.7, "scene": "", "image": "res://assets/maps/desert_map.png",
+		"tileset": "res://assets/maps/desert_map.png", "preview_full": true, "playable_top": 0.20,
 		"tint": Color(1.0, 0.97, 0.9), "hazard": "sandstorm", "bosses": ["demon3", "demon3"],
 		"pools": [
 			["lizardman", "rat", "imp", "lizardman"],
@@ -123,7 +124,7 @@ const MAPS: Dictionary = {
 		],
 	},
 }
-const MAP_ORDER: Array = ["pradera", "pantano", "desierto"]
+const MAP_ORDER: Array = ["pradera", "desierto", "pantano"]
 
 ## Dificultad: multiplica vida/daño de los monstruos y las monedas.
 ## Difícil se abre al ganar una partida; Pesadilla, al ganar en Difícil.
@@ -214,15 +215,15 @@ const ACHIEVEMENTS: Array = [
 	{"id": "boss_1",      "name": "Matagigantes",     "desc": "Derrota a un jefe",                  "stat": "bosses",     "goal": 1,     "reward": {"character": "swordman"}},
 	{"id": "evo_1",       "name": "Evolución",        "desc": "Consigue tu primera evolución",      "stat": "evolutions", "goal": 1,     "reward": {"coins": 100}},
 	{"id": "weapons_4",   "name": "Arsenal",          "desc": "Ten 4 armas a la vez",               "stat": "max_weapons", "goal": 4,    "reward": {"coins": 100}},
-	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 200, "map": "pantano"}},
+	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 200, "map": "desierto"}},
 	{"id": "kills_1000",  "name": "Exterminador",     "desc": "Derrota 1.000 enemigos",             "stat": "kills",      "goal": 1000,  "reward": {"coins": 150}},
 	{"id": "elites_20",   "name": "Rompe-élites",     "desc": "Derrota 20 élites",                  "stat": "elites",     "goal": 20,    "reward": {"coins": 150}},
 	{"id": "chests_25",   "name": "Cazatesoros",      "desc": "Abre 25 cofres",                     "stat": "chests",     "goal": 25,    "reward": {"coins": 150}},
 	{"id": "level_20",    "name": "Veterano",         "desc": "Llega a nivel 20 en una partida",    "stat": "best_level", "goal": 20,    "reward": {"coins": 150}},
 	{"id": "no_hit_5",    "name": "Intocable",        "desc": "Llega a la oleada 5 sin recibir daño", "stat": "no_hit_wave", "goal": 5,  "reward": {"coins": 200}},
 	{"id": "boss_10",     "name": "Cazajefes",        "desc": "Derrota 10 jefes",                   "stat": "bosses",     "goal": 10,    "reward": {"coins": 300}},
-	{"id": "win_pantano", "name": "Señor del pantano", "desc": "Gana en el Pantano",                "stat": "wins_pantano", "goal": 1,   "reward": {"coins": 300, "map": "desierto"}},
-	{"id": "win_desierto", "name": "Rey del desierto", "desc": "Gana en el Desierto",               "stat": "wins_desierto", "goal": 1,  "reward": {"coins": 500}},
+	{"id": "win_pantano", "name": "Señor del pantano", "desc": "Gana en el Pantano",                "stat": "wins_pantano", "goal": 1,   "reward": {"coins": 300}},
+	{"id": "win_desierto", "name": "Rey del desierto", "desc": "Gana en el Desierto",               "stat": "wins_desierto", "goal": 1,  "reward": {"coins": 500, "map": "pantano"}},
 	{"id": "hard_win",    "name": "Pesadilla",        "desc": "Gana en dificultad Difícil",         "stat": "hard_wins",  "goal": 1,     "reward": {"coins": 400}},
 	{"id": "wave_30",     "name": "Infinito",         "desc": "Llega a la oleada 30 en modo infinito", "stat": "best_wave", "goal": 30,  "reward": {"coins": 400}},
 	{"id": "evo_7",       "name": "Coleccionista",    "desc": "Descubre las 7 evoluciones",         "stat": "evolutions", "goal": 7,     "reward": {"character": "chicken"}},
@@ -458,6 +459,10 @@ func _load() -> void:
 		if not cfg.has_section_key("progress", "unlocked_characters") and (best_wave > 0 or total_currency > 0):
 			unlocked_characters = ["main_char1", "main_char2", "main_char2_female", "swordman"]
 		unlocked_maps = cfg.get_value("progress", "unlocked_maps", DEFAULT_MAPS.duplicate())
+		# Migracion: Desierto ahora es la segunda etapa y corresponde a
+		# quienes ya obtuvieron el logro de una victoria.
+		if "win_1" in achievements_unlocked and not ("desierto" in unlocked_maps):
+			unlocked_maps.append("desierto")
 		player_name = cfg.get_value("progress", "player_name", "")
 		daily_best = cfg.get_value("progress", "daily_best", {})
 		# Partidas guardadas de antes de los logros: si ya tenías el récord

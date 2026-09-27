@@ -52,5 +52,8 @@ func _draw() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player") and body.has_method("take_damage"):
+		if body.has_method("block_projectile") and body.block_projectile(global_position):
+			queue_free()
+			return
 		body.take_damage(_damage)
 		queue_free()

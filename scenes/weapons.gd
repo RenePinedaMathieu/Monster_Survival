@@ -21,6 +21,13 @@ const SOURCES: Dictionary = {
 	"aura":     {"name": "Aura sagrada",        "icon": SKILL + "skill_23.png"},
 	"hacha":    {"name": "Hacha giratoria",     "icon": SKILL + "skill_25.png"},
 	"rayo":     {"name": "Rayo en cadena",      "icon": SKILL + "skill_70.png"},
+	"laser_cadena": {"name": "Laser en cadena", "icon": SKILL + "skill_19.png"},
+	"disparo_fuego": {"name": "Disparo de fuego", "icon": SKILL + "skill_22.png"},
+	"quemadura": {"name": "Quemadura", "icon": SKILL + "skill_22.png"},
+	"disparo_electrico": {"name": "Disparo electrico", "icon": SKILL + "skill_70.png"},
+	"disparo_congelante": {"name": "Disparo congelante", "icon": SKILL + "skill_30.png"},
+	"escudo_fuerza": {"name": "Escudo de fuerza", "icon": SKILL + "skill_76.png"},
+	"pulso": {"name": "Pulso", "icon": SKILL + "skill_62.png"},
 	# Evoluciones (upgrades.gd EVOLUTIONS) — el arma evolucionada reporta
 	# su daño con el id de la evolución.
 	"lluvia_flechas":     {"name": "Lluvia de flechas",   "icon": SKILL + "skill_43.png"},

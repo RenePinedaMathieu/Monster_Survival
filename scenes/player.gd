@@ -56,6 +56,10 @@ const Upgrades := preload("res://scenes/upgrades.gd")
 const AURA_SCRIPT := preload("res://scenes/aura_weapon.gd")
 const AXE_SCRIPT := preload("res://scenes/axe_weapon.gd")
 const LIGHTNING_SCRIPT := preload("res://scenes/lightning_weapon.gd")
+const CHAIN_LASER_SCRIPT := preload("res://scenes/chain_laser_weapon.gd")
+const ELEMENTAL_SHOT_SCRIPT := preload("res://scenes/elemental_shot_weapon.gd")
+const FORCE_SHIELD_SCRIPT := preload("res://scenes/force_shield_weapon.gd")
+const PULSE_SCRIPT := preload("res://scenes/pulse_weapon.gd")
 
 const BASE_SCALE := 0.5
 ## 220 → 175 → 125. A 175 se cruzaba la pantalla (335 unidades de alto
@@ -231,6 +235,12 @@ var _companion_id: String = ""
 var _aura = null
 var _axes = null
 var _lightning = null
+var _chain_laser = null
+var _fire_shot_weapon = null
+var _electric_shot = null
+var _freeze_shot = null
+var _force_shield = null
+var _pulse_weapon = null
 
 ## Build de la run (ver upgrades.gd): nivel de cada arma y pasiva que
 ## se tiene, y evoluciones conseguidas. Las casillas (máximo de armas/
@@ -251,12 +261,33 @@ var _revives_left: int = 0
 ## está parado y tormenta de arena del desierto — ambos frenan.
 var _mud_zones: int = 0
 var in_sandstorm: bool = false
+var _burn_t: float = 0.0
+var _burn_dps_frac: float = 0.0
+var _burn_tick: float = 0.0
 
 func enter_mud() -> void:
 	_mud_zones += 1
 
 func exit_mud() -> void:
 	_mud_zones = maxi(0, _mud_zones - 1)
+
+func apply_burn(dps_frac: float, duration: float) -> void:
+	_burn_dps_frac = maxf(_burn_dps_frac, dps_frac)
+	_burn_t = maxf(_burn_t, duration)
+	queue_redraw()
+
+func _tick_burn(delta: float) -> void:
+	if _burn_t <= 0.0:
+		return
+	_burn_t = maxf(0.0, _burn_t - delta)
+	_burn_tick += delta
+	while _burn_tick >= 0.5:
+		_burn_tick -= 0.5
+		take_damage(max_hp * _burn_dps_frac * 0.5)
+	if _burn_t <= 0.0:
+		_burn_dps_frac = 0.0
+		_burn_tick = 0.0
+	queue_redraw()
 
 func _terrain_mult() -> float:
 	var m: float = 1.0
@@ -618,6 +649,9 @@ func _set_zoom(value: float) -> void:
 	$Camera2D.zoom = Vector2(clamped, clamped)
 
 func _physics_process(delta: float) -> void:
+	_tick_burn(delta)
+	if hp <= 0.0:
+		return
 	# Movement — teclado tiene prioridad; si no hay tecla, usamos touch.
 	var kb := _keyboard_input()
 	var input: Vector2 = kb if kb != Vector2.ZERO else _touch_input
@@ -974,6 +1008,18 @@ func apply_upgrade(id: String) -> void:
 			_axes = _level_weapon(_axes, AXE_SCRIPT, "hacha", false)
 		"rayo":
 			_lightning = _level_weapon(_lightning, LIGHTNING_SCRIPT, "rayo", false)
+		"laser_cadena":
+			_chain_laser = _level_weapon(_chain_laser, CHAIN_LASER_SCRIPT, "laser_cadena", false)
+		"disparo_fuego":
+			_fire_shot_weapon = _level_elemental_shot(_fire_shot_weapon, "disparo_fuego", "fire")
+		"disparo_electrico":
+			_electric_shot = _level_elemental_shot(_electric_shot, "disparo_electrico", "electric")
+		"disparo_congelante":
+			_freeze_shot = _level_elemental_shot(_freeze_shot, "disparo_congelante", "freeze")
+		"escudo_fuerza":
+			_force_shield = _level_weapon(_force_shield, FORCE_SHIELD_SCRIPT, "escudo_fuerza", true)
+		"pulso":
+			_pulse_weapon = _level_weapon(_pulse_weapon, PULSE_SCRIPT, "pulso", false)
 		# Relleno cuando ya no queda nada por mejorar.
 		"coins":
 			GameState.add_run_currency(25)
@@ -998,11 +1044,21 @@ func _level_weapon(node, script: Script, id: String, attach_to_player: bool):
 	node.set_level(lvl)
 	return node
 
+func _level_elemental_shot(node, id: String, element: String):
+	node = _level_weapon(node, ELEMENTAL_SHOT_SCRIPT, id, false)
+	node.element = element
+	return node
+
 # ── HP ──────────────────────────────────────────────────────────
 
 ## La armadura comprada en la tienda da una barra de defensa que
 ## absorbe daño ANTES que la vida (no regenera durante la run — es
 ## efectivamente HP extra "gratis" cada partida).
+func block_projectile(from_pos: Vector2) -> bool:
+	if _force_shield != null and is_instance_valid(_force_shield) and _force_shield.has_method("block_projectile"):
+		return _force_shield.block_projectile(from_pos)
+	return false
+
 func take_damage(amount: float) -> void:
 	if hp <= 0.0: return
 	# Dash/voltereta/escudo: invulnerable mientras dura.
@@ -1218,14 +1274,18 @@ func _spawn_afterimage() -> void:
 
 ## Burbuja del escudo divino (GAROTH) mientras dura.
 func _draw() -> void:
-	if _shield_fx_t <= 0.0:
-		return
-	var a: float = clampf(1.0 - _shield_fx_t / 2.0, 0.0, 1.0)
-	var ring: float = minf(1.0, _shield_fx_t / 0.25) * SHIELD_RADIUS
-	if _shield_fx_t < 0.3:
-		draw_arc(Vector2.ZERO, ring, 0.0, TAU, 40, Color(1.0, 0.95, 0.6, 1.0 - _shield_fx_t / 0.3), 3.0, false)
-	draw_circle(Vector2(0, -8), 26.0, Color(0.6, 0.85, 1.0, 0.18 * a + 0.05))
-	draw_arc(Vector2(0, -8), 26.0, 0.0, TAU, 32, Color(0.75, 0.92, 1.0, 0.6 * a + 0.2), 2.0, false)
+	if _shield_fx_t > 0.0:
+		var a: float = clampf(1.0 - _shield_fx_t / 2.0, 0.0, 1.0)
+		var ring: float = minf(1.0, _shield_fx_t / 0.25) * SHIELD_RADIUS
+		if _shield_fx_t < 0.3:
+			draw_arc(Vector2.ZERO, ring, 0.0, TAU, 40, Color(1.0, 0.95, 0.6, 1.0 - _shield_fx_t / 0.3), 3.0, false)
+		draw_circle(Vector2(0, -8), 26.0, Color(0.6, 0.85, 1.0, 0.18 * a + 0.05))
+		draw_arc(Vector2(0, -8), 26.0, 0.0, TAU, 32, Color(0.75, 0.92, 1.0, 0.6 * a + 0.2), 2.0, false)
+	if _burn_t > 0.0:
+		var flicker: float = 0.65 + sin(Time.get_ticks_msec() * 0.018) * 0.2
+		draw_arc(Vector2(0, 8), 17.0, 0.0, TAU, 24, Color(1.0, 0.25, 0.04, flicker), 3.0, false)
+		draw_circle(Vector2(-8, -5), 3.5, Color(1.0, 0.55, 0.08, flicker))
+		draw_circle(Vector2(8, -10), 3.0, Color(1.0, 0.8, 0.2, flicker))
 
 # ── Build: casillas, niveles y evoluciones (ver upgrades.gd) ────────
 
