@@ -6,16 +6,20 @@ extends RefCounted
 ## Se usa vía preload, igual que ui_theme.gd.
 
 const SKILL := "res://assets/ui/skill_icons/"
+const COMP := "res://assets/companions/"
 
 const SOURCES: Dictionary = {
 	"ataque":   {"name": "Ataque básico",       "icon": "res://assets/ui/weapon_icons/icon_15.png"},
 	"disparo":  {"name": "Disparo a distancia", "icon": SKILL + "skill_55.png"},
 	"espadas":  {"name": "Espadas voladoras",   "icon": SKILL + "skill_5.png"},
 	"meteoros": {"name": "Lluvia de meteoros",  "icon": SKILL + "skill_22.png"},
-	"pollo":    {"name": "Pollo",               "icon": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
-		"region": Rect2(6, 9, 20, 20)},
-	"huevos":   {"name": "Huevos",              "icon": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png",
-		"region": Rect2(6, 9, 20, 20)},
+	# Acompañantes (companion.gd): primer frame del idle de frente.
+	"pollo":    {"name": "Gallina",             "icon": COMP + "chicken/idle_front.png", "region": Rect2(0, 0, 18, 18)},
+	"toro":     {"name": "Toro",                "icon": COMP + "bull/idle_front.png", "region": Rect2(0, 0, 44, 34)},
+	"caballo":  {"name": "Caballo",             "icon": COMP + "horse/idle_front.png", "region": Rect2(0, 0, 44, 36)},
+	"cabra":    {"name": "Cabra",               "icon": COMP + "goat/idle_front.png", "region": Rect2(0, 0, 28, 28)},
+	"ganso":    {"name": "Ganso",               "icon": COMP + "goose/idle_front.png", "region": Rect2(0, 0, 20, 28)},
+	"veneno":   {"name": "Veneno",              "icon": SKILL + "skill_33.png"},
 	"habilidad": {"name": "Habilidad",          "icon": SKILL + "skill_62.png"},
 	"bomba":    {"name": "Bomba",               "icon": SKILL + "skill_98.png"},
 	"aura":     {"name": "Aura sagrada",        "icon": SKILL + "skill_23.png"},

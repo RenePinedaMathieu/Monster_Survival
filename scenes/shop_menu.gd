@@ -7,8 +7,9 @@ extends Control
 ##                 al arrancar cada run.
 ##   PODERES       compra única que habilita que la carta del poder
 ##                 salga en los level-ups (GameState.SHOP_POWERS).
-##   ACOMPAÑANTES  mascotas que te siguen y atacan; se compran una vez
-##                 y se lleva una equipada (GameState.COMPANIONS).
+##   ACOMPAÑANTES  animales que te siguen y ayudan (GameState.COMPANIONS):
+##                 se compran y se mejoran hasta el nivel 5, y las crías
+##                 crecen. Se llevan tantos como espacios haya.
 ##
 ## Las tarjetas se arman por código desde los dicts de GameState, así
 ## sumar un ítem es tocar game_state.gd + su ícono acá. Estilo del pack
@@ -23,7 +24,7 @@ enum Tab { UPGRADES, POWERS, COMPANIONS }
 const TAB_HINTS: Dictionary = {
 	Tab.UPGRADES: "Árbol de habilidades permanentes: cada rama se abre mejorando el nodo anterior.",
 	Tab.POWERS: "Compra única: el poder empieza a salir como carta al subir de nivel durante las oleadas.",
-	Tab.COMPANIONS: "Te acompañan en cada partida y atacan solos. Podés llevar uno a la vez.",
+	Tab.COMPANIONS: "Te acompañan en cada partida. Mejóralos para que crezcan y se vuelvan más fuertes.",
 }
 
 ## Mismos íconos que las cartas de level-up que desbloquean.
@@ -34,11 +35,7 @@ const POWER_ICONS: Dictionary = {
 	"hacha": "res://assets/ui/skill_icons/skill_25.png",
 	"rayo": "res://assets/ui/skill_icons/skill_70.png",
 }
-## Primer frame del idle de frente, recortado al bicho (el frame de
-## 32x32 trae mucho aire alrededor).
-const COMPANION_ICONS: Dictionary = {
-	"chicken": {"sheet": "res://assets/sprites/Chicken/Idle/Chicken_front_Idle.png", "region": Rect2(6, 9, 20, 20)},
-}
+const CompanionScript := preload("res://scenes/companion.gd")
 
 @onready var _background: TextureRect = $Background
 @onready var _window: Panel = $Window
@@ -85,7 +82,8 @@ func _apply_layout(compact: bool) -> void:
 	_compact = compact
 	var vp := Screen.view_size()
 	var w: float = minf(1120.0, vp.x - 16.0)
-	var h: float = minf(680.0, vp.y - 24.0)
+	# En vertical sobra altura: más tarjetas a la vista.
+	var h: float = minf(1000.0 if vp.y > vp.x * 1.2 else 680.0, vp.y - 24.0)
 	_window.offset_left = -w / 2.0
 	_window.offset_right = w / 2.0
 	_window.offset_top = -h / 2.0
@@ -177,10 +175,13 @@ func _skill_node(id: String, color: Color) -> Control:
 	var item: Dictionary = GameState.SKILL_TREE[id]
 	var level: int = GameState.get_shop_level(id)
 	var available: bool = GameState.is_skill_available(id)
+	var legend: String = item.get("legend", "")
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", RpgTheme.slot_box(false, 10.0))
 	if not available:
 		card.modulate = Color(0.75, 0.72, 0.7)
+	elif legend != "":
+		card.self_modulate = Color(1.15, 1.02, 0.7)   # legendaria: tinte dorado
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 6)
 	card.add_child(vbox)
@@ -203,8 +204,10 @@ func _skill_node(id: String, color: Color) -> Control:
 	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(info)
 	var name_label := Label.new()
-	name_label.text = item["name"]
+	name_label.text = item["name"] + ("  (LEGENDARIA)" if legend != "" else "")
 	RpgTheme.style_ink_label(name_label, 16, true)
+	if legend != "":
+		name_label.add_theme_color_override("font_color", Color("9a6a10"))
 	info.add_child(name_label)
 	var desc := Label.new()
 	desc.text = item["desc"]
@@ -234,9 +237,12 @@ func _skill_node(id: String, color: Color) -> Control:
 		_set_plain(button, "MÁXIMO", false)
 	elif not available:
 		_set_plain(button, "BLOQUEADO", false)
-		var req: Dictionary = GameState.SKILL_TREE[item["requires"]]
 		var req_label := Label.new()
-		req_label.text = "Requiere %s nivel %d" % [req["name"], item["req_level"]]
+		if legend != "":
+			req_label.text = "Supera la oleada %d en %s" % [GameState.CHALLENGE_WAVE, GameState.MAP_NAMES.get(legend, legend)]
+		else:
+			var req: Dictionary = GameState.SKILL_TREE[item["requires"]]
+			req_label.text = "Requiere %s nivel %d" % [req["name"], item["req_level"]]
 		RpgTheme.style_ink_label(req_label, 12, true)
 		info.add_child(req_label)
 	else:
@@ -258,26 +264,73 @@ func _build_powers() -> void:
 			_set_price(button, power["cost"], GameState.total_currency >= power["cost"])
 		button.pressed.connect(_on_buy_power.bind(id))
 
+## Una tarjeta por línea: forma actual, nivel, qué hace ahora y en el
+## próximo nivel, cuándo crece; botón de comprar/mejorar y de equipar.
 func _build_companions() -> void:
+	var slots := GameState.companion_slots()
+	var names: Array = []
+	for id in GameState.active_companions():
+		names.append(GameState.companion_stage(id)[2])
+	_hint_label.text = TAB_HINTS[Tab.COMPANIONS] + "  Llevas %d de %d: %s." % [names.size(), slots,
+		", ".join(names) if not names.is_empty() else "ninguno"]
 	for id in GameState.COMPANIONS:
 		var comp: Dictionary = GameState.COMPANIONS[id]
-		var icon_data: Dictionary = COMPANION_ICONS[id]
+		var lvl: int = GameState.companion_level(id)
+		var owned: bool = lvl > 0
+		var stage: Array = GameState.companion_stage(id)
+		var form: String = stage[1]
 		var atlas := AtlasTexture.new()
-		atlas.atlas = load(icon_data["sheet"])
-		atlas.region = icon_data["region"]
-		var card := _make_card(_texture_icon(atlas, false), comp["name"], comp["desc"])
-		var owned: bool = GameState.owns_companion(id)
-		var equipped: bool = GameState.equipped_companion == id
+		atlas.atlas = load("res://assets/companions/%s/idle_front.png" % form)
+		var fsize: Vector2 = CompanionScript.SPRITES[form]["frame"]
+		atlas.region = Rect2(Vector2.ZERO, fsize)
+		var title: String = stage[2] + ("  ·  Nv %d/%d" % [lvl, GameState.COMPANION_MAX_LEVEL] if owned else "")
+		var lines: Array = [comp["role"] + "."]
+		lines.append(("Ahora: " if owned else "Nivel 1: ") + CompanionScript.describe(id, maxi(1, lvl)))
+		if owned and lvl < GameState.COMPANION_MAX_LEVEL:
+			lines.append("Próximo: " + CompanionScript.describe(id, lvl + 1))
+		var next_stage: Array = GameState.companion_next_stage(id)
+		if not next_stage.is_empty():
+			lines.append("Crece a %s en el nivel %d." % [next_stage[2], next_stage[0]])
+		var card := _make_card(_texture_icon(atlas, false), title, "
+".join(lines))
+		if not owned:
+			card["card"].modulate = Color(0.82, 0.8, 0.78)
+		var bar := ProgressBar.new()
+		bar.max_value = GameState.COMPANION_MAX_LEVEL
+		bar.value = lvl
+		bar.show_percentage = false
+		bar.custom_minimum_size = Vector2(70, 12)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		RpgTheme.style_level_bar(bar, Color("44a13b"))
+		card["status"].add_child(bar)
+		var equipped: bool = id in GameState.active_companions()
+		if owned:
+			card["status"].add_child(_status_label("EQUIPADO" if equipped else "EN RESERVA", equipped))
 		var button: Button = card["button"]
-		if equipped:
-			card["status"].add_child(_status_label("EQUIPADO", true))
-			_set_plain(button, "QUITAR", true)
-		elif owned:
-			card["status"].add_child(_status_label("EN RESERVA", false))
-			_set_plain(button, "EQUIPAR", true)
+		var cost: int = GameState.companion_next_cost(id)
+		if cost < 0:
+			_set_plain(button, "MÁXIMO", false)
 		else:
-			_set_price(button, comp["cost"], GameState.total_currency >= comp["cost"])
-		button.pressed.connect(_on_companion_pressed.bind(id))
+			_set_price(button, cost, GameState.total_currency >= cost)
+			if owned:
+				button.text = "MEJORAR %d" % cost
+		button.pressed.connect(_on_companion_upgrade.bind(id))
+		# Segundo botón (equipar) debajo del de comprar/mejorar.
+		var equip := Button.new()
+		equip.custom_minimum_size = Vector2(button.custom_minimum_size.x, 38)
+		RpgTheme.style_button(equip, 14)
+		_set_plain(equip, "QUITAR" if equipped else "EQUIPAR", owned)
+		equip.visible = owned
+		equip.pressed.connect(_on_companion_equip.bind(id))
+		var holder := button.get_parent()
+		var stack := VBoxContainer.new()
+		stack.add_theme_constant_override("separation", 6)
+		stack.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		holder.add_child(stack)
+		holder.move_child(stack, button.get_index())
+		holder.remove_child(button)
+		stack.add_child(button)
+		stack.add_child(equip)
 
 # ── Piezas de tarjeta ────────────────────────────────────────────
 
@@ -340,7 +393,7 @@ func _make_card(icon: Control, title: String, desc: String) -> Dictionary:
 		info.add_child(status)
 		hbox.add_child(button)
 
-	return {"status": status, "button": button}
+	return {"status": status, "button": button, "card": card}
 
 ## smooth: los skill_icons son ilustraciones de 256px achicadas — con
 ## filtro nearest (el default del proyecto) quedan con serrucho.
@@ -386,12 +439,14 @@ func _on_buy_power(id: String) -> void:
 		Audio.play_sfx("card_selected")
 		_rebuild()
 
-func _on_companion_pressed(id: String) -> void:
-	if GameState.owns_companion(id):
-		GameState.toggle_companion(id)
-		Audio.play_sfx("ui_click")
-	elif GameState.buy_companion(id):
+func _on_companion_upgrade(id: String) -> void:
+	if GameState.upgrade_companion(id):
 		Audio.play_sfx("card_selected")
+		_rebuild()
+
+func _on_companion_equip(id: String) -> void:
+	GameState.toggle_companion(id)
+	Audio.play_sfx("ui_click")
 	_rebuild()
 
 func _on_back_pressed() -> void:
