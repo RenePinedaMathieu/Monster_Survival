@@ -530,6 +530,8 @@ func _physics_process(delta: float) -> void:
 		_update_animation(delta)
 		return
 
+	# Frenado y veneno corren también mientras está aturdido/congelado.
+	_tick_status(delta)
 	var status_locked := _tick_status_effects(delta)
 	if _dead:
 		_update_animation(delta)
@@ -548,7 +550,6 @@ func _physics_process(delta: float) -> void:
 	# un jefe pegado al player vive en windup→strike→cooldown y pasaba
 	# por chase un solo frame por ciclo — nunca llegaba a atacar.
 	_behavior_cd -= delta
-	_tick_status(delta)
 
 	# Empujón (escudo divino de GAROTH): mientras dura no persigue.
 	if _knock_t > 0.0:
