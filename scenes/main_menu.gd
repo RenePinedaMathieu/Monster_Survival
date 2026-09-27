@@ -9,6 +9,7 @@ extends Control
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const BuildInfo := preload("res://scenes/build_info.gd")
+const DAILY_TOP_SCRIPT := preload("res://scenes/daily_top_panel.gd")
 
 const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
@@ -47,6 +48,7 @@ func _ready() -> void:
 	RpgTheme.style_light_label(_record_label, 16)
 	_record_label.modulate.a = 0.9
 	_add_version_label()
+	_add_daily_top()
 	if GameState.best_wave > 0:
 		var mins := int(GameState.best_time) / 60
 		var secs := int(GameState.best_time) % 60
@@ -116,6 +118,8 @@ func _apply_layout(_compact: bool) -> void:
 	_options_panel.offset_right = ow / 2.0
 	var tall: bool = vp.y > vp.x * 1.2
 	var short: bool = vp.y < 640.0
+	if _daily_top != null:
+		_daily_top.visible = not tall
 	var bw: float = 240.0 if tall else (190.0 if short else 220.0)
 	var bh: float = 48.0 if not short else 42.0
 	_grid.columns = 1 if tall else 2
@@ -139,6 +143,24 @@ func _apply_layout(_compact: bool) -> void:
 		_background.offset_top = 0.0
 		_background.offset_right = 0.0
 		_background.offset_bottom = 0.0
+
+## "TOP DE HOY" del reto diario, bajo el botón RETO DIARIO (arriba a la
+## derecha). Clic: abre el ranking. En vertical no entra junto al logo.
+var _daily_top: PanelContainer
+
+func _add_daily_top() -> void:
+	_daily_top = PanelContainer.new()
+	_daily_top.set_script(DAILY_TOP_SCRIPT)
+	_daily_top.anchor_left = 1.0
+	_daily_top.anchor_right = 1.0
+	_daily_top.offset_right = -16.0
+	_daily_top.offset_left = -16.0 - DAILY_TOP_SCRIPT.WIDTH
+	_daily_top.offset_top = 76.0
+	_daily_top.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	add_child(_daily_top)
+	# Debajo del panel de opciones (que se abre encima de todo).
+	move_child(_daily_top, _options_panel.get_index())
+	_daily_top.open_ranking.connect(func(): get_tree().change_scene_to_file(RANKING_SCENE))
 
 ## Versión chica abajo a la izquierda (ver build_info.gd).
 func _add_version_label() -> void:
