@@ -33,8 +33,8 @@ enum Cat { HEROES, MONSTERS, COMPANIONS, WEAPONS, SKILLS, ITEMS, EFFECTS, ICONS,
 const CAT_NAMES := ["HÉROES", "MONSTRUOS", "ACOMPAÑANTES", "ARMAS Y CARTAS", "HABILIDADES Y TIENDA", "OBJETOS", "EFECTOS", "ÍCONOS", "MAPAS"]
 const BACKGROUNDS := [Color("1c1b22"), Color("5b7a3a"), Color("d9b36b"), Color("e4d3a0")]
 const BG_NAMES := ["OSCURO", "PASTO", "ARENA", "PERGAMINO"]
-const ANIMS := ["idle", "run", "attack", "death"]
-const ANIM_NAMES := ["QUIETO", "CAMINA", "ATACA", "MUERE"]
+const ANIMS := ["idle", "run", "attack", "hurt", "death"]
+const ANIM_NAMES := ["QUIETO", "CAMINA", "ATACA", "GOLPE", "MUERE"]
 const DIRS := ["front", "back", "left", "right"]
 const DIR_NAMES := ["FRENTE", "ESPALDA", "IZQUIERDA", "DERECHA"]
 
@@ -202,7 +202,7 @@ func _rebuild() -> void:
 	_anim_bar.visible = animated
 	for i in range(_anim_buttons.size()):
 		RpgTheme.style_tab(_anim_buttons[i], i == _anim, 13)
-		_anim_buttons[i].visible = _cat == Cat.MONSTERS or i < 3
+		_anim_buttons[i].visible = _cat != Cat.COMPANIONS or i < 2
 	for i in range(_dir_buttons.size()):
 		RpgTheme.style_tab(_dir_buttons[i], i == _dir, 13)
 	var card_w: float = _card_width()
@@ -314,65 +314,66 @@ static func _slice(path: String, frame: Vector2, max_frames: int = 64) -> Array:
 # ── HÉROES ───────────────────────────────────────────────────────
 
 func _build_heroes() -> void:
-	_hint.text = "Escala real del juego. GAROTH tiene 6 formas (evoluciona cada 5 niveles). KAY y LINA no tienen animación de ataque; SIRA no tiene animación quieta."
+	_hint.text = "Escala real del juego (x1, como GAROTH). GAROTH tiene 6 formas y todas sus animaciones. AXEL no trae golpe ni muerte; KAY y LINA no traen ataque ni golpe."
 	var anim_name: String = ANIMS[_anim]
+	var label: String = ANIM_NAMES[_anim]
 	var skills: Dictionary = Player.ACTIVE_SKILLS
 	# GAROTH, sus 6 formas.
 	var sw_dir: String = ["front", "back", "side_left", "side_right"][_dir]
 	for tier in range(1, Player.SWORDMAN_MAX_TIER + 1):
-		var anim_folder: String = {"idle": "Idle", "run": "Run", "attack": "Attack"}[anim_name]
+		var anim_folder: String = {"idle": "Idle", "run": "Run", "attack": "Attack", "hurt": "Hurt", "death": "Death"}[anim_name]
 		var path := _swordman_path(tier, anim_folder, sw_dir)
-		var count: int = {"idle": Player.SWORDMAN_IDLE_FRAMES, "run": Player.SWORDMAN_RUN_FRAMES, "attack": Player.SWORDMAN_ATTACK_FRAMES}[anim_name]
-		var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE, count)
-		_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "GAROTH · forma %d" % tier, "SPRITE", COLOR_SPRITE,
+		var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
+		_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "GAROTH · forma %d" % tier, "ESTÁNDAR", COLOR_SPRITE,
 			[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
 			"Habilidad: " + skills["swordman"]["name"]])
-	# AXEL.
+	# AXEL (el pack no trae golpe ni muerte).
 	var ax_dir: String = Player.AXEL_DIRS[_dir]
-	var ax_folder: String = {"idle": "IDLE/idle_%s.png", "run": "RUN/run_%s.png", "attack": "ATTACK 1/attack1_%s.png"}[anim_name]
-	var ax_path: String = Player.AXEL_BASE_PATH + ax_folder % ax_dir
-	var ax_frames := _slice(ax_path, Player.AXEL_FRAME_SIZE, Player.AXEL_FRAME_COUNT)
-	_card(_anim_preview(ax_frames, Player.AXEL_SCALE), "AXEL", "SPRITE", COLOR_SPRITE,
-		[_short(ax_path), "%d cuadros de %dx%d" % [ax_frames.size(), Player.AXEL_FRAME_SIZE.x, Player.AXEL_FRAME_SIZE.y],
-		"Habilidad: " + skills["main_char1"]["name"]])
+	var ax_folder: String = {"idle": "IDLE/idle_%s.png", "run": "RUN/run_%s.png", "attack": "ATTACK 1/attack1_%s.png"}.get(anim_name, "")
+	if ax_folder == "":
+		_card(null, "AXEL", "SIN animación '%s'" % label, COLOR_SHARED, ["El pack no la trae: hay que dibujarla"])
+	else:
+		var ax_path: String = Player.AXEL_BASE_PATH + ax_folder % ax_dir
+		var ax_frames := _slice(ax_path, Player.AXEL_FRAME_SIZE, Player.AXEL_FRAME_COUNT)
+		_card(_anim_preview(ax_frames, Player.AXEL_SCALE), "AXEL", "SPRITE", COLOR_SPRITE,
+			[_short(ax_path), "%d cuadros de %dx%d" % [ax_frames.size(), Player.AXEL_FRAME_SIZE.x, Player.AXEL_FRAME_SIZE.y],
+			"Habilidad: " + skills["main_char1"]["name"]])
 	# KAY y LINA (6 direcciones: sin izquierda/derecha puras).
 	for id in ["main_char2", "main_char2_female"]:
 		var data: Dictionary = Player.RANGED_SKINS[id]
 		var key: String = ["down", "up", "left_down", "right_down"][_dir]
-		var files: Dictionary = data["run_files"] if anim_name == "run" else data["idle_files"]
+		var files: Dictionary = {"idle": data["idle_files"], "run": data["run_files"], "death": data.get("death_files", {})}.get(anim_name, {})
+		if files.is_empty():
+			_card(null, GameState.CHARACTER_NAMES.get(id, id), "SIN animación '%s'" % label, COLOR_SHARED,
+				["El pack no la trae" + (" (dispara quieto)" if anim_name == "attack" else "")])
+			continue
 		var path: String = data["base_path"] + files[key]
 		var frames := _slice(path, Player.RANGED_FRAME_SIZE, Player.RANGED_FRAME_COUNT)
-		var lines: Array = [_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.RANGED_FRAME_SIZE.x, Player.RANGED_FRAME_SIZE.y],
-			"Habilidad: " + skills[id]["name"]]
-		if anim_name == "attack":
-			lines.insert(0, "SIN animación de ataque (dispara quieto)")
-		_card(_anim_preview(frames, Player.RANGED_SCALE), GameState.CHARACTER_NAMES.get(id, id), "SPRITE", COLOR_SPRITE, lines)
-	# EDRIC y SIRA (8 direcciones, un PNG por cuadro) y el lobo de SIRA.
+		_card(_anim_preview(frames, Player.RANGED_SCALE), GameState.CHARACTER_NAMES.get(id, id), "SPRITE", COLOR_SPRITE,
+			[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.RANGED_FRAME_SIZE.x, Player.RANGED_FRAME_SIZE.y],
+			"Habilidad: " + skills[id]["name"]])
+	# Retratos de la selección de personaje.
+	for c in CharSelect.CHARACTERS:
+		_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"], "ILUSTRACIÓN", COLOR_ICON, [_short(c["portrait"])])
+	# EDRIC, SIRA y el lobo: arte anterior, fuera del juego hasta tener
+	# sprites al estilo de GAROTH (se muestran a su escala de antes, x0.5).
 	var px_dir: String = ["south", "north", "west", "east"][_dir]
 	for id in Player.PIXEL_SKINS:
 		var data: Dictionary = Player.PIXEL_SKINS[id]
 		var pattern: String = data.get(anim_name, "")
-		var lines: Array = []
+		if anim_name == "death":
+			pattern = "animations/death/%s/frame_%03d.png"
 		var frames: Array = []
-		if pattern == "":
+		if pattern == "" and anim_name == "idle":
 			frames = [load(data["base"] + data["rest"] % px_dir)]
-			lines.append("SIN animación quieto: usa la pose de rotations/")
-			pattern = data["rest"]
-		else:
+		elif pattern != "":
 			var dir_name: String = data.get("alias", {}).get(anim_name, {}).get(px_dir, px_dir)
 			frames = _pixel_frames(data["base"] + pattern, dir_name)
-		lines.append_array([_short(data["base"] + pattern.replace("%s", px_dir).replace("%03d", "NNN")),
-			"%d cuadros · 8 direcciones" % frames.size(), "Habilidad: " + skills[id]["name"]])
-		_card(_anim_preview(frames, 0.5), GameState.CHARACTER_NAMES.get(id, id), "SPRITE", COLOR_SPRITE, lines)
-	var wolf_anim: String = {"idle": "", "run": "run", "attack": "atk"}[anim_name]
-	var wolf_frames: Array = [load("res://assets/sprites/wolf/rotations/%s.png" % px_dir)] if wolf_anim == "" 		else _pixel_frames("res://assets/sprites/wolf/animations/%s/%%s/frame_%%03d.png" % wolf_anim, px_dir)
-	_card(_anim_preview(wolf_frames, 0.5), "Lobo de SIRA", "SPRITE", COLOR_SPRITE,
-		["sprites/wolf/", "%d cuadros · 8 direcciones" % wolf_frames.size(), "Aparece con Llamado del lobo (wolf_ally.gd)"])
-	# Retratos de la selección de personaje (EDRIC y SIRA: su sprite ampliado).
-	for c in CharSelect.CHARACTERS:
-		var enlarged: bool = c["portrait"].ends_with("_portrait.png")
-		_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"],
-			"SPRITE AMPLIADO" if enlarged else "ILUSTRACIÓN", COLOR_SPRITE if enlarged else COLOR_ICON, [_short(c["portrait"])])
+		if frames.is_empty():
+			_card(null, GameState.CHARACTER_NAMES.get(id, id), "SIN animación '%s'" % label, COLOR_SHARED, ["Arte anterior · fuera del juego"])
+			continue
+		_card(_anim_preview(frames, 0.5), GameState.CHARACTER_NAMES.get(id, id), "ARTE ANTERIOR · FUERA DEL JUEGO", COLOR_SHARED,
+			[_short(data["base"]), "%d cuadros · 8 direcciones" % frames.size(), "Habilidad: " + skills[id]["name"]])
 
 func _pixel_frames(pattern: String, dir_name: String) -> Array:
 	var out: Array = []
@@ -398,6 +399,9 @@ func _build_monsters() -> void:
 	for id in ids:
 		var data: Dictionary = Monster.KIND_DATA[id]
 		var anim_name: String = ANIMS[_anim]
+		if anim_name == "hurt":
+			_monster_hurt_card(id, data)
+			continue
 		if not data.has(anim_name):
 			_card(null, id, "SIN animación '%s'" % ANIM_NAMES[_anim], COLOR_SHARED, [])
 			continue
@@ -410,6 +414,21 @@ func _build_monsters() -> void:
 			[_short(data["base"] + info["file"].replace("_front", "_" + DIRS[_dir])),
 			"%d cuadros de %dx%d · escala %.2f" % [frames.size(), fs.x, fs.y, float(data.get("scale", 1.0))],
 			("vida y monedas las calcula main.gd (jefe)" if is_boss else "vida %s · monedas %s" % [str(data.get("hp", "?")), str(data.get("coin_reward", "?"))]) + " · " + Monster._behavior_for(id)])
+
+## Golpe de un monstruo: el pack lo trae (carpeta/archivo "Hurt" junto
+## al "Idle") pero el juego no lo usa — sólo parpadea en blanco.
+func _monster_hurt_card(id: String, data: Dictionary) -> void:
+	var fs: Vector2 = data.get("frame_size", Vector2(64, 64))
+	var path: String = data["base"] + data["idle"]["file"].replace("Idle", "Hurt")
+	var dir_path: String = path.replace("_front", "_" + DIRS[_dir])
+	if ResourceLoader.exists(dir_path):
+		path = dir_path
+	var frames := _slice(path, fs)
+	if frames.is_empty():
+		_card(null, id, "SIN animación 'GOLPE'", COLOR_SHARED, [])
+		return
+	_card(_anim_preview(frames, float(data.get("scale", 1.0)), 8.0), id, "EN EL PACK · SIN USAR", COLOR_SHARED,
+		[_short(path), "%d cuadros de %dx%d" % [frames.size(), fs.x, fs.y], "En el juego sólo parpadea en blanco"])
 
 # ── ACOMPAÑANTES ─────────────────────────────────────────────────
 

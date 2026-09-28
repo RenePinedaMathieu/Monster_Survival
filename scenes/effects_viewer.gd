@@ -39,7 +39,7 @@ const EFFECTS := [
 	["Infierno (fuego evo.)", "ÍCONO + DIBUJADO", "fuego_evo", "shot_projectile.gd (fuego con radio)"],
 	["Sobrecarga (eléctrico evo.)", "ÍCONO + DIBUJADO", "electrico_evo", "elemental_shot_weapon.gd"],
 	["Cero absoluto (congelante evo.)", "ÍCONO + DIBUJADO", "congelante_evo", "elemental_shot_weapon.gd"],
-	["Lobo de SIRA", "SPRITE", "lobo", "wolf_ally.gd + sprites/wolf/"],
+	["Lobo de SIRA (fuera del juego)", "SPRITE", "lobo", "wolf_ally.gd + sprites/wolf/"],
 	["Huevos (gallina)", "DIBUJADO", "huevos", "egg_projectile.gd"],
 	["Disparo enemigo (imp)", "DIBUJADO", "enemigo", "enemy_projectile.gd"],
 	["Abanico enemigo (beholder)", "DIBUJADO", "abanico", "enemy_projectile.gd"],

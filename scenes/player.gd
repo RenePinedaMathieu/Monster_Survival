@@ -129,10 +129,10 @@ const AXEL_FRAME_COUNT := 8
 # Frame donde aparece el tajo (swoosh) en attack1 — ahí se aplica el
 # daño, no al terminar toda la animación.
 const AXEL_ATTACK_HIT_FRAME := 2
-# El pack de AXEL viene más "vacío" en su frame que el sprite Man
-# (bbox real ~19x34 en un frame de 96x80 vs ~30x54 en uno de 112x112)
-# — este factor lo deja del mismo alto en pantalla que el resto.
-const AXEL_SCALE := 0.8
+# Escala x1 como todo el juego: un píxel del dibujo = una unidad del
+# mundo (el estándar es GAROTH). Antes 0.8 para que midiera lo mismo
+# que el resto; con eso sus píxeles eran más chicos que los demás.
+const AXEL_SCALE := 1.0
 const AXEL_MELEE_DAMAGE := 4.0
 # Radio de "hay algo cerca, ataco" — a propósito más chico que
 # AUTO_FIRE_RANGE (que es para el disparo a distancia). Sin este filtro,
@@ -153,7 +153,7 @@ const IDLE_ANIM_FPS := 6.0
 # mayúsculas, por eso van hardcodeados acá en vez de armarse con %s.
 const RANGED_FRAME_SIZE := Vector2(48, 64)
 const RANGED_FRAME_COUNT := 8
-const RANGED_SCALE := 1.05
+const RANGED_SCALE := 1.0   # x1 como todo el juego (antes 1.05)
 const RANGED_SKINS := {
 	"main_char2": {
 		"base_path": "res://assets/main_characters/main_char2/The Male adventurer - Free/",
@@ -167,6 +167,11 @@ const RANGED_SKINS := {
 			"left_down": "Walk/walk_left_down.png", "left_up": "Walk/walk_left_up.png",
 			"right_down": "Walk/walk_right_down.png", "right_up": "Walk/walk_right_up.png",
 		},
+		"death_files": {
+			"down": "Death/death_normal_down.png", "up": "Death/death_normal_up.png",
+			"left_down": "Death/death_normal_left_down.png", "left_up": "Death/death_normal_left_up.png",
+			"right_down": "Death/death_normal_right_down.png", "right_up": "Death/death_normal_right_up.png",
+		},
 	},
 	"main_char2_female": {
 		"base_path": "res://assets/main_characters/main_char2_female/The Female Adventurer - Free/",
@@ -179,6 +184,11 @@ const RANGED_SKINS := {
 			"down": "Walk/walk_Down.png", "up": "Walk/walk_Up.png",
 			"left_down": "Walk/walk_Left_Down.png", "left_up": "Walk/walk_Left_Up.png",
 			"right_down": "Walk/walk_Right_Down.png", "right_up": "Walk/walk_Right_Up.png",
+		},
+		"death_files": {
+			"down": "Death/death_Down.png", "up": "Death/death_Up.png",
+			"left_down": "Death/death_Left_Down.png", "left_up": "Death/death_Left_Up.png",
+			"right_down": "Death/death_Right_Down.png", "right_up": "Death/death_Right_Up.png",
 		},
 	},
 }
@@ -383,6 +393,9 @@ const SWORDMAN_RUN_FRAMES := 8
 # Attack: lvl 1-5 tienen 8f, lvl 6 tiene 7f. Usamos 7 como mínimo seguro.
 const SWORDMAN_ATTACK_FRAMES := 7
 const SWORDMAN_ATTACK_HIT_FRAME := 3
+## Golpe (5 cuadros) y muerte (7) del pack, en las 6 formas.
+const SWORDMAN_HURT_FRAMES := 5
+const SWORDMAN_DEATH_FRAMES := 7
 const SWORDMAN_SCALE := 1.0
 const SWORDMAN_ATTACK_RANGE := 70.0
 const SWORDMAN_MELEE_DAMAGE := 5.0
@@ -393,6 +406,8 @@ var _swordman_facing: String = "front"
 var _swordman_idle: Dictionary = {}
 var _swordman_run: Dictionary = {}
 var _swordman_attack: Dictionary = {}
+var _swordman_hurt: Dictionary = {}
+var _swordman_death: Dictionary = {}
 var _swordman_attacking: bool = false
 var _swordman_attack_elapsed: float = 0.0
 var _swordman_hit_applied: bool = false
@@ -424,6 +439,16 @@ var _whirl_tick: float = 0.0
 var _is_ranged_skin: bool = false
 var _ranged_idle: Dictionary = {}
 var _ranged_run: Dictionary = {}
+var _ranged_death: Dictionary = {}
+
+# Golpe y muerte animados (los que el pack trae: GAROTH ambos, KAY y
+# LINA sólo muerte, AXEL ninguno). Sin animación queda el destello rojo
+# y la caída de costado de siempre.
+const HURT_FPS := 16.0
+const HURT_COOLDOWN := 0.6   # recibiendo golpes seguidos no queda trabado en el golpe
+const DEATH_FPS := 10.0
+var _hurt_t: float = 0.0
+var _hurt_cd: float = 0.0
 var _ranged_facing: String = "down"
 
 @onready var _sprite: Sprite2D = $Sprite2D
@@ -580,10 +605,14 @@ func _load_swordman_textures() -> void:
 	_swordman_idle.clear()
 	_swordman_run.clear()
 	_swordman_attack.clear()
+	_swordman_hurt.clear()
+	_swordman_death.clear()
 	for dir_name in SWORDMAN_DIRS:
 		_swordman_idle[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Idle", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_IDLE_FRAMES)
 		_swordman_run[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Run", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_RUN_FRAMES)
 		_swordman_attack[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Attack", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_ATTACK_FRAMES)
+		_swordman_hurt[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Hurt", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_HURT_FRAMES)
+		_swordman_death[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Death", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_DEATH_FRAMES)
 
 ## Chequea si el level actual del player amerita subir de tier de sprite
 ## — se llama desde _level_up. Si sube, recarga texturas in-place.
@@ -607,6 +636,8 @@ func _load_ranged_textures(skin_id: String) -> void:
 		_ranged_idle[dir_key] = _slice_sheet(base + data["idle_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
 	for dir_key in data["run_files"]:
 		_ranged_run[dir_key] = _slice_sheet(base + data["run_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
+	for dir_key in data.get("death_files", {}):
+		_ranged_death[dir_key] = _slice_sheet(base + data["death_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
 
 ## AXEL sólo tiene 4 direcciones — el facing se resuelve por el eje
 ## dominante del vector en vez de los 8 pasos de _vec_to_dir().
@@ -751,8 +782,12 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	# Sprite: ataque (si está en curso) tiene prioridad sobre correr/
-	# idle — el swing se ve completo aunque sigas esquivando.
-	if _axel_attacking:
+	# idle — el swing se ve completo aunque sigas esquivando. El golpe
+	# recibido va antes que correr, pero no corta un ataque.
+	_hurt_cd = maxf(0.0, _hurt_cd - delta)
+	if _hurt_t > 0.0 and not (_axel_attacking or _swordman_attacking or _pixel_attacking):
+		_update_hurt(delta)
+	elif _axel_attacking:
 		_update_axel_attack(delta)
 	elif _swordman_attacking:
 		_update_swordman_attack(delta)
@@ -1188,6 +1223,8 @@ func take_damage(amount: float) -> void:
 	if remaining > 0.0:
 		hp = max(0.0, hp - remaining)
 		emit_signal("hp_changed", hp, max_hp)
+		if hp > 0.0:
+			_start_hurt()
 		# Flash rojo brevísimo
 		_sprite.modulate = Color(1.6, 0.5, 0.5)
 		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.2)
@@ -1199,21 +1236,58 @@ func take_damage(amount: float) -> void:
 		emit_signal("died")
 
 ## Muerte: el héroe deja de moverse y de atacar (se apaga su proceso y
-## con él las armas que cuelgan de él) y cae de costado en rojo. El
-## tween va por el árbol y sin time_scale, así corre aunque el player
-## esté apagado y el juego en cámara lenta (main.gd, pantalla MORISTE).
+## con él las armas que cuelgan de él) y juega su animación de muerte,
+## o cae de costado en rojo si el pack no la trae. El tween va por el
+## árbol y sin time_scale, así corre aunque el player esté apagado y el
+## juego en cámara lenta (main.gd, pantalla MORISTE).
 func play_death() -> void:
 	$Camera2D.offset = Vector2.ZERO
 	_shake_strength = 0.0
 	_sprite.self_modulate.a = 1.0
 	velocity = Vector2.ZERO
 	process_mode = Node.PROCESS_MODE_DISABLED
+	var frames := _death_frames()
+	if not frames.is_empty():
+		_sprite.modulate = Color(1.6, 0.6, 0.55)
+		var anim := get_tree().create_tween().set_ignore_time_scale(true)
+		anim.tween_method(func(i: float): _sprite.texture = frames[mini(int(i), frames.size() - 1)],
+			0.0, float(frames.size()), frames.size() / DEATH_FPS)
+		anim.parallel().tween_property(_sprite, "modulate", Color(0.8, 0.6, 0.6), 0.9)
+		return
 	var side: float = -1.0 if _last_move_dir.x < 0.0 else 1.0
 	_sprite.modulate = Color(2.0, 0.45, 0.4)
 	var tw := get_tree().create_tween().set_ignore_time_scale(true)
 	tw.tween_property(_sprite, "rotation", side * PI / 2.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.parallel().tween_property(_sprite, "position:y", _sprite.position.y + 8.0, 0.45)
 	tw.parallel().tween_property(_sprite, "modulate", Color(0.6, 0.35, 0.35), 0.9)
+
+func _hurt_frames() -> Array:
+	if _is_swordman:
+		return _swordman_hurt.get(_swordman_facing, [])
+	return []
+
+func _death_frames() -> Array:
+	if _is_swordman:
+		return _swordman_death.get(_swordman_facing, [])
+	if _is_ranged_skin:
+		return _ranged_death.get(_ranged_facing, [])
+	return []
+
+func _start_hurt() -> void:
+	var frames := _hurt_frames()
+	if frames.is_empty() or _hurt_cd > 0.0:
+		return
+	_hurt_t = frames.size() / HURT_FPS
+	_hurt_cd = HURT_COOLDOWN
+
+func _update_hurt(delta: float) -> void:
+	var frames := _hurt_frames()
+	_hurt_t = maxf(0.0, _hurt_t - delta)
+	if frames.is_empty():
+		_hurt_t = 0.0
+		return
+	var i: int = clampi(int((frames.size() / HURT_FPS - _hurt_t) * HURT_FPS), 0, frames.size() - 1)
+	_sprite.texture = frames[i]
 
 ## "Segunda vida" (árbol de habilidades): vuelve con media vida, un
 ## instante invulnerable y una onda que aleja a los que lo rodeaban.

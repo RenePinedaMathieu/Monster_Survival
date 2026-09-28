@@ -74,9 +74,13 @@ const CHARACTERS: Array[Dictionary] = [
 		"blurb": "Tan letal como KAY pero más ligera de pies — prioriza esquivar por sobre plantarse a pelear.",
 		"stats": {"Daño": 2, "Velocidad": 4, "Alcance": 4, "Dificultad": 2},
 	},
-	# EDRIC y SIRA se ganan en los DESAFÍOS (GameState.TRIALS). Sprites de
-	# 8 direcciones (player.gd PIXEL_SKINS); retrato y preview generados
-	# de sus sprites.
+]
+
+## EDRIC y SIRA: fuera del juego por ahora. Sus sprites (y el del lobo)
+## son arte anterior, de otro estilo; vuelven a CHARACTERS cuando tengan
+## sprites al estilo de GAROTH. Su lógica sigue en player.gd
+## (PIXEL_SKINS, Remolino, Llamado del lobo).
+const PENDING_CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "edric",
 		"name": "EDRIC",

@@ -431,16 +431,17 @@ func daily_modifier() -> String:
 # ── Desafíos ─────────────────────────────────────────────────────
 ## Partidas cortas con reglas fijas: los modificadores del reto diario,
 ## combinados, en un mapa dado (se juega aunque no lo tengas) y con el
-## héroe que elijas. Ganar uno da su premio una sola vez: los héroes
-## EDRIC y SIRA, o cartas nuevas (upgrades.gd LOCKED_CARDS). No suben al
-## ranking ni cuentan como victoria del mapa (como el reto diario).
+## héroe que elijas. Ganar uno da su premio una sola vez: monedas o
+## cartas nuevas (upgrades.gd LOCKED_CARDS). No suben al ranking ni
+## cuentan como victoria del mapa (como el reto diario). Cañón de
+## cristal y La horda daban a EDRIC y SIRA, fuera del juego por ahora.
 const TRIALS: Array = [
 	{"id": "cristal", "name": "Cañón de cristal", "map": "pradera", "waves": 10, "mods": ["cristal"],
-		"reward": {"character": "edric"}},
+		"reward": {"coins": 800}},
 	{"id": "frenesi", "name": "Frenesí", "map": "desierto", "waves": 10, "mods": ["veloces"],
 		"reward": {"cards": ["haste", "precision"]}},
 	{"id": "horda", "name": "La horda", "map": "pantano", "waves": 10, "mods": ["horda"],
-		"reward": {"character": "sira"}},
+		"reward": {"coins": 1200}},
 	{"id": "elites", "name": "Noche de élites", "map": "desierto", "waves": 12, "mods": ["elites", "veloces"],
 		"reward": {"cards": ["toughness", "bloodthirst"]}},
 	{"id": "fuego", "name": "Lluvia de fuego", "map": "pantano", "waves": 12, "mods": ["meteoros", "horda"],
