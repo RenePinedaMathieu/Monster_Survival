@@ -439,7 +439,7 @@ func _finish_run(victory: bool) -> void:
 		"weapons": _player.weapon_levels, "passives": _player.passive_levels,
 		"evolutions": _player.evolutions, "cards": _player.upgrade_log.size(),
 		"level": _player.level,
-	})
+	}, _player.hp / _player.max_hp if victory else 0.0)
 	# Pequeño delay para que se vea el golpe final; al morir, lo que dura
 	# la pantalla MORISTE (en tiempo real: el juego va en cámara lenta).
 	get_tree().create_timer(1.0 if victory else DEATH_SCREEN_SEC, true, false, true) \

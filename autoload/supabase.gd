@@ -154,7 +154,10 @@ func rest_get(path: String, on_done: Callable) -> void:
 	var http := _new_http()
 	http.request_completed.connect(func(_r, code, _h, body):
 		http.queue_free()
-		on_done.call(code, body.get_string_from_utf8()))
+		# Si ya te fuiste de la pantalla que lo pidió (ej: JUGAR en el reto
+		# diario antes de que cargue el ranking), no hay a quién avisar.
+		if on_done.is_valid():
+			on_done.call(code, body.get_string_from_utf8()))
 	http.request(URL + "/rest/v1" + path, [
 		"apikey: " + ANON_KEY,
 		"Authorization: Bearer " + ANON_KEY,

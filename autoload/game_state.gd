@@ -516,11 +516,47 @@ func set_player_name(n: String) -> void:
 static func run_score(wave: int, kills: int, victory: bool, mult: float = 1.0) -> int:
 	return int(round((wave * 1000 + kills * 2 + (20000 if victory else 0)) * mult))
 
+## Puntaje del reto diario. Antes era run_score (+20.000 fijo al ganar):
+## las bajas son casi las mismas para todos (hay que matarlos a todos
+## para pasar de oleada), así que los ganadores empataban en ~31.000 y
+## el orden entre ellos salía al azar. Ahora ganar da menos fijo y se
+## suma lo que sí depende de cómo jugaste: la rapidez (el ritmo de las
+## oleadas deja el mínimo en ~4:20) y la vida con que terminaste.
+## Cualquier derrota queda debajo de cualquier victoria.
+const DAILY_WIN_BONUS := 5000
+const DAILY_PAR_SEC := 900.0         # 15 minutos: más lento no suma rapidez
+const DAILY_POINTS_PER_SEC := 10
+const DAILY_HP_BONUS := 5000         # con la vida llena
+
+## Partes del puntaje [texto, puntos], para sumarlas y para mostrarlas.
+static func daily_score_parts(wave: int, kills: int, victory: bool, time_sec: float, hp_frac: float) -> Array:
+	var parts: Array = [
+		["Oleada %d × 1.000" % wave, wave * 1000],
+		["Bajas %d × 2" % kills, kills * 2],
+	]
+	if victory:
+		parts.append(["Victoria", DAILY_WIN_BONUS])
+		parts.append(["Rapidez (%d:%02d)" % [int(time_sec) / 60, int(time_sec) % 60],
+			int(maxf(0.0, DAILY_PAR_SEC - time_sec)) * DAILY_POINTS_PER_SEC])
+		parts.append(["Vida restante %d%%" % int(round(clampf(hp_frac, 0.0, 1.0) * 100.0)),
+			int(round(clampf(hp_frac, 0.0, 1.0) * DAILY_HP_BONUS))])
+	return parts
+
+## Las partes del último puntaje del reto (las muestra results_screen).
+var last_score_parts: Array = []
 ## Registra la partida en Supabase (si hay sesión). Devuelve el puntaje.
-func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary) -> int:
+## hp_frac: vida con la que terminó (0 al morir) — cuenta en el diario.
+func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary, hp_frac: float = 0.0) -> int:
 	var kills: int = run_stats.get("total_kills", 0)
 	var mult: float = 1.0 if daily_active or trial_active != "" else float(map_data()["mult"]) * float(difficulty_data()["mult"])
 	var score := run_score(wave, kills, victory, mult)
+	last_score_parts = []
+	if daily_active:
+		last_score_parts = daily_score_parts(wave, kills, victory, time_sec, hp_frac)
+		score = 0
+		for part in last_score_parts:
+			score += int(part[1])
+		build["hp"] = snappedf(hp_frac, 0.01)
 	# Los desafíos no van al ranking: son partidas cortas y con reglas
 	# especiales, no se comparan con una etapa normal.
 	if trial_active != "":
