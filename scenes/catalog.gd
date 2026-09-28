@@ -314,7 +314,7 @@ static func _slice(path: String, frame: Vector2, max_frames: int = 64) -> Array:
 # ── HÉROES ───────────────────────────────────────────────────────
 
 func _build_heroes() -> void:
-	_hint.text = "Escala real del juego. GAROTH tiene 6 formas (evoluciona cada 5 niveles). KAY y LINA no tienen animación de ataque."
+	_hint.text = "Escala real del juego. GAROTH tiene 6 formas (evoluciona cada 5 niveles). KAY y LINA no tienen animación de ataque; SIRA no tiene animación quieta."
 	var anim_name: String = ANIMS[_anim]
 	var skills: Dictionary = Player.ACTIVE_SKILLS
 	# GAROTH, sus 6 formas.
@@ -347,9 +347,41 @@ func _build_heroes() -> void:
 		if anim_name == "attack":
 			lines.insert(0, "SIN animación de ataque (dispara quieto)")
 		_card(_anim_preview(frames, Player.RANGED_SCALE), GameState.CHARACTER_NAMES.get(id, id), "SPRITE", COLOR_SPRITE, lines)
-	# Retratos de la selección de personaje.
+	# EDRIC y SIRA (8 direcciones, un PNG por cuadro) y el lobo de SIRA.
+	var px_dir: String = ["south", "north", "west", "east"][_dir]
+	for id in Player.PIXEL_SKINS:
+		var data: Dictionary = Player.PIXEL_SKINS[id]
+		var pattern: String = data.get(anim_name, "")
+		var lines: Array = []
+		var frames: Array = []
+		if pattern == "":
+			frames = [load(data["base"] + data["rest"] % px_dir)]
+			lines.append("SIN animación quieto: usa la pose de rotations/")
+			pattern = data["rest"]
+		else:
+			var dir_name: String = data.get("alias", {}).get(anim_name, {}).get(px_dir, px_dir)
+			frames = _pixel_frames(data["base"] + pattern, dir_name)
+		lines.append_array([_short(data["base"] + pattern.replace("%s", px_dir).replace("%03d", "NNN")),
+			"%d cuadros · 8 direcciones" % frames.size(), "Habilidad: " + skills[id]["name"]])
+		_card(_anim_preview(frames, 0.5), GameState.CHARACTER_NAMES.get(id, id), "SPRITE", COLOR_SPRITE, lines)
+	var wolf_anim: String = {"idle": "", "run": "run", "attack": "atk"}[anim_name]
+	var wolf_frames: Array = [load("res://assets/sprites/wolf/rotations/%s.png" % px_dir)] if wolf_anim == "" 		else _pixel_frames("res://assets/sprites/wolf/animations/%s/%%s/frame_%%03d.png" % wolf_anim, px_dir)
+	_card(_anim_preview(wolf_frames, 0.5), "Lobo de SIRA", "SPRITE", COLOR_SPRITE,
+		["sprites/wolf/", "%d cuadros · 8 direcciones" % wolf_frames.size(), "Aparece con Llamado del lobo (wolf_ally.gd)"])
+	# Retratos de la selección de personaje (EDRIC y SIRA: su sprite ampliado).
 	for c in CharSelect.CHARACTERS:
-		_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"], "ILUSTRACIÓN", COLOR_ICON, [_short(c["portrait"])])
+		var enlarged: bool = c["portrait"].ends_with("_portrait.png")
+		_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"],
+			"SPRITE AMPLIADO" if enlarged else "ILUSTRACIÓN", COLOR_SPRITE if enlarged else COLOR_ICON, [_short(c["portrait"])])
+
+func _pixel_frames(pattern: String, dir_name: String) -> Array:
+	var out: Array = []
+	for i in range(16):
+		var path: String = pattern % [dir_name, i]
+		if not ResourceLoader.exists(path):
+			break
+		out.append(load(path))
+	return out
 
 func _swordman_path(tier: int, anim: String, direction: String) -> String:
 	var base := "res://assets/sprites/swordman/Swordsman_lvl%d/" % tier

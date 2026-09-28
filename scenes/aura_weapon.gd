@@ -40,7 +40,8 @@ func evolve() -> void:
 	evolved = true
 
 func radius() -> float:
-	return LEVELS[level - 1]["radius"] * (EVOLVED_RADIUS_MULT if evolved else 1.0)
+	var area: float = player.area_mult if player != null and is_instance_valid(player) else 1.0
+	return LEVELS[level - 1]["radius"] * (EVOLVED_RADIUS_MULT if evolved else 1.0) * area
 
 func _process(delta: float) -> void:
 	_t += delta

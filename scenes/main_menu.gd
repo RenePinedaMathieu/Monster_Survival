@@ -16,6 +16,7 @@ const SHOP_SCENE := "res://scenes/shop_menu.tscn"
 const ACHIEVEMENTS_SCENE := "res://scenes/achievements_menu.tscn"
 const DAILY_SCENE := "res://scenes/daily_menu.tscn"
 const RANKING_SCENE := "res://scenes/leaderboard_menu.tscn"
+const TRIALS_SCENE := "res://scenes/trials_menu.tscn"
 const TUTORIAL_SCENE := preload("res://scenes/tutorial_overlay.tscn")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
@@ -26,6 +27,7 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 @onready var _play_button: Button = $MenuButtons/PlayButton
 @onready var _shop_button: Button = $MenuButtons/Grid/ShopButton
 @onready var _ranking_button: Button = $MenuButtons/Grid/RankingButton
+@onready var _trials_button: Button = $MenuButtons/Grid/TrialsButton
 @onready var _achievements_button: Button = $MenuButtons/Grid/AchievementsButton
 @onready var _options_button: Button = $MenuButtons/Grid/OptionsButton
 @onready var _quit_button: Button = $MenuButtons/Grid/QuitButton
@@ -37,8 +39,10 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 @onready var _back_button: Button = $OptionsPanel/Content/BackButton
 
 func _ready() -> void:
-	# Volver al menú corta el modo reto diario (daily_menu lo prende).
+	# Volver al menú corta el reto diario y los desafíos (los prenden
+	# daily_menu y trials_menu).
 	GameState.daily_active = false
+	GameState.trial_active = ""
 	var daily: Button = $DailyButton
 	RpgTheme.style_button(daily, 17)
 	daily.pressed.connect(func():
@@ -56,13 +60,14 @@ func _ready() -> void:
 	else:
 		_record_label.hide()
 
-	for button in [_play_button, _shop_button, _ranking_button, _achievements_button, _options_button, _quit_button]:
+	for button in [_play_button, _shop_button, _trials_button, _ranking_button, _achievements_button, _options_button, _quit_button]:
 		RpgTheme.style_button(button, 20)
 	for button in [_back_button, _tutorial_button, _qa_room_button]:
 		RpgTheme.style_button(button, 16)
 	_achievements_button.pressed.connect(func(): get_tree().change_scene_to_file(ACHIEVEMENTS_SCENE))
 	_ranking_button.pressed.connect(func(): get_tree().change_scene_to_file(RANKING_SCENE))
-	for button in [_play_button, _shop_button, _ranking_button, _achievements_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
+	_trials_button.pressed.connect(func(): get_tree().change_scene_to_file(TRIALS_SCENE))
+	for button in [_play_button, _shop_button, _trials_button, _ranking_button, _achievements_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
 		button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
 		button.mouse_exited.connect(UITheme.pulse.bind(button, 1.0, 0.08))

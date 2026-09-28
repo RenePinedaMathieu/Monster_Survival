@@ -44,7 +44,7 @@ func _process(delta: float) -> void:
 	if not _strike():
 		_cd = 0.2
 		return
-	_cd = LEVELS[level - 1]["cooldown"]
+	_cd = LEVELS[level - 1]["cooldown"] * player.cooldown_mult
 	if evolved:
 		get_tree().create_timer(SECOND_STRIKE_DELAY).timeout.connect(_strike)
 

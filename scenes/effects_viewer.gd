@@ -25,14 +25,21 @@ const EFFECTS := [
 	["Rayo en cadena", "DIBUJADO", "rayo", "lightning_weapon.gd + bolt_effect.gd"],
 	["Tormenta eléctrica (rayo evo.)", "DIBUJADO", "rayo_evo", "bolt_effect.gd"],
 	["Láser en cadena", "DIBUJADO", "laser", "chain_laser_weapon.gd + laser_effect.gd"],
+	["Cadena carmesí (láser evo.)", "DIBUJADO", "laser_evo", "chain_laser_weapon.gd + laser_effect.gd"],
 	["Pulso", "DIBUJADO", "pulso", "pulse_weapon.gd"],
+	["Terremoto (pulso evo.)", "DIBUJADO", "pulso_evo", "pulse_weapon.gd"],
 	["Escudo de fuerza (bloquea)", "DIBUJADO", "escudo", "force_shield_weapon.gd"],
+	["Bastión (escudo evo., 3 cargas)", "DIBUJADO", "escudo_evo", "force_shield_weapon.gd"],
 	["Espadas voladoras", "ÍCONO + DIBUJADO", "espadas", "weapon_icons/icon_15.png + flying_sword.gd"],
 	["Hacha giratoria", "ÍCONO", "hacha", "weapon_icons/icon_86.png"],
 	["Disparo niv. 1 / 5 / cargado", "ÍCONO + DIBUJADO", "disparo", "weapon_icons/icon_43.png + shot_projectile.gd"],
 	["Disparo de fuego", "ÍCONO + DIBUJADO", "fuego", "shot_projectile.gd (efecto fire)"],
 	["Disparo eléctrico", "ÍCONO + DIBUJADO", "electrico", "shot_projectile.gd (efecto electric)"],
 	["Disparo congelante", "ÍCONO + DIBUJADO", "congelante", "shot_projectile.gd (efecto freeze)"],
+	["Infierno (fuego evo.)", "ÍCONO + DIBUJADO", "fuego_evo", "shot_projectile.gd (fuego con radio)"],
+	["Sobrecarga (eléctrico evo.)", "ÍCONO + DIBUJADO", "electrico_evo", "elemental_shot_weapon.gd"],
+	["Cero absoluto (congelante evo.)", "ÍCONO + DIBUJADO", "congelante_evo", "elemental_shot_weapon.gd"],
+	["Lobo de SIRA", "SPRITE", "lobo", "wolf_ally.gd + sprites/wolf/"],
 	["Huevos (gallina)", "DIBUJADO", "huevos", "egg_projectile.gd"],
 	["Disparo enemigo (imp)", "DIBUJADO", "enemigo", "enemy_projectile.gd"],
 	["Abanico enemigo (beholder)", "DIBUJADO", "abanico", "enemy_projectile.gd"],
@@ -189,13 +196,24 @@ func _play_effect(id: String) -> void:
 			var w := _weapon(preload("res://scenes/lightning_weapon.gd"), false, 5)
 			if id == "rayo_evo":
 				w.evolve()
-		"laser":
-			_weapon(preload("res://scenes/chain_laser_weapon.gd"), false, 5)
-		"pulso":
-			_weapon(preload("res://scenes/pulse_weapon.gd"), false, 5)
-		"escudo":
-			_weapon(preload("res://scenes/force_shield_weapon.gd"), true, 5)
+		"laser", "laser_evo":
+			var w := _weapon(preload("res://scenes/chain_laser_weapon.gd"), false, 5)
+			if id.ends_with("_evo"):
+				w.evolve()
+		"pulso", "pulso_evo":
+			var w := _weapon(preload("res://scenes/pulse_weapon.gd"), false, 5)
+			if id.ends_with("_evo"):
+				w.evolve()
+		"escudo", "escudo_evo":
+			var w := _weapon(preload("res://scenes/force_shield_weapon.gd"), true, 5)
+			if id.ends_with("_evo"):
+				w.evolve()
 			_repeat_cb = func(): _enemy_shot(Color("ff7a2e"), 122.0)
+		"lobo":
+			var wolf := Node2D.new()
+			wolf.set_script(preload("res://scenes/wolf_ally.gd"))
+			add_child(wolf)
+			wolf.setup(_dummy)
 		"espadas":
 			_weapon(preload("res://scenes/flying_swords_rig.gd"), true, 3)
 		"hacha":
@@ -207,9 +225,11 @@ func _play_effect(id: String) -> void:
 					add_child(shot)
 					shot.global_position = p.global_position + Vector2(10, -24 + i * 24)
 					shot.setup(Vector2.RIGHT, i == 2, [1, 5, 3][i])
-		"fuego", "electrico", "congelante":
+		"fuego", "electrico", "congelante", "fuego_evo", "electrico_evo", "congelante_evo":
 			var w := _weapon(preload("res://scenes/elemental_shot_weapon.gd"), false, 3)
-			w.element = {"fuego": "fire", "electrico": "electric", "congelante": "freeze"}[id]
+			w.element = {"fuego": "fire", "electrico": "electric", "congelante": "freeze"}[id.trim_suffix("_evo")]
+			if id.ends_with("_evo"):
+				w.evolve()
 		"huevos":
 			_repeat_cb = func():
 				var ts := _targets()
@@ -309,6 +329,9 @@ class DummyPlayer extends CharacterBody2D:
 	var max_hp: float = 100.0
 	var damage_mult: float = 1.0
 	var atk_speed_mult: float = 1.0
+	var area_mult: float = 1.0
+	var effect_duration_mult: float = 1.0
+	var cooldown_mult: float = 1.0
 	var move_speed: float = 125.0
 	var defense: float = 0.0
 	var max_defense: float = 0.0

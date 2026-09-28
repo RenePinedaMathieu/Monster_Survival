@@ -176,6 +176,12 @@ func _apply_effect(body: Node) -> void:
 		"fire":
 			if body.has_method("apply_burn"):
 				body.apply_burn(effect_power, effect_duration, "quemadura")
+			var center := body as Node2D
+			if effect_radius > 0.0 and center != null:
+				for m in get_tree().get_nodes_in_group("monster"):
+					if m != body and is_instance_valid(m) and m.has_method("apply_burn") \
+							and center.global_position.distance_to(m.global_position) <= effect_radius:
+						m.apply_burn(effect_power, effect_duration, "infierno")
 		"electric":
 			if body.has_method("apply_stun"):
 				body.apply_stun(effect_duration)

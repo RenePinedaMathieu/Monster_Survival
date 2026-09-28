@@ -50,7 +50,7 @@ func _process(delta: float) -> void:
 	if targets.is_empty():
 		_cd = 0.2
 		return
-	_cd = data["cooldown"]
+	_cd = data["cooldown"] * player.cooldown_mult
 	for i in range(data["count"]):
 		var target: Node2D = targets[i % targets.size()]
 		var dir: Vector2 = (target.global_position - player.global_position).normalized()

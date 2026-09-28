@@ -21,6 +21,7 @@ const SOURCES: Dictionary = {
 	"ganso":    {"name": "Ganso",               "icon": COMP + "goose/idle_front.png", "region": Rect2(0, 0, 20, 28)},
 	"veneno":   {"name": "Veneno",              "icon": SKILL + "skill_33.png"},
 	"habilidad": {"name": "Habilidad",          "icon": SKILL + "skill_62.png"},
+	"lobo":     {"name": "Lobo",                "icon": SKILL + "skill_75.png"},
 	"bomba":    {"name": "Bomba",               "icon": SKILL + "skill_98.png"},
 	"aura":     {"name": "Aura sagrada",        "icon": SKILL + "skill_23.png"},
 	"hacha":    {"name": "Hacha giratoria",     "icon": SKILL + "skill_25.png"},
@@ -41,6 +42,11 @@ const SOURCES: Dictionary = {
 	"torbellino":         {"name": "Torbellino",          "icon": SKILL + "skill_36.png"},
 	"tormenta_electrica": {"name": "Tormenta eléctrica",  "icon": SKILL + "skill_19.png"},
 	"gallina_dorada":     {"name": "Gallina dorada",      "icon": SKILL + "skill_90.png"},
+	"terremoto":          {"name": "Terremoto",           "icon": SKILL + "skill_34.png"},
+	"infierno":           {"name": "Infierno",            "icon": SKILL + "skill_32.png"},
+	"cero_absoluto":      {"name": "Cero absoluto",       "icon": SKILL + "skill_59.png"},
+	"sobrecarga":         {"name": "Sobrecarga",          "icon": SKILL + "skill_20.png"},
+	"cadena_carmesi":     {"name": "Cadena carmesí",      "icon": SKILL + "skill_100.png"},
 }
 
 static func display_name(id: String) -> String:

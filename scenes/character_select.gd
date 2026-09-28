@@ -74,6 +74,30 @@ const CHARACTERS: Array[Dictionary] = [
 		"blurb": "Tan letal como KAY pero más ligera de pies — prioriza esquivar por sobre plantarse a pelear.",
 		"stats": {"Daño": 2, "Velocidad": 4, "Alcance": 4, "Dificultad": 2},
 	},
+	# EDRIC y SIRA se ganan en los DESAFÍOS (GameState.TRIALS). Sprites de
+	# 8 direcciones (player.gd PIXEL_SKINS); retrato y preview generados
+	# de sus sprites.
+	{
+		"id": "edric",
+		"name": "EDRIC",
+		"portrait": "res://assets/main_characters/edric_portrait.png",
+		"idle_sheet": "res://assets/main_characters/edric_idle_strip.png",
+		"accent": Color("7fbf5a"),
+		"role": "CUERPO A CUERPO · RESISTENTE",
+		"blurb": "Escudero curtido: más vida que nadie y un tajo amplio. Su Remolino limpia todo lo que lo rodea.",
+		"stats": {"Daño": 3, "Velocidad": 2, "Alcance": 2, "Dificultad": 2},
+	},
+	{
+		"id": "sira",
+		"name": "SIRA",
+		"portrait": "res://assets/main_characters/sira_portrait.png",
+		"idle_sheet": "res://assets/main_characters/sira_idle_strip.png",
+		"idle_frames": 1,
+		"accent": Color("d9894a"),
+		"role": "CUERPO A CUERPO · VELOZ",
+		"blurb": "Cazadora rápida y frágil. Apuñala sin parar y llama a su lobo para cazar en manada.",
+		"stats": {"Daño": 3, "Velocidad": 5, "Alcance": 1, "Dificultad": 4},
+	},
 ]
 
 @onready var _title: Label = $Layout/Title
@@ -180,12 +204,18 @@ func _apply_layout(compact: bool) -> void:
 	var short: bool = not compact and Screen.view_size().y < 640.0
 	# PC: todas en una fila. Teléfono: 2 columnas con 4 cartas, 3 con 5.
 	grid.columns = (2 if n <= 4 else 3) if compact else n
-	grid.add_theme_constant_override("h_separation", 16 if compact else (46 if n <= 4 else 16))
+	var sep: int = 16 if compact else (46 if n <= 4 else (16 if n == 5 else 10))
+	grid.add_theme_constant_override("h_separation", sep)
 	var card_w: float = 250.0 if n <= 4 else 210.0
 	if compact:
 		card_w = 186.0 if n <= 4 else 148.0
-	elif short:
-		card_w = 200.0
+	else:
+		if short:
+			card_w = minf(card_w, 200.0)
+		# Que la fila entre en el ancho que haya (con 6 héroes, en una
+		# ventana de 1137 de ancho lógico no entraban cartas de 184).
+		var avail: float = Screen.view_size().x - 2.0 * (24.0 if short else 48.0)
+		card_w = minf(card_w, floorf((avail - (n - 1) * sep) / n))
 	var card_h: float = 330.0 if compact else (370.0 if short else 400.0)
 	# Retrato arriba y abajo la franja del preview / candado.
 	var portrait_bottom: float = 236.0 if compact else card_h - 124.0
@@ -193,7 +223,7 @@ func _apply_layout(compact: bool) -> void:
 	# y el retrato/preview reubicados adentro (sus offsets son absolutos).
 	for i in range(_card_roots.size()):
 		_card_roots[i].custom_minimum_size = Vector2(card_w, card_h)
-		_name_labels[i].add_theme_font_size_override("font_size", 18 if compact and n > 4 else 24)
+		_name_labels[i].add_theme_font_size_override("font_size", 18 if (compact and n > 4) or card_w < 180.0 else 24)
 		_lock_hints[i].offset_left = 10.0
 		_lock_hints[i].offset_right = -10.0
 		_lock_hints[i].offset_top = portrait_bottom + 4.0

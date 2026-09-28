@@ -85,6 +85,9 @@ func _ready() -> void:
 	if GameState.daily_active:
 		seed(GameState.daily_info()["seed"])
 		_final_wave = GameState.DAILY_WAVES
+	# Desafío: sus oleadas y sus reglas (GameState.TRIALS).
+	if GameState.trial_active != "":
+		_final_wave = int(GameState.trial_data()["waves"])
 	Supabase.ensure_session(GameState.ensure_player_name())
 	_player.hp_changed.connect(_hud.on_hp_changed)
 	_player.defense_changed.connect(_hud.on_defense_changed)
@@ -95,14 +98,18 @@ func _ready() -> void:
 	_player.skill_cooldown_changed.connect(_hud.on_skill_cooldown)
 	_hud.skill_pressed.connect(_player.use_active_skill)
 	_hud.setup_skill(_player.active_skill)
-	match GameState.daily_modifier():
-		"meteoros":
-			_player.apply_upgrade("meteors")
-		"cristal":
-			_player.max_hp *= 0.5
-			_player.hp = _player.max_hp
-			_player.damage_mult *= 1.5
-			_player.emit_signal("hp_changed", _player.hp, _player.max_hp)
+	# El player ya avisó su vida en su _ready, antes de estas conexiones:
+	# sin esto el HUD arrancaba en 100/100 aunque la tienda o el héroe
+	# (EDRIC, SIRA) le cambien la vida máxima.
+	_hud.on_hp_changed(_player.hp, _player.max_hp)
+	_hud.on_defense_changed(_player.defense, _player.max_defense)
+	if GameState.has_modifier("meteoros"):
+		_player.apply_upgrade("meteors")
+	if GameState.has_modifier("cristal"):
+		_player.max_hp *= 0.5
+		_player.hp = _player.max_hp
+		_player.damage_mult *= 1.5
+		_player.emit_signal("hp_changed", _player.hp, _player.max_hp)
 	_hud.set_portrait(_player.portrait_texture())
 	_update_wave_hud()
 	# Joystick táctil — vive siempre; en desktop no molesta porque
@@ -144,12 +151,12 @@ func _start_next_wave() -> void:
 		GameState.report_max("no_hit_wave", _current_wave)
 	_current_wave += 1
 	_in_break = false
-	var pace: float = DAILY_PACE if GameState.daily_active else 1.0
+	var pace: float = DAILY_PACE if GameState.daily_active or GameState.trial_active != "" else 1.0
 	# En el desafío los monstruos ya son mucho más duros (CHALLENGE_*_STEP):
 	# ahí el doble en vez del triple.
 	var count_mult: float = 2.0 if _challenge else WAVE_COUNT_MULT
 	var count := int((BASE_MONSTERS + _current_wave * MONSTERS_PER_WAVE) * count_mult * pace)
-	if GameState.daily_modifier() == "horda":
+	if GameState.has_modifier("horda"):
 		count = int(count * 1.5)
 	# Cada 10 waves aparece 1 boss extra, bastante más grande y duro
 	# que el resto (ver KIND_DATA["golem"] en monster.gd).
@@ -169,7 +176,7 @@ func _start_next_wave() -> void:
 	var elite_count: int = 0
 	if _current_wave % 3 == 0:
 		elite_count = 2 if _current_wave >= 12 else 1
-	if GameState.daily_modifier() == "elites":
+	if GameState.has_modifier("elites"):
 		elite_count = 2
 	if _challenge:
 		elite_count = 2 if _current_wave < 25 else 3
@@ -301,7 +308,7 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 			m.make_elite()
 	m.coin_reward = maxi(1, int(round(m.coin_reward * _coin_mult())))
 	m.speed_mult = min(1.0 + (_current_wave - 1) * WAVE_SPEED_STEP, WAVE_SPEED_CAP)
-	if GameState.daily_modifier() == "veloces":
+	if GameState.has_modifier("veloces"):
 		m.speed_mult *= 1.3
 	# El monster persigue al player desde el momento del spawn,
 	# sin necesidad de estar en el radio de detección.
@@ -331,6 +338,7 @@ func _update_wave_hud() -> void:
 
 func _on_monster_died() -> void:
 	_monsters_alive = max(0, _monsters_alive - 1)
+	_player.on_monster_killed()
 	_update_wave_hud()
 	if _monsters_alive == 0 and not _in_break and not _run_over:
 		_in_break = true
@@ -417,8 +425,11 @@ func _finish_run(victory: bool) -> void:
 	# El reto diario (10 oleadas) no cuenta como victoria del mapa para
 	# los logros — sería un atajo para abrir mapas y dificultades.
 	_new_legend = ""
+	_trial_reward = {}
 	if victory and _challenge:
 		_new_legend = GameState.report_challenge_win(GameState.selected_map)
+	elif victory and GameState.trial_active != "":
+		_trial_reward = GameState.report_trial_win(GameState.trial_active)
 	elif victory and not GameState.daily_active:
 		GameState.report_win(GameState.selected_character_id, GameState.selected_map, GameState.selected_difficulty)
 	if victory:
@@ -436,6 +447,8 @@ func _finish_run(victory: bool) -> void:
 
 ## Legendaria que se abrió al superar la oleada 30 (para los resultados).
 var _new_legend: String = ""
+## Premio del desafío ganado por primera vez (para los resultados).
+var _trial_reward: Dictionary = {}
 
 func _show_results(victory: bool, score: int) -> void:
 	Engine.time_scale = 1.0
@@ -444,8 +457,11 @@ func _show_results(victory: bool, score: int) -> void:
 	var results = RESULTS_SCENE.instantiate()
 	add_child(results)
 	var hero: String = GameState.pending_character.get("name", GameState.CHARACTER_NAMES.get(GameState.selected_character_id, "El héroe"))
+	var special_run: bool = GameState.daily_active or GameState.trial_active != ""
 	results.show_results(victory, _current_wave, _hud.get_run_time(), hero,
-		victory and not _challenge and not GameState.daily_active, score if GameState.daily_active else -1)
+		victory and not _challenge and not special_run, score if GameState.daily_active else -1)
+	if not _trial_reward.is_empty():
+		results.add_highlight("¡DESAFÍO SUPERADO! " + GameState.reward_text(_trial_reward))
 	if _new_legend != "":
 		var skill: Dictionary = GameState.SKILL_TREE[_new_legend]
 		results.add_highlight("¡HABILIDAD LEGENDARIA: %s! %s (ya tienes el nivel 1, mejórala en la tienda)" % [skill["name"].to_upper(), skill["desc"]])

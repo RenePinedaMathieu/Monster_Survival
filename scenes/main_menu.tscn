@@ -55,6 +55,10 @@ theme_override_constants/v_separation = 9
 custom_minimum_size = Vector2(240, 48)
 text = "TIENDA"
 
+[node name="TrialsButton" type="Button" parent="MenuButtons/Grid"]
+custom_minimum_size = Vector2(240, 48)
+text = "DESAFÍOS"
+
 [node name="RankingButton" type="Button" parent="MenuButtons/Grid"]
 custom_minimum_size = Vector2(240, 48)
 text = "RANKING"

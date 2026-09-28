@@ -933,6 +933,9 @@ func take_damage(amount: float, source: String = "otro", show_number: bool = tru
 	# Árbol de habilidades: "Cazador" (jefes/élites) y "Crítico" (x2).
 	if is_elite or is_boss():
 		amount *= 1.0 + GameState.run_hunter_bonus
+	# Evolución "Cero absoluto": los congelados reciben más daño.
+	if GameState.run_shatter and _freeze_t > 0.0:
+		amount *= 1.5
 	var crit: bool = GameState.run_crit_chance > 0.0 and randf() < GameState.run_crit_chance
 	if crit:
 		amount *= 2.0
