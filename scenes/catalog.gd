@@ -52,6 +52,7 @@ const ICON_FAMILIES := {
 	"res://assets/ui/skill_icons/skill_83.png": "Vida máxima",
 	"res://assets/ui/skill_icons/skill_79.png": "Regeneración",
 	"res://assets/ui/skill_icons/skill_30.png": "Imán",
+	"res://assets/ui/skill_icons/skill_76.png": "Defensa",
 	"res://assets/ui/skill_icons/skill_63.png": "Disparo",
 	"res://assets/ui/rpg/coin.png": "Monedas",
 }

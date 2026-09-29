@@ -34,10 +34,13 @@ const EFFECTS := [
 	["Hacha giratoria", "ÍCONO", "hacha", "weapon_icons/icon_86.png"],
 	["Disparo niv. 1 / 5 / cargado", "ÍCONO + DIBUJADO", "disparo", "weapon_icons/icon_43.png + shot_projectile.gd"],
 	["Disparo de fuego", "ÍCONO + DIBUJADO", "fuego", "shot_projectile.gd (efecto fire)"],
-	["Disparo eléctrico", "ÍCONO + DIBUJADO", "electrico", "shot_projectile.gd (efecto electric)"],
+	["Disparo eléctrico (rayo instantáneo)", "DIBUJADO", "electrico", "elemental_shot_weapon.gd + bolt_effect.gd"],
 	["Disparo congelante", "ÍCONO + DIBUJADO", "congelante", "shot_projectile.gd (efecto freeze)"],
 	["Infierno (fuego evo.)", "ÍCONO + DIBUJADO", "fuego_evo", "shot_projectile.gd (fuego con radio)"],
-	["Sobrecarga (eléctrico evo.)", "ÍCONO + DIBUJADO", "electrico_evo", "elemental_shot_weapon.gd"],
+	["Sobrecarga (eléctrico evo.)", "DIBUJADO", "electrico_evo", "elemental_shot_weapon.gd + bolt_effect.gd"],
+	["Centinela dron", "DIBUJADO", "centinela", "sentinel_weapon.gd + shot_projectile.gd"],
+	["Sierras orbitales", "DIBUJADO", "sierras", "saw_weapon.gd"],
+	["Aura helada", "DIBUJADO", "aura_lenta", "slow_aura_weapon.gd"],
 	["Cero absoluto (congelante evo.)", "ÍCONO + DIBUJADO", "congelante_evo", "elemental_shot_weapon.gd"],
 	["Lobo de SIRA (fuera del juego)", "SPRITE", "lobo", "wolf_ally.gd + sprites/wolf/"],
 	["Huevos (gallina)", "DIBUJADO", "huevos", "egg_projectile.gd"],
@@ -209,6 +212,12 @@ func _play_effect(id: String) -> void:
 			if id.ends_with("_evo"):
 				w.evolve()
 			_repeat_cb = func(): _enemy_shot(Color("ff7a2e"), 122.0)
+		"centinela":
+			_weapon(preload("res://scenes/sentinel_weapon.gd"), true, 3)
+		"sierras":
+			_weapon(preload("res://scenes/saw_weapon.gd"), true, 3)
+		"aura_lenta":
+			_weapon(preload("res://scenes/slow_aura_weapon.gd"), true, 5)
 		"lobo":
 			var wolf := Node2D.new()
 			wolf.set_script(preload("res://scenes/wolf_ally.gd"))

@@ -29,13 +29,15 @@ const CARDS: Array = [
 	{"id": "hp_regen",     "title": "+1 VIDA/S",          "desc": "Regeneración pasiva",                 "icon": ICON + "skill_79.png"},
 	{"id": "magnet",       "title": "+40% IMÁN",          "desc": "Absorbes experiencia desde más lejos", "icon": ICON + "skill_30.png"},
 	{"id": "level_damage", "title": "INSTINTO ASESINO",   "desc": "+10% de daño en cada nivel futuro",   "icon": ICON + "skill_53.png"},
-	# ── Disparo a distancia ──
-	{"id": "toughness",    "title": "PIEL DE HIERRO",     "desc": "Recibes 6% menos dano",               "icon": ICON + "skill_68.png"},
-	{"id": "area",         "title": "EXPANSION",          "desc": "+10% de tamano: pulso, aura, meteoros y aturdir", "icon": ICON + "skill_17.png"},
-	{"id": "duration",     "title": "PERSISTENCIA",       "desc": "Quemar, congelar y aturdir duran 20% mas", "icon": ICON + "skill_4.png"},
-	{"id": "precision",    "title": "OJO CERTERO",        "desc": "+5% de golpe critico (doble dano)",   "icon": ICON + "skill_56.png"},
-	{"id": "haste",        "title": "PRISA",              "desc": "Tu habilidad y tus armas se recargan 8% mas rapido", "icon": ICON + "skill_60.png"},
+	# Pasivas que se ganan en los DESAFÍOS (ver LOCKED_CARDS): cada una
+	# evoluciona una de las armas elementales.
+	{"id": "toughness",    "title": "PIEL DE HIERRO",     "desc": "Recibes 6% menos daño",               "icon": ICON + "skill_68.png"},
+	{"id": "area",         "title": "EXPANSIÓN",          "desc": "+10% de tamaño: pulso, aura, meteoros y aturdir", "icon": ICON + "skill_17.png"},
+	{"id": "duration",     "title": "PERSISTENCIA",       "desc": "Quemar, congelar y aturdir duran 20% más", "icon": ICON + "skill_4.png"},
+	{"id": "precision",    "title": "OJO CERTERO",        "desc": "+5% de golpe crítico (doble daño)",   "icon": ICON + "skill_56.png"},
+	{"id": "haste",        "title": "PRISA",              "desc": "Tu habilidad y tus armas se recargan 8% más rápido", "icon": ICON + "skill_60.png"},
 	{"id": "bloodthirst",  "title": "SED DE SANGRE",      "desc": "Cada enemigo que muere te cura 0,3 de vida", "icon": ICON + "skill_93.png"},
+	# ── Disparo a distancia ──
 	{"id": "ranged_bonus", "title": "DISPARO A DISTANCIA", "desc": "Un disparo automático al enemigo más cercano", "icon": ICON + "skill_55.png"},
 	{"id": "ranged_power", "title": "DISPARO A DISTANCIA", "desc": "Más fuerte y más brillante",        "icon": ICON + "skill_67.png"},
 	{"id": "ranged_count", "title": "DISPARO A DISTANCIA", "desc": "Suma otro disparo a la ráfaga",     "icon": ICON + "skill_63.png"},
@@ -50,19 +52,19 @@ const CARDS: Array = [
 	{"id": "aura",         "title": "AURA SAGRADA",       "desc": "Quema a los enemigos que se te acercan", "icon": ICON + "skill_23.png"},
 	{"id": "hacha",        "title": "HACHA GIRATORIA",    "desc": "Lanza hachas que van y vuelven atravesando todo", "icon": ICON + "skill_25.png"},
 	{"id": "rayo",         "title": "RAYO EN CADENA",     "desc": "Un rayo que salta entre enemigos cercanos", "icon": ICON + "skill_70.png"},
-	{"id": "laser_cadena", "title": "LASER EN CADENA",    "desc": "Un laser rebota hacia dos enemigos cercanos", "icon": ICON + "skill_19.png"},
-	{"id": "disparo_fuego", "title": "DISPARO DE FUEGO",  "desc": "Disparo que quema 3% de vida por segundo durante 3 s", "icon": ICON + "skill_22.png"},
-	{"id": "disparo_electrico", "title": "DISPARO ELECTRICO", "desc": "Paraliza al objetivo y puede aturdir enemigos cercanos", "icon": ICON + "skill_70.png"},
-	{"id": "disparo_congelante", "title": "DISPARO CONGELANTE", "desc": "Congela al enemigo golpeado", "icon": ICON + "skill_30.png"},
-	{"id": "centinela",   "title": "CENTINELA DRON",      "desc": "Un dron te acompaÃ±a y dispara al enemigo mÃ¡s cercano", "icon": ICON + "skill_91.png"},
-	{"id": "sierras",     "title": "SIERRAS ORBITALES",   "desc": "Una sierra gira a tu alrededor y corta al contacto", "icon": ICON + "skill_36.png"},
-	{"id": "aura_lenta",  "title": "AURA HELADA",         "desc": "Frena a los enemigos cercanos", "icon": ICON + "skill_21.png"},
-	{"id": "escudo_fuerza", "title": "ESCUDO DE FUERZA",  "desc": "Se recarga cada pocos segundos y bloquea un disparo", "icon": ICON + "skill_76.png"},
-	{"id": "pulso",        "title": "PULSO",              "desc": "Una onda expansiva golpea enemigos alrededor", "icon": ICON + "skill_62.png"},
-	# â”€â”€ Escalado cuando la build ya tiene sus 8 armas â”€â”€
-	{"id": "overflow_attack",  "title": "+15% ATAQUE",    "desc": "Toda tu build pega mÃ¡s fuerte", "icon": ICON + "skill_96.png"},
+	{"id": "laser_cadena", "title": "LASER EN CADENA",    "desc": "Un laser rebota hacia dos enemigos cercanos", "icon": ICON + "skill_40.png"},
+	{"id": "disparo_fuego", "title": "DISPARO DE FUEGO",  "desc": "Disparo que quema 3% de vida por segundo durante 3 s", "icon": ICON + "skill_84.png"},
+	{"id": "disparo_electrico", "title": "DISPARO ELECTRICO", "desc": "Paraliza al objetivo y puede aturdir enemigos cercanos", "icon": ICON + "skill_71.png"},
+	{"id": "disparo_congelante", "title": "DISPARO CONGELANTE", "desc": "Congela al enemigo golpeado", "icon": ICON + "skill_64.png"},
+	{"id": "centinela",   "title": "CENTINELA DRON",      "desc": "Un dron te acompaña y dispara al enemigo más cercano", "icon": ICON + "skill_91.png"},
+	{"id": "sierras",     "title": "SIERRAS ORBITALES",   "desc": "Una sierra gira a tu alrededor y corta al contacto", "icon": ICON + "skill_39.png"},
+	{"id": "aura_lenta",  "title": "AURA HELADA",         "desc": "Frena a los enemigos cercanos", "icon": ICON + "skill_69.png"},
+	{"id": "escudo_fuerza", "title": "ESCUDO DE FUERZA",  "desc": "Se recarga cada pocos segundos y bloquea un disparo", "icon": ICON + "skill_1.png"},
+	{"id": "pulso",        "title": "PULSO",              "desc": "Una onda expansiva golpea enemigos alrededor", "icon": ICON + "skill_74.png"},
+	# ── Escalado cuando la build ya tiene sus 8 armas ──
+	{"id": "overflow_attack",  "title": "+15% ATAQUE",    "desc": "Toda tu build pega más fuerte", "icon": ICON + "skill_96.png"},
 	{"id": "overflow_defense", "title": "+20% DEFENSA",   "desc": "Aumenta tu barra de defensa", "icon": ICON + "skill_76.png"},
-	{"id": "overflow_hp",      "title": "+20% VIDA",      "desc": "Aumenta tu vida mÃ¡xima y cura un poco", "icon": ICON + "skill_83.png"},
+	{"id": "overflow_hp",      "title": "+20% VIDA",      "desc": "Aumenta tu vida máxima y cura un poco", "icon": ICON + "skill_83.png"},
 	# ── Relleno cuando no queda nada por mejorar ──
 	{"id": "coins",        "title": "BOLSA DE MONEDAS",   "desc": "+25 monedas para la tienda",         "icon": "res://assets/ui/rpg/coin.png"},
 	{"id": "heal",         "title": "POCIÓN",             "desc": "Recuperas 30% de tu vida",           "icon": ICON + "skill_86.png"},
@@ -77,6 +79,7 @@ const PASSIVES: Dictionary = {
 	"precision": MAX_LEVEL, "haste": MAX_LEVEL, "bloodthirst": MAX_LEVEL,
 }
 
+## Cartas que no salen hasta ganarlas en un desafío (GameState.TRIALS).
 const LOCKED_CARDS: Array = ["toughness", "area", "duration", "precision", "haste", "bloodthirst"]
 
 ## Armas: "unlock" = carta que la da, "level" = carta que le sube el
@@ -120,18 +123,18 @@ const EVOLUTIONS: Dictionary = {
 		"desc": "El rayo salta a 8 enemigos y cae dos veces", "icon": ICON + "skill_19.png"},
 	"gallina_dorada": {"weapon": "pollo", "passive": "hp_regen", "name": "Gallina dorada",
 		"desc": "El pollo pone huevos de oro: doble daño y +1 moneda por golpe", "icon": ICON + "skill_90.png"},
-	"bastion": {"weapon": "escudo_fuerza", "passive": "toughness", "name": "Bastion",
-		"desc": "El escudo aguanta 3 golpes y se recarga el doble de rapido", "icon": ICON + "skill_18.png"},
+	"bastion": {"weapon": "escudo_fuerza", "passive": "toughness", "name": "Bastión",
+		"desc": "El escudo aguanta 3 golpes (también cuerpo a cuerpo) y se recarga el doble de rápido", "icon": ICON + "skill_18.png"},
 	"terremoto": {"weapon": "pulso", "passive": "area", "name": "Terremoto",
-		"desc": "Cada pulso retumba dos veces, mas grande, y aturde a los que toca", "icon": ICON + "skill_34.png"},
+		"desc": "Cada pulso retumba dos veces, más grande, y aturde a los que toca", "icon": ICON + "skill_34.png"},
 	"infierno": {"weapon": "disparo_fuego", "passive": "duration", "name": "Infierno",
-		"desc": "El fuego se contagia alrededor del impacto", "icon": ICON + "skill_32.png"},
+		"desc": "El fuego se contagia: cada impacto quema a los enemigos de alrededor", "icon": ICON + "skill_32.png"},
 	"cero_absoluto": {"weapon": "disparo_congelante", "passive": "precision", "name": "Cero absoluto",
-		"desc": "Congela el doble de tiempo y los congelados reciben +50% de dano", "icon": ICON + "skill_59.png"},
+		"desc": "Congela el doble de tiempo y los congelados reciben +50% de daño", "icon": ICON + "skill_59.png"},
 	"sobrecarga": {"weapon": "disparo_electrico", "passive": "haste", "name": "Sobrecarga",
-		"desc": "Siempre aturde a todos alrededor", "icon": ICON + "skill_20.png"},
-	"cadena_carmesi": {"weapon": "laser_cadena", "passive": "bloodthirst", "name": "Cadena carmesi",
-		"desc": "El laser rebota a mas enemigos y cada golpe te cura", "icon": ICON + "skill_100.png"},
+		"desc": "El rayo aturde siempre a todos alrededor, en el doble de radio", "icon": ICON + "skill_20.png"},
+	"cadena_carmesi": {"weapon": "laser_cadena", "passive": "bloodthirst", "name": "Cadena carmesí",
+		"desc": "El láser rebota a 6 enemigos y cada golpe te cura", "icon": ICON + "skill_100.png"},
 }
 
 ## Cartas de desbloqueo — si todavía no las tenés, se prioriza que
