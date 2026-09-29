@@ -14,6 +14,7 @@ signal continue_pressed
 
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const Weapons := preload("res://scenes/weapons.gd")
+const DailyTop := preload("res://scenes/daily_top_panel.gd")
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 const GAME_NAME := "One Last Hero"
 const MAX_DAMAGE_ROWS := 6
@@ -67,7 +68,10 @@ func _apply_layout(compact: bool) -> void:
 func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_continue: bool, daily_score: int = -1) -> void:
 	var stats: Dictionary = GameState.run_stats
 	if daily_score >= 0:
-		_add_stat("PUNTAJE DEL RETO", str(daily_score))
+		_add_stat("PUNTAJE DEL RETO", DailyTop._thousands(daily_score))
+		# Cómo se armó (GameState.daily_score_parts).
+		for part in GameState.last_score_parts:
+			_add_stat("   " + part[0], "+" + DailyTop._thousands(int(part[1])), true)
 	_title.text = "¡VICTORIA!" if victory else "DERROTA"
 	_subtitle.text = ("%s salvó la región" % hero) if victory else ("%s cayó en la oleada %d" % [hero, wave])
 	var mins := int(time_sec) / 60
@@ -90,16 +94,17 @@ func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_c
 		_share_text = "Reto diario de %s (%s): %d puntos. ¿Me superas?" % [GAME_NAME, GameState.daily_date(), daily_score]
 	_retry_button.grab_focus()
 
-func _add_stat(label_text: String, value: String) -> void:
+## small: fila chica y suave (el desglose del puntaje del reto).
+func _add_stat(label_text: String, value: String, small: bool = false) -> void:
 	var l := Label.new()
 	l.text = label_text
-	RpgTheme.style_ink_label(l, 15, false, true)
+	RpgTheme.style_ink_label(l, 13 if small else 15, false, true)
 	_stats.add_child(l)
 	var v := Label.new()
 	v.text = value
 	v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	RpgTheme.style_ink_label(v, 15, true)
+	RpgTheme.style_ink_label(v, 13 if small else 15, not small, small)
 	_stats.add_child(v)
 
 ## Una fila por arma, ordenadas de más a menos daño, con barra

@@ -23,12 +23,11 @@ func _ready() -> void:
 func set_xp(v: int) -> void:
 	xp_value = v
 	# Los orbs más grandes cambian de color (verde 3+, morado 5+)
+	# Sólo el color: el tamaño queda x1 como todo el juego.
 	if v >= 5:
 		$Sprite2D.modulate = Color(0.9, 0.5, 1.0)
-		$Sprite2D.scale = Vector2(2.0, 2.0)
 	elif v >= 3:
 		$Sprite2D.modulate = Color(0.6, 1.0, 0.55)
-		$Sprite2D.scale = Vector2(1.7, 1.7)
 
 ## Llamada por el player cuando la orb está dentro del magnet_radius.
 ## Setea el target y en _process nos volamos hacia él.

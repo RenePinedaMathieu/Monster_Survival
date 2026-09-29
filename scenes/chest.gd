@@ -24,7 +24,7 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = load(CHEST_TEXTURE)
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_sprite.scale = Vector2(1.6, 1.6)
+	_sprite.scale = Vector2.ONE   # x1 como todo el juego (antes 1.6)
 	_sprite.modulate = Color(1.35, 1.1, 0.7)
 	add_child(_sprite)
 	z_index = 3

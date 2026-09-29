@@ -32,8 +32,12 @@ const ACTIVE_SKILLS: Dictionary = {
 		"desc": "Disparas 12 flechas en círculo"},
 	"main_char2_female": {"id": "roll", "name": "Voltereta", "cooldown": 3.5, "icon": SKILL_ICON + "skill_77.png",
 		"desc": "Ruedas lejos y eres invulnerable un instante"},
-	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_76.png",
+	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_27.png",
 		"desc": "2 s invulnerable y empujas a los enemigos cercanos"},
+	"edric": {"id": "whirl", "name": "Remolino", "cooldown": 7.0, "icon": SKILL_ICON + "skill_89.png",
+		"desc": "Giras con la espada 1,2 s golpeando todo a tu alrededor"},
+	"sira": {"id": "wolf", "name": "Llamado del lobo", "cooldown": 14.0, "icon": SKILL_ICON + "skill_75.png",
+		"desc": "Un lobo caza a tu lado durante 10 s"},
 }
 const DASH_SPEED := 900.0
 const DASH_DAMAGE := 8.0
@@ -45,6 +49,12 @@ const EMBESTIDA_TIME := 0.15
 const SHIELD_RADIUS := 110.0
 const SHIELD_DAMAGE := 10.0
 const VOLLEY_ARROWS := 12
+## Remolino (EDRIC): golpea alrededor cada WHIRL_TICK mientras gira.
+const WHIRL_TIME := 1.2
+const WHIRL_TICK := 0.2
+const WHIRL_RADIUS := 80.0
+const WHIRL_DAMAGE := 6.0
+const WOLF_SCRIPT := preload("res://scenes/wolf_ally.gd")
 
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
@@ -122,10 +132,10 @@ const AXEL_FRAME_COUNT := 8
 # Frame donde aparece el tajo (swoosh) en attack1 — ahí se aplica el
 # daño, no al terminar toda la animación.
 const AXEL_ATTACK_HIT_FRAME := 2
-# El pack de AXEL viene más "vacío" en su frame que el sprite Man
-# (bbox real ~19x34 en un frame de 96x80 vs ~30x54 en uno de 112x112)
-# — este factor lo deja del mismo alto en pantalla que el resto.
-const AXEL_SCALE := 0.8
+# Escala x1 como todo el juego: un píxel del dibujo = una unidad del
+# mundo (el estándar es GAROTH). Antes 0.8 para que midiera lo mismo
+# que el resto; con eso sus píxeles eran más chicos que los demás.
+const AXEL_SCALE := 1.0
 const AXEL_MELEE_DAMAGE := 4.0
 # Radio de "hay algo cerca, ataco" — a propósito más chico que
 # AUTO_FIRE_RANGE (que es para el disparo a distancia). Sin este filtro,
@@ -146,7 +156,7 @@ const IDLE_ANIM_FPS := 6.0
 # mayúsculas, por eso van hardcodeados acá en vez de armarse con %s.
 const RANGED_FRAME_SIZE := Vector2(48, 64)
 const RANGED_FRAME_COUNT := 8
-const RANGED_SCALE := 1.05
+const RANGED_SCALE := 1.0   # x1 como todo el juego (antes 1.05)
 const RANGED_SKINS := {
 	"main_char2": {
 		"base_path": "res://assets/main_characters/main_char2/The Male adventurer - Free/",
@@ -159,6 +169,11 @@ const RANGED_SKINS := {
 			"down": "Walk/walk_down.png", "up": "Walk/walk_up.png",
 			"left_down": "Walk/walk_left_down.png", "left_up": "Walk/walk_left_up.png",
 			"right_down": "Walk/walk_right_down.png", "right_up": "Walk/walk_right_up.png",
+		},
+		"death_files": {
+			"down": "Death/death_normal_down.png", "up": "Death/death_normal_up.png",
+			"left_down": "Death/death_normal_left_down.png", "left_up": "Death/death_normal_left_up.png",
+			"right_down": "Death/death_normal_right_down.png", "right_up": "Death/death_normal_right_up.png",
 		},
 	},
 	"main_char2_female": {
@@ -173,6 +188,37 @@ const RANGED_SKINS := {
 			"left_down": "Walk/walk_Left_Down.png", "left_up": "Walk/walk_Left_Up.png",
 			"right_down": "Walk/walk_Right_Down.png", "right_up": "Walk/walk_Right_Up.png",
 		},
+		"death_files": {
+			"down": "Death/death_Down.png", "up": "Death/death_Up.png",
+			"left_down": "Death/death_Left_Down.png", "left_up": "Death/death_Left_Up.png",
+			"right_down": "Death/death_Right_Down.png", "right_up": "Death/death_Right_Up.png",
+		},
+	},
+}
+
+# EDRIC y SIRA: sprites de 8 direcciones con un PNG por frame (como el
+# viejo "Man"). Pelean cuerpo a cuerpo igual que AXEL/GAROTH. "idle" es
+# una animación o, si falta, la pose quieta de rotations/. "alias" cubre
+# carpetas con otro nombre en el pack. "hp"/"speed" ajustan la vida y la
+# velocidad base; "attack_time" acorta el ciclo de ataque (SIRA apuñala
+# más seguido) y "reach" agranda el área del tajo (EDRIC).
+const PIXEL_SKINS := {
+	"edric": {
+		"base": "res://assets/sprites/Man/",
+		"idle": "animations/idle_v4/%s/frame_%03d.png",
+		"run": "animations/run_v4/%s/frame_%03d.png",
+		"attack": "animations/atk_sword_v4/%s/frame_%03d.png",
+		"alias": {"attack": {"north-east": "north-east-00f1db12"}},
+		"hit_frame": 4, "damage": 5.0, "range": 80.0,
+		"hp": 1.25, "speed": 0.95, "attack_time": 1.0, "reach": 1.3,
+	},
+	"sira": {
+		"base": "res://assets/sprites/woman/",
+		"rest": "rotations/%s.png",
+		"run": "animations/run/%s/frame_%03d.png",
+		"attack": "animations/atk sword/%s/frame_%03d.png",
+		"hit_frame": 3, "damage": 3.2, "range": 66.0,
+		"hp": 0.85, "speed": 1.15, "attack_time": 0.7, "reach": 1.0,
 	},
 }
 
@@ -185,6 +231,14 @@ var atk_speed_mult: float = 1.0
 var magnet_radius: float = XP_MAGNET_RADIUS
 var hp_regen_per_sec: float = 0.0
 var projectiles_per_shot: int = 1
+## Pasivas de los desafíos (upgrades.gd LOCKED_CARDS): daño recibido,
+## tamaño de las áreas, duración de quemar/congelar/aturdir, recarga de
+## habilidad y armas, y vida por enemigo muerto.
+var damage_taken_mult: float = 1.0
+var area_mult: float = 1.0
+var effect_duration_mult: float = 1.0
+var cooldown_mult: float = 1.0
+var kill_heal: float = 0.0
 ## "Disparo a distancia" — UNA sola carta que después se ramifica en
 ## dos caminos separados, el jugador elige cuál priorizar en cada
 ## level-up:
@@ -286,6 +340,7 @@ func _terrain_mult() -> float:
 var rerolls_left: int = 0
 var active_skill: Dictionary = {}
 var _skill_cd: float = 0.0
+var _skill_cd_total: float = 1.0
 var _invuln_t: float = 0.0
 var _dash_t: float = 0.0
 var _dash_dir: Vector2 = Vector2.DOWN
@@ -344,6 +399,9 @@ const SWORDMAN_RUN_FRAMES := 8
 # Attack: lvl 1-5 tienen 8f, lvl 6 tiene 7f. Usamos 7 como mínimo seguro.
 const SWORDMAN_ATTACK_FRAMES := 7
 const SWORDMAN_ATTACK_HIT_FRAME := 3
+## Golpe (5 cuadros) y muerte (7) del pack, en las 6 formas.
+const SWORDMAN_HURT_FRAMES := 5
+const SWORDMAN_DEATH_FRAMES := 7
 const SWORDMAN_SCALE := 1.0
 const SWORDMAN_ATTACK_RANGE := 70.0
 const SWORDMAN_MELEE_DAMAGE := 5.0
@@ -354,6 +412,8 @@ var _swordman_facing: String = "front"
 var _swordman_idle: Dictionary = {}
 var _swordman_run: Dictionary = {}
 var _swordman_attack: Dictionary = {}
+var _swordman_hurt: Dictionary = {}
+var _swordman_death: Dictionary = {}
 var _swordman_attacking: bool = false
 var _swordman_attack_elapsed: float = 0.0
 var _swordman_hit_applied: bool = false
@@ -367,10 +427,34 @@ var _axel_hit_applied: bool = false
 var _idle_time: float = 0.0
 var _idle_frame: int = 0
 
+# EDRIC / SIRA
+var _is_pixel_skin: bool = false
+var _pixel: Dictionary = {}
+var _pixel_idle: Dictionary = {}
+var _pixel_run: Dictionary = {}
+var _pixel_attack: Dictionary = {}
+var _pixel_facing: String = "south"
+var _pixel_attacking: bool = false
+var _pixel_attack_elapsed: float = 0.0
+var _pixel_hit_applied: bool = false
+var _attack_time_mult: float = 1.0
+var _whirl_t: float = 0.0
+var _whirl_tick: float = 0.0
+
 # KAY / LINA
 var _is_ranged_skin: bool = false
 var _ranged_idle: Dictionary = {}
 var _ranged_run: Dictionary = {}
+var _ranged_death: Dictionary = {}
+
+# Golpe y muerte animados (los que el pack trae: GAROTH ambos, KAY y
+# LINA sólo muerte, AXEL ninguno). Sin animación queda el destello rojo
+# y la caída de costado de siempre.
+const HURT_FPS := 16.0
+const HURT_COOLDOWN := 0.6   # recibiendo golpes seguidos no queda trabado en el golpe
+const DEATH_FPS := 10.0
+var _hurt_t: float = 0.0
+var _hurt_cd: float = 0.0
 var _ranged_facing: String = "down"
 
 @onready var _sprite: Sprite2D = $Sprite2D
@@ -410,6 +494,8 @@ func _ready() -> void:
 		_sprite.scale = Vector2.ONE * float(RANGED_SKINS[skin_id].get("scale", RANGED_SCALE))
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_load_ranged_textures(skin_id)
+	elif PIXEL_SKINS.has(skin_id):
+		_setup_pixel_skin(skin_id)
 	else:
 		for dir_name in DIR_NAMES:
 			_idle_textures.append(load("res://assets/sprites/Man/rotations/" + dir_name + ".png"))
@@ -442,6 +528,38 @@ func spawn_companion(id: String, lvl: int = -1, slot: int = 0) -> void:
 	get_tree().current_scene.add_child(comp)
 	comp.setup(self, id, lvl, slot)
 	_companions.append(comp)
+
+func _setup_pixel_skin(skin_id: String) -> void:
+	_is_pixel_skin = true
+	_pixel = PIXEL_SKINS[skin_id]
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var base: String = _pixel["base"]
+	var alias: Dictionary = _pixel.get("alias", {})
+	for d in DIR_NAMES:
+		for anim in ["idle", "run", "attack"]:
+			if not _pixel.has(anim):
+				continue
+			var dir_name: String = alias.get(anim, {}).get(d, d)
+			var frames: Array = []
+			for i in range(16):
+				var path: String = base + _pixel[anim] % [dir_name, i]
+				if not ResourceLoader.exists(path):
+					break
+				frames.append(load(path))
+			var target: Dictionary = {"idle": _pixel_idle, "run": _pixel_run, "attack": _pixel_attack}[anim]
+			target[d] = frames
+		if not _pixel.has("idle"):
+			_pixel_idle[d] = [load(base + _pixel["rest"] % d)]
+	# Vida y velocidad propias del héroe (después de las de la tienda).
+	max_hp *= float(_pixel["hp"])
+	hp = max_hp
+	move_speed *= float(_pixel["speed"])
+	_attack_time_mult = float(_pixel["attack_time"])
+	# El área del tajo es un recurso compartido por la escena: se copia
+	# antes de agrandarla, si no el próximo héroe heredaría el alcance.
+	var shape_node: CollisionShape2D = $AttackArea/AttackShape
+	shape_node.shape = shape_node.shape.duplicate()
+	shape_node.shape.radius *= float(_pixel["reach"])
 
 ## Los sheets son un archivo por dirección con N frames en fila, a
 ## diferencia del sprite "Man" que trae un archivo por frame. Se
@@ -493,10 +611,14 @@ func _load_swordman_textures() -> void:
 	_swordman_idle.clear()
 	_swordman_run.clear()
 	_swordman_attack.clear()
+	_swordman_hurt.clear()
+	_swordman_death.clear()
 	for dir_name in SWORDMAN_DIRS:
 		_swordman_idle[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Idle", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_IDLE_FRAMES)
 		_swordman_run[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Run", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_RUN_FRAMES)
 		_swordman_attack[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Attack", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_ATTACK_FRAMES)
+		_swordman_hurt[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Hurt", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_HURT_FRAMES)
+		_swordman_death[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Death", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_DEATH_FRAMES)
 
 ## Chequea si el level actual del player amerita subir de tier de sprite
 ## — se llama desde _level_up. Si sube, recarga texturas in-place.
@@ -520,6 +642,8 @@ func _load_ranged_textures(skin_id: String) -> void:
 		_ranged_idle[dir_key] = _slice_sheet(base + data["idle_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
 	for dir_key in data["run_files"]:
 		_ranged_run[dir_key] = _slice_sheet(base + data["run_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
+	for dir_key in data.get("death_files", {}):
+		_ranged_death[dir_key] = _slice_sheet(base + data["death_files"][dir_key], data.get("frame_size", RANGED_FRAME_SIZE), data.get("frame_count", RANGED_FRAME_COUNT))
 
 ## AXEL sólo tiene 4 direcciones — el facing se resuelve por el eje
 ## dominante del vector en vez de los 8 pasos de _vec_to_dir().
@@ -664,11 +788,17 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	# Sprite: ataque (si está en curso) tiene prioridad sobre correr/
-	# idle — el swing se ve completo aunque sigas esquivando.
-	if _axel_attacking:
+	# idle — el swing se ve completo aunque sigas esquivando. El golpe
+	# recibido va antes que correr, pero no corta un ataque.
+	_hurt_cd = maxf(0.0, _hurt_cd - delta)
+	if _hurt_t > 0.0 and not (_axel_attacking or _swordman_attacking or _pixel_attacking):
+		_update_hurt(delta)
+	elif _axel_attacking:
 		_update_axel_attack(delta)
 	elif _swordman_attacking:
 		_update_swordman_attack(delta)
+	elif _pixel_attacking:
+		_update_pixel_attack(delta)
 	elif moving:
 		_run_time += delta
 		if _run_time >= 1.0 / RUN_FPS:
@@ -684,6 +814,11 @@ func _physics_process(delta: float) -> void:
 			_ranged_facing = _side_dir_key(input)
 			var run_frames: Array = _ranged_run[_ranged_facing]
 			_sprite.texture = run_frames[_run_frame % run_frames.size()]
+		elif _is_pixel_skin:
+			_pixel_facing = DIR_NAMES[current_dir]
+			var px_frames: Array = _pixel_run[_pixel_facing]
+			if not px_frames.is_empty():
+				_sprite.texture = px_frames[_run_frame % px_frames.size()]
 		else:
 			_sprite.texture = _run_textures[current_dir][_run_frame]
 	else:
@@ -706,7 +841,7 @@ func _physics_process(delta: float) -> void:
 		_meteor_cd -= delta
 		if _meteor_cd <= 0.0:
 			_spawn_meteor()
-			_meteor_cd = _meteor_interval
+			_meteor_cd = _meteor_interval * cooldown_mult
 
 	# Magnetismo XP
 	_magnet_orbs()
@@ -722,8 +857,10 @@ func _auto_fire() -> void:
 	# tienen desbloqueada la carta "disparo a distancia" igual sale la
 	# flecha — sino nunca dispararían nada a distancia aunque tengan la
 	# carta.
-	var is_melee_char := _is_axel or _is_swordman
+	var is_melee_char := _is_axel or _is_swordman or _is_pixel_skin
 	var melee_range: float = SWORDMAN_ATTACK_RANGE if _is_swordman else AXEL_ATTACK_RANGE
+	if _is_pixel_skin:
+		melee_range = float(_pixel["range"])
 	var to_target_dist: float = global_position.distance_to(target.global_position)
 	var out_of_melee_range: bool = is_melee_char and to_target_dist > melee_range
 	if out_of_melee_range and ranged_bonus_shots == 0:
@@ -731,7 +868,7 @@ func _auto_fire() -> void:
 		# gastamos el CD, reintentamos rápido.
 		_fire_cd = 0.15
 		return
-	_fire_cd = AUTO_FIRE_INTERVAL / atk_speed_mult
+	_fire_cd = AUTO_FIRE_INTERVAL / atk_speed_mult * _attack_time_mult
 	# Sin sonido de ataque — sonaban muy fuerte disparando/atacando
 	# tan seguido (cada AUTO_FIRE_INTERVAL, a veces varias veces por
 	# segundo con atk_speed alto).
@@ -746,6 +883,14 @@ func _auto_fire() -> void:
 			_start_swordman_attack(to_target)
 		# La carta "disparo a distancia" también le suma disparos al
 		# swordman, igual que en AXEL — no reemplaza el melee.
+		if ranged_bonus_shots > 0:
+			_fire_shot(to_target, ranged_bonus_shots)
+	elif _is_pixel_skin:
+		if not out_of_melee_range:
+			_pixel_facing = DIR_NAMES[current_dir]
+			_pixel_attacking = true
+			_pixel_attack_elapsed = 0.0
+			_pixel_hit_applied = false
 		if ranged_bonus_shots > 0:
 			_fire_shot(to_target, ranged_bonus_shots)
 	elif _is_axel:
@@ -798,8 +943,9 @@ func _spawn_meteor() -> void:
 		get_tree().current_scene.add_child(meteor)
 		meteor.global_position = target_pos
 		meteor.damage = METEOR_DAMAGE * damage_mult * (1.5 if _meteors_evolved else 1.0)
+		meteor.impact_radius *= area_mult
 		if _meteors_evolved:
-			meteor.impact_radius = 105.0
+			meteor.impact_radius = 105.0 * area_mult
 			meteor.source = "apocalipsis"
 
 # ── AXEL: ataque melee ────────────────────────────────────────────
@@ -865,6 +1011,24 @@ func _swordman_apply_melee_damage() -> void:
 	for body in _attack_area.get_overlapping_bodies():
 		if body.has_method("take_damage"):
 			body.take_damage(dmg, "ataque")
+
+# ── EDRIC / SIRA: ataque en 8 direcciones ───────────────────────
+
+func _update_pixel_attack(delta: float) -> void:
+	_pixel_attack_elapsed += delta
+	var frames: Array = _pixel_attack[_pixel_facing]
+	var duration: float = AUTO_FIRE_INTERVAL / atk_speed_mult * _attack_time_mult
+	var t: float = clampf(_pixel_attack_elapsed / duration, 0.0, 1.0)
+	if not frames.is_empty():
+		var frame: int = mini(int(t * frames.size()), frames.size() - 1)
+		_sprite.texture = frames[frame]
+		if not _pixel_hit_applied and frame >= int(_pixel["hit_frame"]):
+			_pixel_hit_applied = true
+			for body in _attack_area.get_overlapping_bodies():
+				if body.has_method("take_damage"):
+					body.take_damage(float(_pixel["damage"]) * damage_mult, "ataque")
+	if t >= 1.0:
+		_pixel_attacking = false
 
 ## Mapea un vector de movimiento/target a la dirección del sprite
 ## swordman (front/back/side_left/side_right). Usa el eje dominante
@@ -937,6 +1101,12 @@ func apply_upgrade(id: String) -> void:
 			emit_signal("hp_changed", hp, max_hp)
 		"hp_regen":   hp_regen_per_sec += 1.0
 		"magnet":     magnet_radius *= 1.40
+		"toughness":  damage_taken_mult *= 0.94
+		"area":       area_mult += 0.10
+		"duration":   effect_duration_mult += 0.20
+		"precision":  GameState.run_crit_chance += 0.05
+		"haste":      cooldown_mult *= 0.92
+		"bloodthirst": kill_heal += 0.3
 		"multishot":  projectiles_per_shot = min(4, projectiles_per_shot + 1)
 		# Desbloqueo — arranca los dos caminos en su primer escalón.
 		"ranged_bonus":
@@ -1057,6 +1227,10 @@ func take_damage(amount: float) -> void:
 	if GameState.run_dodge > 0.0 and randf() < GameState.run_dodge:
 		FLOAT_TEXT.spawn_text(FLOAT_TEXT, get_tree().current_scene, global_position, "ESQUIVA", Color("9fd8ff"), 1.2)
 		return
+	# Evolución "Bastión": el escudo también para golpes cuerpo a cuerpo.
+	if _force_shield != null and is_instance_valid(_force_shield) and _force_shield.absorb_hit():
+		return
+	amount *= damage_taken_mult
 	## Para el logro "Intocable" (main.gd lo mira al empezar cada oleada).
 	took_damage = true
 	Audio.play_sfx("player_hurt", global_position, 0.1)
@@ -1072,6 +1246,8 @@ func take_damage(amount: float) -> void:
 	if remaining > 0.0:
 		hp = max(0.0, hp - remaining)
 		emit_signal("hp_changed", hp, max_hp)
+		if hp > 0.0:
+			_start_hurt()
 		# Flash rojo brevísimo
 		_sprite.modulate = Color(1.6, 0.5, 0.5)
 		create_tween().tween_property(_sprite, "modulate", Color.WHITE, 0.2)
@@ -1083,21 +1259,58 @@ func take_damage(amount: float) -> void:
 		emit_signal("died")
 
 ## Muerte: el héroe deja de moverse y de atacar (se apaga su proceso y
-## con él las armas que cuelgan de él) y cae de costado en rojo. El
-## tween va por el árbol y sin time_scale, así corre aunque el player
-## esté apagado y el juego en cámara lenta (main.gd, pantalla MORISTE).
+## con él las armas que cuelgan de él) y juega su animación de muerte,
+## o cae de costado en rojo si el pack no la trae. El tween va por el
+## árbol y sin time_scale, así corre aunque el player esté apagado y el
+## juego en cámara lenta (main.gd, pantalla MORISTE).
 func play_death() -> void:
 	$Camera2D.offset = Vector2.ZERO
 	_shake_strength = 0.0
 	_sprite.self_modulate.a = 1.0
 	velocity = Vector2.ZERO
 	process_mode = Node.PROCESS_MODE_DISABLED
+	var frames := _death_frames()
+	if not frames.is_empty():
+		_sprite.modulate = Color(1.6, 0.6, 0.55)
+		var anim := get_tree().create_tween().set_ignore_time_scale(true)
+		anim.tween_method(func(i: float): _sprite.texture = frames[mini(int(i), frames.size() - 1)],
+			0.0, float(frames.size()), frames.size() / DEATH_FPS)
+		anim.parallel().tween_property(_sprite, "modulate", Color(0.8, 0.6, 0.6), 0.9)
+		return
 	var side: float = -1.0 if _last_move_dir.x < 0.0 else 1.0
 	_sprite.modulate = Color(2.0, 0.45, 0.4)
 	var tw := get_tree().create_tween().set_ignore_time_scale(true)
 	tw.tween_property(_sprite, "rotation", side * PI / 2.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.parallel().tween_property(_sprite, "position:y", _sprite.position.y + 8.0, 0.45)
 	tw.parallel().tween_property(_sprite, "modulate", Color(0.6, 0.35, 0.35), 0.9)
+
+func _hurt_frames() -> Array:
+	if _is_swordman:
+		return _swordman_hurt.get(_swordman_facing, [])
+	return []
+
+func _death_frames() -> Array:
+	if _is_swordman:
+		return _swordman_death.get(_swordman_facing, [])
+	if _is_ranged_skin:
+		return _ranged_death.get(_ranged_facing, [])
+	return []
+
+func _start_hurt() -> void:
+	var frames := _hurt_frames()
+	if frames.is_empty() or _hurt_cd > 0.0:
+		return
+	_hurt_t = frames.size() / HURT_FPS
+	_hurt_cd = HURT_COOLDOWN
+
+func _update_hurt(delta: float) -> void:
+	var frames := _hurt_frames()
+	_hurt_t = maxf(0.0, _hurt_t - delta)
+	if frames.is_empty():
+		_hurt_t = 0.0
+		return
+	var i: int = clampi(int((frames.size() / HURT_FPS - _hurt_t) * HURT_FPS), 0, frames.size() - 1)
+	_sprite.texture = frames[i]
 
 ## "Segunda vida" (árbol de habilidades): vuelve con media vida, un
 ## instante invulnerable y una onda que aleja a los que lo rodeaban.
@@ -1135,6 +1348,11 @@ func heal(amount: float) -> void:
 	hp = min(max_hp, hp + amount)
 	emit_signal("hp_changed", hp, max_hp)
 
+## Carta "Sed de sangre": cada enemigo que muere cura (main.gd lo llama).
+func on_monster_killed() -> void:
+	if kill_heal > 0.0 and hp > 0.0 and hp < max_hp:
+		heal(kill_heal)
+
 # ── Estado consultado por level_up_menu.gd para filtrar cartas ──────
 
 ## true si el player dispara algo de alguna forma ahora mismo — todo
@@ -1144,7 +1362,7 @@ func heal(amount: float) -> void:
 func has_ranged_attack() -> bool:
 	# Swordman también es melee puro por default — como AXEL, sólo
 	# tiene disparo si tomó la carta "disparo a distancia".
-	if _is_axel or _is_swordman:
+	if _is_axel or _is_swordman or _is_pixel_skin:
 		return ranged_power_level > 0
 	return true
 
@@ -1177,7 +1395,8 @@ func skill_ready() -> bool:
 func use_active_skill() -> void:
 	if _skill_cd > 0.0 or hp <= 0.0 or get_tree().paused or active_skill.is_empty():
 		return
-	_skill_cd = active_skill["cooldown"]
+	_skill_cd = active_skill["cooldown"] * cooldown_mult
+	_skill_cd_total = _skill_cd
 	match active_skill["id"]:
 		"dash":
 			_start_dash(EMBESTIDA_TIME)
@@ -1202,7 +1421,17 @@ func use_active_skill() -> void:
 						m.knockback(away, 420.0)
 			shake(4.0)
 			Audio.play_sfx("meteor_impact", global_position)
-	skill_cooldown_changed.emit(_skill_cd, active_skill["cooldown"])
+		"whirl":
+			_whirl_t = WHIRL_TIME
+			_whirl_tick = 0.0
+			Audio.play_sfx("sword_swing", global_position)
+		"wolf":
+			var wolf := Node2D.new()
+			wolf.set_script(WOLF_SCRIPT)
+			get_tree().current_scene.add_child(wolf)
+			wolf.setup(self)
+			Audio.play_sfx("ui_click", global_position)
+	skill_cooldown_changed.emit(_skill_cd, _skill_cd_total)
 
 func _start_dash(duration: float) -> void:
 	_dash_dir = _last_move_dir.normalized() if _last_move_dir != Vector2.ZERO else Vector2.DOWN
@@ -1223,7 +1452,7 @@ func _fire_single_shot(dir: Vector2, dmg_mult: float) -> void:
 func _tick_active_skill(delta: float) -> void:
 	if _skill_cd > 0.0:
 		_skill_cd = maxf(0.0, _skill_cd - delta)
-		skill_cooldown_changed.emit(_skill_cd, active_skill.get("cooldown", 1.0))
+		skill_cooldown_changed.emit(_skill_cd, _skill_cd_total)
 	if _invuln_t > 0.0:
 		_invuln_t -= delta
 		# Parpadeo mientras sos invulnerable.
@@ -1235,6 +1464,8 @@ func _tick_active_skill(delta: float) -> void:
 		if _shield_fx_t > 2.0:
 			_shield_fx_t = 0.0
 		queue_redraw()
+	if _whirl_t > 0.0:
+		_tick_whirl(delta)
 	if _dash_t > 0.0:
 		_dash_t -= delta
 		velocity = _dash_dir * DASH_SPEED
@@ -1250,6 +1481,27 @@ func _tick_active_skill(delta: float) -> void:
 				if is_instance_valid(m) and not (m in _dash_hit) and global_position.distance_to(m.global_position) < 28.0:
 					_dash_hit.append(m)
 					m.take_damage(DASH_DAMAGE * damage_mult, "habilidad")
+
+## Remolino: el héroe gira mirando a las 8 direcciones y cada
+## WHIRL_TICK golpea y empuja a todo lo que tenga alrededor.
+func _tick_whirl(delta: float) -> void:
+	_whirl_t = maxf(0.0, _whirl_t - delta)
+	_whirl_tick -= delta
+	if _whirl_tick <= 0.0:
+		_whirl_tick = WHIRL_TICK
+		var r: float = WHIRL_RADIUS * area_mult
+		for m in get_tree().get_nodes_in_group("monster"):
+			if is_instance_valid(m) and global_position.distance_to(m.global_position) <= r:
+				m.take_damage(WHIRL_DAMAGE * damage_mult, "habilidad")
+				if m.has_method("knockback"):
+					m.knockback((m.global_position - global_position).normalized(), 140.0)
+	if _is_pixel_skin:
+		_pixel_attacking = false
+		_pixel_facing = DIR_NAMES[int(_whirl_t * 24.0) % 8]
+		var frames: Array = _pixel_attack[_pixel_facing]
+		if not frames.is_empty():
+			_sprite.texture = frames[int(frames.size() * 0.6)]
+	queue_redraw()
 
 ## Copia fantasma del sprite que se desvanece — estela del dash.
 func _spawn_afterimage() -> void:
@@ -1275,6 +1527,14 @@ func _draw() -> void:
 			draw_arc(Vector2.ZERO, ring, 0.0, TAU, 40, Color(1.0, 0.95, 0.6, 1.0 - _shield_fx_t / 0.3), 3.0, false)
 		draw_circle(Vector2(0, -8), 26.0, Color(0.6, 0.85, 1.0, 0.18 * a + 0.05))
 		draw_arc(Vector2(0, -8), 26.0, 0.0, TAU, 32, Color(0.75, 0.92, 1.0, 0.6 * a + 0.2), 2.0, false)
+	if _whirl_t > 0.0:
+		var r: float = WHIRL_RADIUS * area_mult
+		var spin: float = _whirl_t * 18.0
+		var a: float = minf(1.0, _whirl_t / 0.2)
+		for k in range(3):
+			var start: float = -spin + k * TAU / 3.0
+			draw_arc(Vector2(0, -4), r * 0.85, start, start + 1.3, 16, Color(0.85, 1.0, 0.9, 0.55 * a), 4.0, false)
+		draw_circle(Vector2(0, -4), r, Color(0.7, 1.0, 0.85, 0.07 * a))
 	if _burn_t > 0.0:
 		var flicker: float = 0.65 + sin(Time.get_ticks_msec() * 0.018) * 0.2
 		draw_arc(Vector2(0, 8), 17.0, 0.0, TAU, 24, Color(1.0, 0.25, 0.04, flicker), 3.0, false)
@@ -1331,6 +1591,25 @@ func evolve(evo_id: String) -> void:
 			for c in _companions:
 				if is_instance_valid(c):
 					c.evolve()
+		"bastion":
+			if _force_shield != null:
+				_force_shield.evolve()
+		"terremoto":
+			if _pulse_weapon != null:
+				_pulse_weapon.evolve()
+		"infierno":
+			if _fire_shot_weapon != null:
+				_fire_shot_weapon.evolve()
+		"cero_absoluto":
+			if _freeze_shot != null:
+				_freeze_shot.evolve()
+			GameState.run_shatter = true
+		"sobrecarga":
+			if _electric_shot != null:
+				_electric_shot.evolve()
+		"cadena_carmesi":
+			if _chain_laser != null:
+				_chain_laser.evolve()
 	upgrades_changed.emit(build_summary())
 
 ## Casillas para la barra de mejoras del HUD: primero armas (con el
@@ -1358,6 +1637,8 @@ func portrait_texture() -> Texture2D:
 		frames = _axel_idle.get("down", [])
 	elif _is_ranged_skin:
 		frames = _ranged_idle.get("down", [])
+	elif _is_pixel_skin:
+		frames = _pixel_idle.get("south", [])
 	else:
 		frames = _idle_textures
 	return frames[0] if not frames.is_empty() else null
@@ -1365,7 +1646,7 @@ func portrait_texture() -> Texture2D:
 # ── Utils ───────────────────────────────────────────────────────
 
 func _apply_idle(delta: float = 0.0) -> void:
-	if _axel_attacking or _swordman_attacking:
+	if _axel_attacking or _swordman_attacking or _pixel_attacking or _whirl_t > 0.0:
 		return
 	if _is_axel:
 		_idle_time += delta
@@ -1394,6 +1675,15 @@ func _apply_idle(delta: float = 0.0) -> void:
 			_idle_time = 0.0
 			_idle_frame = (_idle_frame + 1) % _ranged_idle[_ranged_facing].size()
 		_sprite.texture = _ranged_idle[_ranged_facing][_idle_frame]
+	elif _is_pixel_skin:
+		var idle_frames: Array = _pixel_idle.get(_pixel_facing, [])
+		if idle_frames.is_empty():
+			return
+		_idle_time += delta
+		if _idle_time >= 1.0 / IDLE_ANIM_FPS:
+			_idle_time = 0.0
+			_idle_frame += 1
+		_sprite.texture = idle_frames[_idle_frame % idle_frames.size()]
 	elif current_dir < _idle_textures.size():
 		_sprite.texture = _idle_textures[current_dir]
 

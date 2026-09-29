@@ -91,7 +91,7 @@ const SKILL_TREE: Dictionary = {
 		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_33.png"},
 	"mirage":    {"branch": "defense", "tier": 5, "name": "Espejismo", "legend": "desierto",
 		"desc": "6/12/18% de probabilidad de esquivar un golpe",
-		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_77.png"},
+		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_78.png"},
 	"companionship": {"branch": "utility", "tier": 6, "name": "Compañerismo", "legend": "pradera",
 		"desc": "Nivel 1: llevas 2 acompañantes. Niveles 2 y 3: +25% de fuerza a sus habilidades cada uno",
 		"base_cost": 2000, "growth": 1.6, "max_level": 3, "requires": "", "req_level": 0, "icon": SKILL_ICON + "skill_15.png"},
@@ -248,17 +248,17 @@ const ACHIEVEMENTS: Array = [
 	{"id": "boss_1",      "name": "Matagigantes",     "desc": "Derrota a un jefe",                  "stat": "bosses",     "goal": 1,     "reward": {"coins": 400}},
 	{"id": "evo_1",       "name": "Evolución",        "desc": "Consigue tu primera evolución",      "stat": "evolutions", "goal": 1,     "reward": {"coins": 250}},
 	{"id": "weapons_4",   "name": "Arsenal",          "desc": "Ten 4 armas a la vez",               "stat": "max_weapons", "goal": 4,    "reward": {"coins": 250}},
-	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 500, "character": "main_char1", "map": "pantano"}},
+	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 500, "character": "main_char1", "map": "desierto"}},
 	{"id": "kills_1000",  "name": "Exterminador",     "desc": "Derrota 1.000 enemigos",             "stat": "kills",      "goal": 1000,  "reward": {"coins": 400}},
 	{"id": "elites_20",   "name": "Rompe-élites",     "desc": "Derrota 20 élites",                  "stat": "elites",     "goal": 20,    "reward": {"coins": 400}},
 	{"id": "chests_25",   "name": "Cazatesoros",      "desc": "Abre 25 cofres",                     "stat": "chests",     "goal": 25,    "reward": {"coins": 400}},
 	{"id": "level_20",    "name": "Veterano",         "desc": "Llega a nivel 20 en una partida",    "stat": "best_level", "goal": 20,    "reward": {"coins": 400}},
 	{"id": "no_hit_5",    "name": "Intocable",        "desc": "Llega a la oleada 5 sin recibir daño", "stat": "no_hit_wave", "goal": 5,  "reward": {"coins": 500}},
 	{"id": "boss_10",     "name": "Cazajefes",        "desc": "Derrota 10 jefes",                   "stat": "bosses",     "goal": 10,    "reward": {"coins": 750}},
-	{"id": "win_pantano", "name": "Señor del pantano", "desc": "Gana en el Pantano",                "stat": "wins_pantano", "goal": 1,   "reward": {"coins": 750, "map": "desierto"}},
-	{"id": "win_desierto", "name": "Rey del desierto", "desc": "Gana en el Desierto",               "stat": "wins_desierto", "goal": 1,  "reward": {"coins": 1250}},
+	{"id": "win_pantano", "name": "Señor del pantano", "desc": "Gana en el Pantano",                "stat": "wins_pantano", "goal": 1,   "reward": {"coins": 1250}},
+	{"id": "win_desierto", "name": "Rey del desierto", "desc": "Gana en el Desierto",               "stat": "wins_desierto", "goal": 1,  "reward": {"coins": 750, "map": "pantano"}},
 	{"id": "hard_win",    "name": "Pesadilla",        "desc": "Gana en dificultad Difícil",         "stat": "hard_wins",  "goal": 1,     "reward": {"coins": 1000}},
-	{"id": "wave_30",     "name": "Desafío",          "desc": "Supera la oleada 30 en cualquier mapa", "stat": "challenge_wins", "goal": 1, "reward": {"coins": 1500}},
+	{"id": "wave_30",     "name": "Más allá",         "desc": "Supera la oleada 30 en cualquier mapa", "stat": "challenge_wins", "goal": 1, "reward": {"coins": 1500}},
 	{"id": "evo_7",       "name": "Coleccionista",    "desc": "Descubre las 7 evoluciones",         "stat": "evolutions", "goal": 7,     "reward": {"coins": 2000}},
 	{"id": "heroes_4",    "name": "Todos para uno",   "desc": "Gana con 4 héroes distintos",        "stat": "hero_wins",  "goal": 4,     "reward": {"coins": 1250}},
 	{"id": "companion_5", "name": "Granjero",         "desc": "Sube un acompañante a nivel 5",      "stat": "companion_max", "goal": 5,  "reward": {"coins": 1000}},
@@ -323,6 +323,9 @@ func _grant_reward(reward: Dictionary) -> void:
 		unlocked_characters.append(reward["character"])
 	if reward.has("map") and not (reward["map"] in unlocked_maps):
 		unlocked_maps.append(reward["map"])
+	for card_id in reward.get("cards", []):
+		if not (card_id in unlocked_cards):
+			unlocked_cards.append(card_id)
 
 ## Texto corto del premio, para la pantalla de logros y los avisos.
 func reward_text(reward: Dictionary) -> String:
@@ -331,24 +334,34 @@ func reward_text(reward: Dictionary) -> String:
 		parts.append("Nuevo héroe: " + CHARACTER_NAMES.get(reward["character"], reward["character"]))
 	if reward.has("map"):
 		parts.append("Nuevo mapa: " + MAP_NAMES.get(reward["map"], reward["map"]))
+	if reward.has("cards"):
+		# load() y no preload: upgrades.gd usa GameState (evita el ciclo).
+		var upgrades: Script = load("res://scenes/upgrades.gd")
+		var names: Array = []
+		for card_id in reward["cards"]:
+			names.append(upgrades.card(card_id).get("title", card_id).capitalize())
+		parts.append("Nuevas cartas: " + ", ".join(names))
 	if reward.has("coins"):
 		parts.append("+%d monedas" % reward["coins"])
 	return " · ".join(parts)
 
 const CHARACTER_NAMES: Dictionary = {
 	"main_char1": "AXEL", "main_char2": "KAY", "main_char2_female": "LINA",
-	"swordman": "GAROTH",
+	"swordman": "GAROTH", "edric": "EDRIC", "sira": "SIRA",
 }
 const MAP_NAMES: Dictionary = {"pradera": "Pradera", "pantano": "Pantano", "desierto": "Desierto"}
 
 func is_character_unlocked(id: String) -> bool:
 	return id in unlocked_characters
 
-## Qué logro desbloquea a un personaje (para mostrar el candado).
+## Qué logro o desafío desbloquea a un personaje (para el candado).
 func unlock_hint_for_character(id: String) -> String:
 	for a in ACHIEVEMENTS:
 		if a["reward"].get("character", "") == id:
 			return a["desc"]
+	for t in TRIALS:
+		if t["reward"].get("character", "") == id:
+			return "Supera el desafío " + t["name"]
 	return ""
 
 func is_map_unlocked(id: String) -> bool:
@@ -415,6 +428,68 @@ func daily_info() -> Dictionary:
 func daily_modifier() -> String:
 	return daily_info()["modifier"] if daily_active else ""
 
+# ── Desafíos ─────────────────────────────────────────────────────
+## Partidas cortas con reglas fijas: los modificadores del reto diario,
+## combinados, en un mapa dado (se juega aunque no lo tengas) y con el
+## héroe que elijas. Ganar uno da su premio una sola vez: monedas o
+## cartas nuevas (upgrades.gd LOCKED_CARDS). No suben al ranking ni
+## cuentan como victoria del mapa (como el reto diario). Cañón de
+## cristal y La horda daban a EDRIC y SIRA, fuera del juego por ahora.
+const TRIALS: Array = [
+	{"id": "cristal", "name": "Cañón de cristal", "map": "pradera", "waves": 10, "mods": ["cristal"],
+		"reward": {"coins": 800}},
+	{"id": "frenesi", "name": "Frenesí", "map": "desierto", "waves": 10, "mods": ["veloces"],
+		"reward": {"cards": ["haste", "precision"]}},
+	{"id": "horda", "name": "La horda", "map": "pantano", "waves": 10, "mods": ["horda"],
+		"reward": {"coins": 1200}},
+	{"id": "elites", "name": "Noche de élites", "map": "desierto", "waves": 12, "mods": ["elites", "veloces"],
+		"reward": {"cards": ["toughness", "bloodthirst"]}},
+	{"id": "fuego", "name": "Lluvia de fuego", "map": "pantano", "waves": 12, "mods": ["meteoros", "horda"],
+		"reward": {"cards": ["area", "duration"]}},
+	{"id": "ultimo", "name": "El último héroe", "map": "pradera", "waves": 15, "mods": ["cristal", "elites", "veloces"],
+		"reward": {"coins": 3000}},
+]
+
+## Id del desafío en juego ("" = ninguno). Lo prende trials_menu y lo
+## apaga el menú principal al volver.
+var trial_active: String = ""
+var trials_cleared: Array = []
+## Cartas ganadas en desafíos (las de upgrades.gd LOCKED_CARDS).
+var unlocked_cards: Array = []
+
+func trial_data(id: String = "") -> Dictionary:
+	if id == "":
+		id = trial_active
+	for t in TRIALS:
+		if t["id"] == id:
+			return t
+	return {}
+
+func is_trial_cleared(id: String) -> bool:
+	return id in trials_cleared
+
+func is_card_unlocked(id: String) -> bool:
+	return id in unlocked_cards
+
+## ¿La partida en curso tiene este modificador? (reto diario o desafío)
+func has_modifier(mod: String) -> bool:
+	if daily_active:
+		return daily_modifier() == mod
+	if trial_active != "":
+		return mod in trial_data().get("mods", [])
+	return false
+
+## Desafío ganado: la primera vez da el premio (lo devuelve para la
+## pantalla de resultados); las siguientes, {}.
+func report_trial_win(id: String) -> Dictionary:
+	if id == "" or id in trials_cleared:
+		return {}
+	trials_cleared.append(id)
+	var reward: Dictionary = trial_data(id).get("reward", {})
+	_grant_reward(reward)
+	_save()
+	return reward
+
 func ensure_player_name() -> String:
 	if player_name == "":
 		player_name = "Héroe%04d" % (randi() % 10000)
@@ -442,18 +517,60 @@ func set_player_name(n: String) -> void:
 static func run_score(wave: int, kills: int, victory: bool, mult: float = 1.0) -> int:
 	return int(round((wave * 1000 + kills * 2 + (20000 if victory else 0)) * mult))
 
+## Puntaje del reto diario. Antes era run_score (+20.000 fijo al ganar):
+## las bajas son casi las mismas para todos (hay que matarlos a todos
+## para pasar de oleada), así que los ganadores empataban en ~31.000 y
+## el orden entre ellos salía al azar. Ahora ganar da menos fijo y se
+## suma lo que sí depende de cómo jugaste: la rapidez (el ritmo de las
+## oleadas deja el mínimo en ~4:20) y la vida con que terminaste.
+## Cualquier derrota queda debajo de cualquier victoria.
+const DAILY_WIN_BONUS := 5000
+const DAILY_PAR_SEC := 900.0         # 15 minutos: más lento no suma rapidez
+const DAILY_POINTS_PER_SEC := 10
+const DAILY_HP_BONUS := 5000         # con la vida llena
+
+## Partes del puntaje [texto, puntos], para sumarlas y para mostrarlas.
+static func daily_score_parts(wave: int, kills: int, victory: bool, time_sec: float, hp_frac: float) -> Array:
+	var parts: Array = [
+		["Oleada %d × 1.000" % wave, wave * 1000],
+		["Bajas %d × 2" % kills, kills * 2],
+	]
+	if victory:
+		parts.append(["Victoria", DAILY_WIN_BONUS])
+		parts.append(["Rapidez (%d:%02d)" % [int(time_sec) / 60, int(time_sec) % 60],
+			int(maxf(0.0, DAILY_PAR_SEC - time_sec)) * DAILY_POINTS_PER_SEC])
+		parts.append(["Vida restante %d%%" % int(round(clampf(hp_frac, 0.0, 1.0) * 100.0)),
+			int(round(clampf(hp_frac, 0.0, 1.0) * DAILY_HP_BONUS))])
+	return parts
+
+## Las partes del último puntaje del reto (las muestra results_screen).
+var last_score_parts: Array = []
 ## Registra la partida en Supabase (si hay sesión). Devuelve el puntaje.
-func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary) -> int:
+## hp_frac: vida con la que terminó (0 al morir) — cuenta en el diario.
+func submit_run(wave: int, time_sec: float, victory: bool, build: Dictionary, hp_frac: float = 0.0) -> int:
 	var kills: int = run_stats.get("total_kills", 0)
-	var mult: float = 1.0 if daily_active else float(map_data()["mult"]) * float(difficulty_data()["mult"])
+	var mult: float = 1.0 if daily_active or trial_active != "" else float(map_data()["mult"]) * float(difficulty_data()["mult"])
 	var score := run_score(wave, kills, victory, mult)
+	last_score_parts = []
+	if daily_active:
+		last_score_parts = daily_score_parts(wave, kills, victory, time_sec, hp_frac)
+		score = 0
+		for part in last_score_parts:
+			score += int(part[1])
+		build["hp"] = snappedf(hp_frac, 0.01)
+	# Los desafíos no van al ranking: son partidas cortas y con reglas
+	# especiales, no se comparan con una etapa normal.
+	if trial_active != "":
+		return score
 	var date: Variant = null
 	if daily_active:
 		date = daily_date()
 		if score > int(daily_best.get(date, 0)):
 			daily_best = {date: score}   # sólo guarda el de hoy
 			_save()
-	if Supabase.is_signed_in():
+	# Desde el editor (pruebas, tests automáticos) no se sube nada: antes
+	# llenaban el ranking real de partidas falsas de 0 minutos.
+	if Supabase.is_signed_in() and not OS.has_feature("editor"):
 		Supabase.rest_insert("/runs", {
 			"player_name": ensure_player_name(),
 			"hero": selected_character_id,
@@ -527,6 +644,8 @@ func _load() -> void:
 		if "win_1" in achievements_unlocked and not ("desierto" in unlocked_maps):
 			unlocked_maps.append("desierto")
 		player_name = cfg.get_value("progress", "player_name", "")
+		trials_cleared = cfg.get_value("progress", "trials_cleared", [])
+		unlocked_cards = cfg.get_value("progress", "unlocked_cards", [])
 		daily_best = cfg.get_value("progress", "daily_best", {})
 		# Partidas guardadas de antes de los logros: si ya tenías el récord
 		# o las evoluciones, los logros correspondientes se dan al cargar.
@@ -549,6 +668,8 @@ func _save() -> void:
 	cfg.set_value("progress", "unlocked_characters", unlocked_characters)
 	cfg.set_value("progress", "unlocked_maps", unlocked_maps)
 	cfg.set_value("progress", "player_name", player_name)
+	cfg.set_value("progress", "trials_cleared", trials_cleared)
+	cfg.set_value("progress", "unlocked_cards", unlocked_cards)
 	cfg.set_value("progress", "daily_best", daily_best)
 	cfg.save(SAVE_PATH)
 
@@ -847,6 +968,8 @@ var run_xp_mult: float = 1.0
 ## Legendarias: veneno (fracción del golpe por segundo) y esquiva.
 var run_poison: float = 0.0
 var run_dodge: float = 0.0
+## Evolución "Cero absoluto": los enemigos congelados reciben +50%.
+var run_shatter: bool = false
 var _coin_frac: float = 0.0
 
 func _compute_run_bonuses() -> void:
@@ -856,4 +979,5 @@ func _compute_run_bonuses() -> void:
 	run_xp_mult = 1.0 + get_shop_level("wisdom") * 0.08
 	run_poison = [0.0, 0.10, 0.15, 0.20][clampi(get_shop_level("venom"), 0, 3)]
 	run_dodge = get_shop_level("mirage") * 0.06
+	run_shatter = false
 	_coin_frac = 0.0

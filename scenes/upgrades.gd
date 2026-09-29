@@ -30,6 +30,12 @@ const CARDS: Array = [
 	{"id": "magnet",       "title": "+40% IMÁN",          "desc": "Absorbes experiencia desde más lejos", "icon": ICON + "skill_30.png"},
 	{"id": "level_damage", "title": "INSTINTO ASESINO",   "desc": "+10% de daño en cada nivel futuro",   "icon": ICON + "skill_53.png"},
 	# ── Disparo a distancia ──
+	{"id": "toughness",    "title": "PIEL DE HIERRO",     "desc": "Recibes 6% menos dano",               "icon": ICON + "skill_68.png"},
+	{"id": "area",         "title": "EXPANSION",          "desc": "+10% de tamano: pulso, aura, meteoros y aturdir", "icon": ICON + "skill_17.png"},
+	{"id": "duration",     "title": "PERSISTENCIA",       "desc": "Quemar, congelar y aturdir duran 20% mas", "icon": ICON + "skill_4.png"},
+	{"id": "precision",    "title": "OJO CERTERO",        "desc": "+5% de golpe critico (doble dano)",   "icon": ICON + "skill_56.png"},
+	{"id": "haste",        "title": "PRISA",              "desc": "Tu habilidad y tus armas se recargan 8% mas rapido", "icon": ICON + "skill_60.png"},
+	{"id": "bloodthirst",  "title": "SED DE SANGRE",      "desc": "Cada enemigo que muere te cura 0,3 de vida", "icon": ICON + "skill_93.png"},
 	{"id": "ranged_bonus", "title": "DISPARO A DISTANCIA", "desc": "Un disparo automático al enemigo más cercano", "icon": ICON + "skill_55.png"},
 	{"id": "ranged_power", "title": "DISPARO A DISTANCIA", "desc": "Más fuerte y más brillante",        "icon": ICON + "skill_67.png"},
 	{"id": "ranged_count", "title": "DISPARO A DISTANCIA", "desc": "Suma otro disparo a la ráfaga",     "icon": ICON + "skill_63.png"},
@@ -67,7 +73,11 @@ const PASSIVES: Dictionary = {
 	"damage": MAX_LEVEL, "atk_speed": MAX_LEVEL, "move_speed": MAX_LEVEL,
 	"max_hp": MAX_LEVEL, "hp_regen": MAX_LEVEL, "magnet": MAX_LEVEL,
 	"level_damage": 1,
+	"toughness": MAX_LEVEL, "area": MAX_LEVEL, "duration": MAX_LEVEL,
+	"precision": MAX_LEVEL, "haste": MAX_LEVEL, "bloodthirst": MAX_LEVEL,
 }
+
+const LOCKED_CARDS: Array = ["toughness", "area", "duration", "precision", "haste", "bloodthirst"]
 
 ## Armas: "unlock" = carta que la da, "level" = carta que le sube el
 ## nivel (puede ser la misma), "extras" = cartas propias que no suben
@@ -110,6 +120,18 @@ const EVOLUTIONS: Dictionary = {
 		"desc": "El rayo salta a 8 enemigos y cae dos veces", "icon": ICON + "skill_19.png"},
 	"gallina_dorada": {"weapon": "pollo", "passive": "hp_regen", "name": "Gallina dorada",
 		"desc": "El pollo pone huevos de oro: doble daño y +1 moneda por golpe", "icon": ICON + "skill_90.png"},
+	"bastion": {"weapon": "escudo_fuerza", "passive": "toughness", "name": "Bastion",
+		"desc": "El escudo aguanta 3 golpes y se recarga el doble de rapido", "icon": ICON + "skill_18.png"},
+	"terremoto": {"weapon": "pulso", "passive": "area", "name": "Terremoto",
+		"desc": "Cada pulso retumba dos veces, mas grande, y aturde a los que toca", "icon": ICON + "skill_34.png"},
+	"infierno": {"weapon": "disparo_fuego", "passive": "duration", "name": "Infierno",
+		"desc": "El fuego se contagia alrededor del impacto", "icon": ICON + "skill_32.png"},
+	"cero_absoluto": {"weapon": "disparo_congelante", "passive": "precision", "name": "Cero absoluto",
+		"desc": "Congela el doble de tiempo y los congelados reciben +50% de dano", "icon": ICON + "skill_59.png"},
+	"sobrecarga": {"weapon": "disparo_electrico", "passive": "haste", "name": "Sobrecarga",
+		"desc": "Siempre aturde a todos alrededor", "icon": ICON + "skill_20.png"},
+	"cadena_carmesi": {"weapon": "laser_cadena", "passive": "bloodthirst", "name": "Cadena carmesi",
+		"desc": "El laser rebota a mas enemigos y cada golpe te cura", "icon": ICON + "skill_100.png"},
 }
 
 ## Cartas de desbloqueo — si todavía no las tenés, se prioriza que
@@ -139,6 +161,8 @@ static func is_eligible(player, id: String) -> bool:
 		return false
 	if id in ["overflow_attack", "overflow_defense", "overflow_hp"]:
 		return player.weapons_owned() >= MAX_WEAPONS
+	if id in LOCKED_CARDS and not GameState.is_card_unlocked(id):
+		return false
 	if PASSIVES.has(id):
 		if player.weapons_owned() >= MAX_WEAPONS:
 			return false
@@ -218,3 +242,6 @@ static func evolution_of(player, weapon: String) -> String:
 		if EVOLUTIONS[evo]["weapon"] == weapon and player.has_evolution(evo):
 			return evo
 	return ""
+
+
+

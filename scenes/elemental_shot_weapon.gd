@@ -17,10 +17,16 @@ const ELECTRIC_STUN := 0.75
 const ELECTRIC_RADIUS := 85.0
 const ELECTRIC_CHANCE := 0.35
 const FREEZE_DURATION := 1.1
+## Evoluciones: Infierno (el fuego se contagia en este radio), Cero
+## absoluto (congela el doble; el +50% de daño lo aplica monster.gd con
+## GameState.run_shatter) y Sobrecarga (2 disparos, aturde siempre).
+const INFERNO_RADIUS := 70.0
+const OVERLOAD_SPREAD := 0.18
 
 var player = null
 var level: int = 1
 var element: String = "fire"
+var evolved: bool = false
 var _cd: float = 0.5
 
 func setup(p) -> void:
@@ -28,6 +34,9 @@ func setup(p) -> void:
 
 func set_level(l: int) -> void:
 	level = clampi(l, 1, LEVELS.size())
+
+func evolve() -> void:
+	evolved = true
 
 func _process(delta: float) -> void:
 	if player == null or not is_instance_valid(player) or player.hp <= 0.0:
@@ -40,7 +49,7 @@ func _process(delta: float) -> void:
 		_cd = 0.2
 		return
 	_fire(target)
-	_cd = LEVELS[level - 1]["cooldown"] / player.atk_speed_mult
+	_cd = LEVELS[level - 1]["cooldown"] / player.atk_speed_mult * player.cooldown_mult
 
 func _fire(target: Node2D) -> void:
 	var data: Dictionary = LEVELS[level - 1]
@@ -52,32 +61,37 @@ func _fire(target: Node2D) -> void:
 	get_tree().current_scene.add_child(shot)
 	shot.global_position = player.global_position + dir * 24.0
 	shot.set_damage(data["damage"] * player.damage_mult)
+	var dur: float = player.effect_duration_mult
 	match element:
 		"fire":
-			shot.source = "disparo_fuego"
-			shot.set_effect("fire", FIRE_DURATION, FIRE_DPS_FRAC)
+			shot.source = "infierno" if evolved else "disparo_fuego"
+			shot.set_effect("fire", FIRE_DURATION * dur, FIRE_DPS_FRAC, INFERNO_RADIUS * player.area_mult if evolved else 0.0)
 			shot.setup(dir, false, 5)
 		"freeze":
-			shot.source = "disparo_congelante"
-			shot.set_effect("freeze", FREEZE_DURATION)
+			shot.source = "cero_absoluto" if evolved else "disparo_congelante"
+			shot.set_effect("freeze", FREEZE_DURATION * dur * (2.0 if evolved else 1.0))
 			shot.setup(dir, false, 0)
 
 func _fire_electric(target: Node2D, damage: float) -> void:
 	if not is_instance_valid(target):
 		return
+	var dur: float = player.effect_duration_mult
+	var radius: float = ELECTRIC_RADIUS * player.area_mult * (2.0 if evolved else 1.0)
+	var chance: float = 1.0 if evolved else ELECTRIC_CHANCE
+	var source: String = "sobrecarga" if evolved else "disparo_electrico"
 	var points: Array = [player.global_position, target.global_position]
-	target.take_damage(damage, "disparo_electrico")
+	target.take_damage(damage, source)
 	if target.has_method("apply_stun"):
-		target.apply_stun(ELECTRIC_STUN)
+		target.apply_stun(ELECTRIC_STUN * dur)
 	for m in get_tree().get_nodes_in_group("monster"):
 		if m == target or not is_instance_valid(m):
 			continue
-		if target.global_position.distance_to(m.global_position) > ELECTRIC_RADIUS:
+		if target.global_position.distance_to(m.global_position) > radius:
 			continue
-		if randf() >= ELECTRIC_CHANCE:
+		if randf() >= chance:
 			continue
 		if m.has_method("apply_stun"):
-			m.apply_stun(ELECTRIC_STUN * 0.75)
+			m.apply_stun(ELECTRIC_STUN * dur * 0.75)
 		points.append(m.global_position)
 	var bolt := Node2D.new()
 	bolt.set_script(BOLT_SCRIPT)

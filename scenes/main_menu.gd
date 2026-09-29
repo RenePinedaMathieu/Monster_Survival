@@ -9,12 +9,14 @@ extends Control
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const BuildInfo := preload("res://scenes/build_info.gd")
+const DAILY_TOP_SCRIPT := preload("res://scenes/daily_top_panel.gd")
 
 const CHARACTER_SELECT_SCENE := "res://scenes/character_select.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
 const ACHIEVEMENTS_SCENE := "res://scenes/achievements_menu.tscn"
 const DAILY_SCENE := "res://scenes/daily_menu.tscn"
 const RANKING_SCENE := "res://scenes/leaderboard_menu.tscn"
+const TRIALS_SCENE := "res://scenes/trials_menu.tscn"
 const TUTORIAL_SCENE := preload("res://scenes/tutorial_overlay.tscn")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
@@ -25,6 +27,7 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 @onready var _play_button: Button = $MenuButtons/PlayButton
 @onready var _shop_button: Button = $MenuButtons/Grid/ShopButton
 @onready var _ranking_button: Button = $MenuButtons/Grid/RankingButton
+@onready var _trials_button: Button = $MenuButtons/Grid/TrialsButton
 @onready var _achievements_button: Button = $MenuButtons/Grid/AchievementsButton
 @onready var _options_button: Button = $MenuButtons/Grid/OptionsButton
 @onready var _quit_button: Button = $MenuButtons/Grid/QuitButton
@@ -36,8 +39,10 @@ const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 @onready var _back_button: Button = $OptionsPanel/Content/BackButton
 
 func _ready() -> void:
-	# Volver al menú corta el modo reto diario (daily_menu lo prende).
+	# Volver al menú corta el reto diario y los desafíos (los prenden
+	# daily_menu y trials_menu).
 	GameState.daily_active = false
+	GameState.trial_active = ""
 	var daily: Button = $DailyButton
 	RpgTheme.style_button(daily, 17)
 	daily.pressed.connect(func():
@@ -47,6 +52,7 @@ func _ready() -> void:
 	RpgTheme.style_light_label(_record_label, 16)
 	_record_label.modulate.a = 0.9
 	_add_version_label()
+	_add_daily_top()
 	if GameState.best_wave > 0:
 		var mins := int(GameState.best_time) / 60
 		var secs := int(GameState.best_time) % 60
@@ -54,13 +60,14 @@ func _ready() -> void:
 	else:
 		_record_label.hide()
 
-	for button in [_play_button, _shop_button, _ranking_button, _achievements_button, _options_button, _quit_button]:
+	for button in [_play_button, _shop_button, _trials_button, _ranking_button, _achievements_button, _options_button, _quit_button]:
 		RpgTheme.style_button(button, 20)
 	for button in [_back_button, _tutorial_button, _qa_room_button]:
 		RpgTheme.style_button(button, 16)
 	_achievements_button.pressed.connect(func(): get_tree().change_scene_to_file(ACHIEVEMENTS_SCENE))
 	_ranking_button.pressed.connect(func(): get_tree().change_scene_to_file(RANKING_SCENE))
-	for button in [_play_button, _shop_button, _ranking_button, _achievements_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
+	_trials_button.pressed.connect(func(): get_tree().change_scene_to_file(TRIALS_SCENE))
+	for button in [_play_button, _shop_button, _trials_button, _ranking_button, _achievements_button, _options_button, _quit_button, _back_button, _tutorial_button, _qa_room_button]:
 		button.mouse_entered.connect(UITheme.pulse.bind(button, 1.06, 0.08))
 		button.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
 		button.mouse_exited.connect(UITheme.pulse.bind(button, 1.0, 0.08))
@@ -91,6 +98,9 @@ func _ready() -> void:
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 	_tutorial_button.pressed.connect(_on_tutorial_button_pressed)
 	_qa_room_button.pressed.connect(_on_qa_room_pressed)
+	var catalog_button: Button = $OptionsPanel/Content/CatalogButton
+	RpgTheme.style_button(catalog_button, 16)
+	catalog_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/catalog.tscn"))
 
 	# En Web no hay forma confiable de "cerrar" la pestaña del browser
 	# desde el juego — el botón no tiene sentido ahí.
@@ -116,6 +126,8 @@ func _apply_layout(_compact: bool) -> void:
 	_options_panel.offset_right = ow / 2.0
 	var tall: bool = vp.y > vp.x * 1.2
 	var short: bool = vp.y < 640.0
+	if _daily_top != null:
+		_daily_top.visible = not tall
 	var bw: float = 240.0 if tall else (190.0 if short else 220.0)
 	var bh: float = 48.0 if not short else 42.0
 	_grid.columns = 1 if tall else 2
@@ -139,6 +151,24 @@ func _apply_layout(_compact: bool) -> void:
 		_background.offset_top = 0.0
 		_background.offset_right = 0.0
 		_background.offset_bottom = 0.0
+
+## "TOP DE HOY" del reto diario, bajo el botón RETO DIARIO (arriba a la
+## derecha). Clic: abre el ranking. En vertical no entra junto al logo.
+var _daily_top: PanelContainer
+
+func _add_daily_top() -> void:
+	_daily_top = PanelContainer.new()
+	_daily_top.set_script(DAILY_TOP_SCRIPT)
+	_daily_top.anchor_left = 1.0
+	_daily_top.anchor_right = 1.0
+	_daily_top.offset_right = -16.0
+	_daily_top.offset_left = -16.0 - DAILY_TOP_SCRIPT.WIDTH
+	_daily_top.offset_top = 76.0
+	_daily_top.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	add_child(_daily_top)
+	# Debajo del panel de opciones (que se abre encima de todo).
+	move_child(_daily_top, _options_panel.get_index())
+	_daily_top.open_ranking.connect(func(): get_tree().change_scene_to_file(RANKING_SCENE))
 
 ## Versión chica abajo a la izquierda (ver build_info.gd).
 func _add_version_label() -> void:

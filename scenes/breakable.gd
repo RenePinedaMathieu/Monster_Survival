@@ -29,7 +29,7 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = load(TEXTURE)
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_sprite.scale = Vector2(1.7, 1.7)
+	_sprite.scale = Vector2.ONE   # x1 como todo el juego (antes 1.7)
 	_sprite.position = Vector2(0, -6)
 	add_child(_sprite)
 	body_entered.connect(_on_body_entered)

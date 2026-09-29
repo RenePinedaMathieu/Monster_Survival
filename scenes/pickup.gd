@@ -10,7 +10,7 @@ extends Area2D
 const ICONS: Dictionary = {
 	"heal": "res://assets/ui/rpg/heart.png",
 	"magnet": "res://assets/ui/rpg/magnet.png",
-	"bomb": "res://assets/ui/skill_icons/skill_98.png",
+	"bomb": "res://assets/props/bomb.png",
 	"coins": "res://assets/ui/rpg/coin.png",
 }
 const TINTS: Dictionary = {
@@ -53,10 +53,10 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = load(ICONS[kind])
 	_sprite.modulate = TINTS[kind]
-	var tex_size: float = _sprite.texture.get_width()
+	# x1 como todo el juego (antes se estiraban a 18 unidades de ancho).
 	# Los íconos del pack son de 16 px; la bomba es una ilustración grande.
-	_sprite.scale = Vector2.ONE * (18.0 / tex_size)
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if tex_size > 32.0 else CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.scale = Vector2.ONE
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(_sprite)
 	body_entered.connect(_on_body_entered)
 

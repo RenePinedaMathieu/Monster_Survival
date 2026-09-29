@@ -9,6 +9,7 @@ extends Control
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const SELECT_SCRIPT := preload("res://scenes/character_select.gd")
 const NamePrompt := preload("res://scenes/name_prompt.gd")
+const DailyTop := preload("res://scenes/daily_top_panel.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
@@ -93,6 +94,8 @@ func _build_challenge() -> void:
 	var best: int = int(GameState.daily_best.get(_info["date"], 0))
 	_label(_challenge, "Tu mejor puntaje de hoy: %s" % (str(best) if best > 0 else "—"), 15, true)
 	_label(_challenge, "Todos juegan lo mismo hoy. Mañana cambia.", 13, false, true)
+	_label(_challenge, "Puntaje: 1.000 por oleada y 2 por baja. Si ganas: +%s, más un bono por rapidez y otro por la vida que te quede." \
+		% DailyTop._thousands(GameState.DAILY_WIN_BONUS), 13, false, true)
 	var name_row := HBoxContainer.new()
 	name_row.add_theme_constant_override("separation", 8)
 	_challenge.add_child(name_row)
