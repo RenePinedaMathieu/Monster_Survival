@@ -32,12 +32,12 @@ const BOSS_EVERY := 10
 const SPAWN_INNER := 500.0
 const SPAWN_OUTER := 800.0
 const WAVE_BREAK_SEC := 2.5
-# Densidad VS: mucho volumen. Con las oleadas por tiempo (30-09) la
+# Densidad VS: mucho volumen. Con las oleadas por tiempo (29-09) la
 # cantidad crece menos (antes +4 por oleada): el peligro lo ponen el
 # daño y el nivel de los monstruos, no que se acumulen sin fin.
 const BASE_MONSTERS := 8
 const MONSTERS_PER_WAVE := 2
-## Ritmo de la etapa (30-09): cada oleada dura WAVE_DURATION aunque
+## Ritmo de la etapa (29-09): cada oleada dura WAVE_DURATION aunque
 ## queden monstruos vivos (siguen en la siguiente); si se limpia todo
 ## antes, pasa antes. Trae el triple de monstruos y los suelta de a poco
 ## en el primer SPAWN_WINDOW_FRAC de su tiempo; los que no alcanzaron a
