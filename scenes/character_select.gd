@@ -54,6 +54,48 @@ const CHARACTERS: Array[Dictionary] = [
 		"blurb": "Espadachín ágil. Pega fuerte de cerca; puede sumar disparos a distancia con la carta correcta.",
 		"stats": {"Daño": 4, "Velocidad": 3, "Alcance": 1, "Dificultad": 3},
 	},
+	# TOREN, BRAN y VAEL: GAROTH recoloreado (tools/recolor_hero.py);
+	# evolucionan como él. Se ganan en los desafíos (GameState.TRIALS).
+	{
+		"id": "toren",
+		"name": "TOREN",
+		"portrait": "res://assets/main_characters/toren_portrait.png",
+		"idle_sheet": "res://assets/main_characters/toren_idle_strip.png",
+		"idle_frames": 12,
+		"accent": Color("8fcf5a"),
+		"role": "CUERPO A CUERPO · EVOLUTIVO · RESISTENTE",
+		"blurb": "Rubio de ojos verdes. Crece como GAROTH, con más vida, y su Remolino barre a todos los que lo rodean.",
+		"stats": {"Daño": 3, "Velocidad": 2, "Alcance": 2, "Dificultad": 3},
+	},
+	{
+		"id": "bran",
+		"name": "BRAN",
+		"portrait": "res://assets/main_characters/bran_portrait.png",
+		"idle_sheet": "res://assets/main_characters/bran_idle_strip.png",
+		"idle_frames": 12,
+		"accent": Color("e0703a"),
+		"role": "CUERPO A CUERPO · EVOLUTIVO · VELOZ",
+		"blurb": "Colorín de ojos miel. Más rápido y con menos vida; su Voltereta lo saca de cualquier encierro.",
+		"stats": {"Daño": 3, "Velocidad": 4, "Alcance": 1, "Dificultad": 4},
+	},
+	{
+		"id": "vael",
+		"name": "VAEL",
+		"portrait": "res://assets/main_characters/vael_portrait.png",
+		"idle_sheet": "res://assets/main_characters/vael_idle_strip.png",
+		"idle_frames": 12,
+		"accent": Color("a070e0"),
+		"role": "CUERPO A CUERPO · EVOLUTIVO · RÁFAGA",
+		"blurb": "Pelo blanco y ojos violeta. Su Ráfaga lanza 12 proyectiles en círculo y limpia el espacio a su alrededor.",
+		"stats": {"Daño": 4, "Velocidad": 3, "Alcance": 3, "Dificultad": 3},
+	},
+]
+
+## Fuera del juego por ahora, hasta tener sprites al estilo de GAROTH:
+## KAY y LINA (reemplazados por TOREN, BRAN y VAEL el 29-09-2026) y
+## EDRIC y SIRA (arte anterior). Su lógica sigue en player.gd; sus datos
+## quedan acá para el ranking y el reto diario de días anteriores.
+const PENDING_CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "main_char2",
 		"name": "KAY",
@@ -74,13 +116,6 @@ const CHARACTERS: Array[Dictionary] = [
 		"blurb": "Tan letal como KAY pero más ligera de pies — prioriza esquivar por sobre plantarse a pelear.",
 		"stats": {"Daño": 2, "Velocidad": 4, "Alcance": 4, "Dificultad": 2},
 	},
-]
-
-## EDRIC y SIRA: fuera del juego por ahora. Sus sprites (y el del lobo)
-## son arte anterior, de otro estilo; vuelven a CHARACTERS cuando tengan
-## sprites al estilo de GAROTH. Su lógica sigue en player.gd
-## (PIXEL_SKINS, Remolino, Llamado del lobo).
-const PENDING_CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "edric",
 		"name": "EDRIC",
@@ -352,6 +387,14 @@ func _update_card_glow(i: int, active: bool) -> void:
 		UITheme.pulse(_card_roots[i], 1.04 if active else 1.0, 0.12)
 
 # ── Selección ────────────────────────────────────────────────────
+
+## Datos de un héroe por id, esté en el juego o fuera (partidas viejas
+## del ranking, reto diario de un día anterior). {} si no existe.
+static func find_character(id: String) -> Dictionary:
+	for c in CHARACTERS + PENDING_CHARACTERS:
+		if c["id"] == id:
+			return c
+	return {}
 
 ## Textura del retrato (con recorte si "portrait_region" lo pide).
 static func portrait_texture(data: Dictionary) -> Texture2D:

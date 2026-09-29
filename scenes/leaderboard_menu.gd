@@ -49,7 +49,7 @@ var _hero_names: Dictionary = {}
 
 func _ready() -> void:
 	$Background.texture = load(BACKGROUND_TEXTURE)
-	for c in SELECT_SCRIPT.CHARACTERS:
+	for c in SELECT_SCRIPT.CHARACTERS + SELECT_SCRIPT.PENDING_CHARACTERS:
 		_hero_names[c["id"]] = String(c.get("name", c["id"])).capitalize()
 	_window.add_theme_stylebox_override("panel", RpgTheme.window_box())
 	RpgTheme.style_light_label(_title, 26)

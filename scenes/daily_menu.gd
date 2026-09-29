@@ -31,9 +31,7 @@ var _board_status: Label
 func _ready() -> void:
 	$Background.texture = load(BACKGROUND_TEXTURE)
 	_info = GameState.daily_info()
-	for c in SELECT_SCRIPT.CHARACTERS:
-		if c["id"] == _info["hero"]:
-			_hero = c
+	_hero = SELECT_SCRIPT.find_character(_info["hero"])
 	_window.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(26.0, 22.0))
 	RpgTheme.style_header_title(_title, 24)
 	_title.text = "RETO DIARIO · " + _info["date"]

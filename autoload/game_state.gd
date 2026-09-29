@@ -243,8 +243,8 @@ var discovered_evolutions: Array = []
 signal achievement_unlocked(achievement: Dictionary)
 
 const ACHIEVEMENTS: Array = [
-	{"id": "kills_100",   "name": "Primera sangre",   "desc": "Derrota 100 enemigos",               "stat": "kills",      "goal": 100,   "reward": {"coins": 150, "character": "main_char2"}},
-	{"id": "wave_10",     "name": "Superviviente",    "desc": "Llega a la oleada 10",               "stat": "best_wave",  "goal": 10,    "reward": {"character": "main_char2_female"}},
+	{"id": "kills_100",   "name": "Primera sangre",   "desc": "Derrota 100 enemigos",               "stat": "kills",      "goal": 100,   "reward": {"coins": 300}},
+	{"id": "wave_10",     "name": "Superviviente",    "desc": "Llega a la oleada 10",               "stat": "best_wave",  "goal": 10,    "reward": {"coins": 400}},
 	{"id": "boss_1",      "name": "Matagigantes",     "desc": "Derrota a un jefe",                  "stat": "bosses",     "goal": 1,     "reward": {"coins": 400}},
 	{"id": "evo_1",       "name": "Evolución",        "desc": "Consigue tu primera evolución",      "stat": "evolutions", "goal": 1,     "reward": {"coins": 250}},
 	{"id": "weapons_4",   "name": "Arsenal",          "desc": "Ten 4 armas a la vez",               "stat": "max_weapons", "goal": 4,    "reward": {"coins": 250}},
@@ -348,6 +348,7 @@ func reward_text(reward: Dictionary) -> String:
 const CHARACTER_NAMES: Dictionary = {
 	"main_char1": "AXEL", "main_char2": "KAY", "main_char2_female": "LINA",
 	"swordman": "GAROTH", "edric": "EDRIC", "sira": "SIRA",
+	"toren": "TOREN", "bran": "BRAN", "vael": "VAEL",
 }
 const MAP_NAMES: Dictionary = {"pradera": "Pradera", "pantano": "Pantano", "desierto": "Desierto"}
 
@@ -394,7 +395,10 @@ func report_win(hero_id: String, map_id: String, difficulty: String) -> void:
 ## SQL de la tabla: docs/supabase_runs.sql.
 
 const DAILY_WAVES := 10
-const DAILY_HEROES: Array = ["main_char1", "main_char2", "main_char2_female", "swordman"]
+## Desde el 30-09-2026 (TOREN, BRAN y VAEL reemplazan a KAY y LINA). La
+## lista vieja queda para que el reto de días anteriores no cambie.
+const DAILY_HEROES: Array = ["main_char1", "swordman", "toren", "bran", "vael"]
+const DAILY_HEROES_UNTIL_0929: Array = ["main_char1", "main_char2", "main_char2_female", "swordman"]
 const DAILY_MODIFIERS: Dictionary = {
 	"elites":   {"name": "Noche de élites", "desc": "Cada oleada trae 2 élites (y 2 cofres)"},
 	"veloces":  {"name": "Frenesí", "desc": "Los monstruos son 30% más rápidos"},
@@ -420,10 +424,13 @@ func daily_info() -> Dictionary:
 	return {
 		"date": date,
 		"seed": h,
-		"hero": DAILY_HEROES[h % DAILY_HEROES.size()],
+		"hero": _daily_heroes(date)[h % _daily_heroes(date).size()],
 		"map": MAP_ORDER[(h / 7) % MAP_ORDER.size()],
 		"modifier": mods[(h / 31) % mods.size()],
 	}
+
+func _daily_heroes(date: String) -> Array:
+	return DAILY_HEROES if date >= "2026-09-30" else DAILY_HEROES_UNTIL_0929
 
 func daily_modifier() -> String:
 	return daily_info()["modifier"] if daily_active else ""
@@ -431,23 +438,23 @@ func daily_modifier() -> String:
 # ── Desafíos ─────────────────────────────────────────────────────
 ## Partidas cortas con reglas fijas: los modificadores del reto diario,
 ## combinados, en un mapa dado (se juega aunque no lo tengas) y con el
-## héroe que elijas. Ganar uno da su premio una sola vez: monedas o
-## cartas nuevas (upgrades.gd LOCKED_CARDS). No suben al ranking ni
-## cuentan como victoria del mapa (como el reto diario). Cañón de
-## cristal y La horda daban a EDRIC y SIRA, fuera del juego por ahora.
+## héroe que elijas. Ganar uno da su premio una sola vez: los héroes
+## TOREN, BRAN y VAEL o cartas nuevas (upgrades.gd LOCKED_CARDS). No
+## suben al ranking ni cuentan como victoria del mapa (como el reto
+## diario).
 const TRIALS: Array = [
 	{"id": "cristal", "name": "Cañón de cristal", "map": "pradera", "waves": 10, "mods": ["cristal"],
-		"reward": {"coins": 800}},
+		"reward": {"character": "toren"}},
 	{"id": "frenesi", "name": "Frenesí", "map": "desierto", "waves": 10, "mods": ["veloces"],
 		"reward": {"cards": ["haste", "precision"]}},
 	{"id": "horda", "name": "La horda", "map": "pantano", "waves": 10, "mods": ["horda"],
-		"reward": {"coins": 1200}},
+		"reward": {"character": "bran"}},
 	{"id": "elites", "name": "Noche de élites", "map": "desierto", "waves": 12, "mods": ["elites", "veloces"],
 		"reward": {"cards": ["toughness", "bloodthirst"]}},
 	{"id": "fuego", "name": "Lluvia de fuego", "map": "pantano", "waves": 12, "mods": ["meteoros", "horda"],
 		"reward": {"cards": ["area", "duration"]}},
 	{"id": "ultimo", "name": "El último héroe", "map": "pradera", "waves": 15, "mods": ["cristal", "elites", "veloces"],
-		"reward": {"coins": 3000}},
+		"reward": {"character": "vael"}},
 ]
 
 ## Id del desafío en juego ("" = ninguno). Lo prende trials_menu y lo

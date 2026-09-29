@@ -38,6 +38,14 @@ const ACTIVE_SKILLS: Dictionary = {
 		"desc": "Giras con la espada 1,2 s golpeando todo a tu alrededor"},
 	"sira": {"id": "wolf", "name": "Llamado del lobo", "cooldown": 14.0, "icon": SKILL_ICON + "skill_75.png",
 		"desc": "Un lobo caza a tu lado durante 10 s"},
+	# TOREN, BRAN y VAEL (GAROTH recoloreado) usan habilidades que ya
+	# existían: la de EDRIC, la de LINA y la de KAY (fuera del juego).
+	"toren": {"id": "whirl", "name": "Remolino", "cooldown": 7.0, "icon": SKILL_ICON + "skill_89.png",
+		"desc": "Giras con la espada 1,2 s golpeando todo a tu alrededor"},
+	"bran": {"id": "roll", "name": "Voltereta", "cooldown": 3.5, "icon": SKILL_ICON + "skill_77.png",
+		"desc": "Ruedas lejos y eres invulnerable un instante"},
+	"vael": {"id": "volley", "name": "Ráfaga", "cooldown": 6.0, "icon": SKILL_ICON + "skill_61.png",
+		"desc": "Lanzas 12 proyectiles en círculo"},
 }
 const DASH_SPEED := 900.0
 const DASH_DAMAGE := 8.0
@@ -406,7 +414,16 @@ const SWORDMAN_SCALE := 1.0
 const SWORDMAN_ATTACK_RANGE := 70.0
 const SWORDMAN_MELEE_DAMAGE := 5.0
 const SWORDMAN_MAX_TIER := 6
+## TOREN, BRAN y VAEL: GAROTH recoloreado (pelo y ojos) con
+## tools/recolor_hero.py. Evolucionan igual que él en 6 formas; "hp" y
+## "speed" ajustan su vida y velocidad base.
+const SWORD_SKINS := {
+	"toren": {"dir": "res://assets/sprites/toren/", "name": "Toren", "hp": 1.2, "speed": 0.95},
+	"bran": {"dir": "res://assets/sprites/bran/", "name": "Bran", "hp": 0.9, "speed": 1.1},
+	"vael": {"dir": "res://assets/sprites/vael/", "name": "Vael", "hp": 1.0, "speed": 1.0},
+}
 var _is_swordman: bool = false
+var _sword_skin: Dictionary = {}   # vacío = GAROTH
 var _swordman_tier: int = 1
 var _swordman_facing: String = "front"
 var _swordman_idle: Dictionary = {}
@@ -480,12 +497,17 @@ func _ready() -> void:
 	var skin_id: String = GameState.selected_character_id
 	active_skill = ACTIVE_SKILLS.get(skin_id, ACTIVE_SKILLS["main_char1"])
 	_is_axel = skin_id == "main_char1"
-	_is_swordman = skin_id == "swordman"
+	_is_swordman = skin_id == "swordman" or SWORD_SKINS.has(skin_id)
+	_sword_skin = SWORD_SKINS.get(skin_id, {})
 	_is_ranged_skin = RANGED_SKINS.has(skin_id)
 	if _is_swordman:
 		_sprite.scale = Vector2.ONE * SWORDMAN_SCALE
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_load_swordman_textures()
+		if not _sword_skin.is_empty():
+			max_hp *= float(_sword_skin["hp"])
+			hp = max_hp
+			move_speed *= float(_sword_skin["speed"])
 	elif _is_axel:
 		_sprite.scale = Vector2.ONE * AXEL_SCALE
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -601,6 +623,10 @@ func _tier_for_level(lvl: int) -> int:
 ## Los filenames adentro también varían — "attack" es lowercase, el
 ## resto capitalizado. Se maneja acá para no ensuciar el caller.
 func _swordman_path(tier: int, anim: String, direction: String) -> String:
+	# TOREN, BRAN y VAEL: un solo formato de nombre para todas las formas.
+	if not _sword_skin.is_empty():
+		var n: String = _sword_skin["name"]
+		return "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [_sword_skin["dir"], n, tier, anim, n, tier, anim, direction]
 	var base := "res://assets/sprites/swordman/Swordsman_lvl%d/" % tier
 	var folder := anim if tier >= 4 else "Swordsman_lvl%d_%s" % [tier, anim]
 	var fname := "Swordsman_lvl%d_%s_%s.png" % [tier, anim if anim != "Attack" else "attack", direction]
@@ -791,7 +817,9 @@ func _physics_process(delta: float) -> void:
 	# idle — el swing se ve completo aunque sigas esquivando. El golpe
 	# recibido va antes que correr, pero no corta un ataque.
 	_hurt_cd = maxf(0.0, _hurt_cd - delta)
-	if _hurt_t > 0.0 and not (_axel_attacking or _swordman_attacking or _pixel_attacking):
+	if _whirl_t > 0.0:
+		pass   # _tick_whirl ya eligió el cuadro
+	elif _hurt_t > 0.0 and not (_axel_attacking or _swordman_attacking or _pixel_attacking):
 		_update_hurt(delta)
 	elif _axel_attacking:
 		_update_axel_attack(delta)
@@ -1501,6 +1529,12 @@ func _tick_whirl(delta: float) -> void:
 		var frames: Array = _pixel_attack[_pixel_facing]
 		if not frames.is_empty():
 			_sprite.texture = frames[int(frames.size() * 0.6)]
+	elif _is_swordman:
+		_swordman_attacking = false
+		_swordman_facing = ["front", "side_right", "back", "side_left"][int(_whirl_t * 16.0) % 4]
+		var sw_frames: Array = _swordman_attack.get(_swordman_facing, [])
+		if not sw_frames.is_empty():
+			_sprite.texture = sw_frames[int(sw_frames.size() * 0.5)]
 	queue_redraw()
 
 ## Copia fantasma del sprite que se desvanece — estela del dash.

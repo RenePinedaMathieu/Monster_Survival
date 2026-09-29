@@ -315,7 +315,7 @@ static func _slice(path: String, frame: Vector2, max_frames: int = 64) -> Array:
 # ── HÉROES ───────────────────────────────────────────────────────
 
 func _build_heroes() -> void:
-	_hint.text = "Escala real del juego (x1, como GAROTH). GAROTH tiene 6 formas y todas sus animaciones. AXEL no trae golpe ni muerte; KAY y LINA no traen ataque ni golpe."
+	_hint.text = "Escala real del juego (x1). GAROTH, TOREN, BRAN y VAEL tienen 6 formas y todas sus animaciones. AXEL no trae golpe ni muerte. KAY, LINA, EDRIC y SIRA están fuera del juego."
 	var anim_name: String = ANIMS[_anim]
 	var label: String = ANIM_NAMES[_anim]
 	var skills: Dictionary = Player.ACTIVE_SKILLS
@@ -328,6 +328,17 @@ func _build_heroes() -> void:
 		_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "GAROTH · forma %d" % tier, "ESTÁNDAR", COLOR_SPRITE,
 			[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
 			"Habilidad: " + skills["swordman"]["name"]])
+	# TOREN, BRAN y VAEL: GAROTH recoloreado, también en 6 formas.
+	for sid in Player.SWORD_SKINS:
+		var sk: Dictionary = Player.SWORD_SKINS[sid]
+		for tier in range(1, Player.SWORDMAN_MAX_TIER + 1):
+			var anim_folder: String = {"idle": "Idle", "run": "Run", "attack": "Attack", "hurt": "Hurt", "death": "Death"}[anim_name]
+			var n: String = sk["name"]
+			var path: String = "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [sk["dir"], n, tier, anim_folder, n, tier, anim_folder, sw_dir]
+			var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
+			_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "%s · forma %d" % [GameState.CHARACTER_NAMES.get(sid, sid), tier], "GAROTH RECOLOREADO", COLOR_SPRITE,
+				[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
+				"Habilidad: " + skills[sid]["name"]])
 	# AXEL (el pack no trae golpe ni muerte).
 	var ax_dir: String = Player.AXEL_DIRS[_dir]
 	var ax_folder: String = {"idle": "IDLE/idle_%s.png", "run": "RUN/run_%s.png", "attack": "ATTACK 1/attack1_%s.png"}.get(anim_name, "")
@@ -339,7 +350,8 @@ func _build_heroes() -> void:
 		_card(_anim_preview(ax_frames, Player.AXEL_SCALE), "AXEL", "SPRITE", COLOR_SPRITE,
 			[_short(ax_path), "%d cuadros de %dx%d" % [ax_frames.size(), Player.AXEL_FRAME_SIZE.x, Player.AXEL_FRAME_SIZE.y],
 			"Habilidad: " + skills["main_char1"]["name"]])
-	# KAY y LINA (6 direcciones: sin izquierda/derecha puras).
+	# KAY y LINA (6 direcciones: sin izquierda/derecha puras), fuera del
+	# juego desde el 29-09 (los reemplazan TOREN, BRAN y VAEL).
 	for id in ["main_char2", "main_char2_female"]:
 		var data: Dictionary = Player.RANGED_SKINS[id]
 		var key: String = ["down", "up", "left_down", "right_down"][_dir]
@@ -350,12 +362,14 @@ func _build_heroes() -> void:
 			continue
 		var path: String = data["base_path"] + files[key]
 		var frames := _slice(path, Player.RANGED_FRAME_SIZE, Player.RANGED_FRAME_COUNT)
-		_card(_anim_preview(frames, Player.RANGED_SCALE), GameState.CHARACTER_NAMES.get(id, id), "SPRITE", COLOR_SPRITE,
+		_card(_anim_preview(frames, Player.RANGED_SCALE), GameState.CHARACTER_NAMES.get(id, id), "FUERA DEL JUEGO", COLOR_SHARED,
 			[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.RANGED_FRAME_SIZE.x, Player.RANGED_FRAME_SIZE.y],
 			"Habilidad: " + skills[id]["name"]])
 	# Retratos de la selección de personaje.
 	for c in CharSelect.CHARACTERS:
-		_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"], "ILUSTRACIÓN", COLOR_ICON, [_short(c["portrait"])])
+		var enlarged: bool = c["portrait"].ends_with("_portrait.png")
+		_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"],
+			"SPRITE AMPLIADO" if enlarged else "ILUSTRACIÓN", COLOR_SPRITE if enlarged else COLOR_ICON, [_short(c["portrait"])])
 	# EDRIC, SIRA y el lobo: arte anterior, fuera del juego hasta tener
 	# sprites al estilo de GAROTH (se muestran a su escala de antes, x0.5).
 	var px_dir: String = ["south", "north", "west", "east"][_dir]
