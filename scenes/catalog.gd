@@ -400,36 +400,18 @@ func _build_monsters() -> void:
 	for id in ids:
 		var data: Dictionary = Monster.KIND_DATA[id]
 		var anim_name: String = ANIMS[_anim]
-		if anim_name == "hurt":
-			_monster_hurt_card(id, data)
-			continue
-		if not data.has(anim_name):
-			_card(null, id, "SIN animación '%s'" % ANIM_NAMES[_anim], COLOR_SHARED, [])
-			continue
 		var all: Dictionary = Monster._build_anim_frames(data, data.get("frame_size", Vector2(64, 64)), data.get("cols", 4))
 		var frames: Array = all.get(anim_name, {}).get(DIRS[_dir], [])
+		if frames.is_empty():
+			_card(null, id, "SIN animación '%s'" % ANIM_NAMES[_anim], COLOR_SHARED, [])
+			continue
 		var is_boss: bool = id in Monster.BOSS_KIND_IDS
-		var info: Dictionary = data[anim_name]
+		var info: Dictionary = data.get(anim_name, {"file": data["idle"]["file"].replace("Idle", "Hurt")})
 		var fs: Vector2 = data.get("frame_size", Vector2(64, 64))
 		_card(_anim_preview(frames, float(data.get("scale", 1.0)), 8.0), ("JEFE · " if is_boss else "") + id, "SPRITE", COLOR_SPRITE,
 			[_short(data["base"] + info["file"].replace("_front", "_" + DIRS[_dir])),
 			"%d cuadros de %dx%d · escala %.2f" % [frames.size(), fs.x, fs.y, float(data.get("scale", 1.0))],
 			("vida y monedas las calcula main.gd (jefe)" if is_boss else "vida %s · monedas %s" % [str(data.get("hp", "?")), str(data.get("coin_reward", "?"))]) + " · " + Monster._behavior_for(id)])
-
-## Golpe de un monstruo: el pack lo trae (carpeta/archivo "Hurt" junto
-## al "Idle") pero el juego no lo usa — sólo parpadea en blanco.
-func _monster_hurt_card(id: String, data: Dictionary) -> void:
-	var fs: Vector2 = data.get("frame_size", Vector2(64, 64))
-	var path: String = data["base"] + data["idle"]["file"].replace("Idle", "Hurt")
-	var dir_path: String = path.replace("_front", "_" + DIRS[_dir])
-	if ResourceLoader.exists(dir_path):
-		path = dir_path
-	var frames := _slice(path, fs)
-	if frames.is_empty():
-		_card(null, id, "SIN animación 'GOLPE'", COLOR_SHARED, [])
-		return
-	_card(_anim_preview(frames, float(data.get("scale", 1.0)), 8.0), id, "EN EL PACK · SIN USAR", COLOR_SHARED,
-		[_short(path), "%d cuadros de %dx%d" % [frames.size(), fs.x, fs.y], "En el juego sólo parpadea en blanco"])
 
 # ── ACOMPAÑANTES ─────────────────────────────────────────────────
 

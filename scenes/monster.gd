@@ -55,7 +55,20 @@ const ELITE_COLOR := Color(1.0, 0.82, 0.3)
 const WANDER_SPEED := 10.0
 const CHASE_SPEED  := 33.0
 const WANDER_CHANGE_MS := 2000
-const ATTACK_RANGE := 30.0   # a esta distancia empieza el windup (x collision_scale del kind)
+const ATTACK_RANGE := 30.0   # a esta distancia empieza el windup (con el cuerpo base; crece con el tamaño)
+## Tamaño fijo por monstruo (decisión del 29-09-2026): cada uno usa su
+## "scale" de KIND_DATA — nivel 1 x1, nivel 2 x1,25, nivel 3 x1,5 y los
+## jefes x1,5 / x1,75 / x2 — y los élites un 30 % más. El área de choque
+## sigue ese tamaño: radio = BODY_RADIUS_FRAC x "body" (raíz del área
+## opaca del dibujo a x1, así no la inflan colas ni chispas) x escala.
+const ELITE_SCALE := 1.3
+const BODY_RADIUS_FRAC := 0.62
+const MIN_BODY_RADIUS := 10.0
+const BASE_BODY_RADIUS := 14.0   # radio con el que se calibró ATTACK_RANGE
+## Golpe recibido: la animación Hurt del pack, con pausa entre golpes para
+## que un monstruo al que le pegan seguido no quede trabado en ella.
+const HURT_FPS := 14.0
+const HURT_COOLDOWN := 0.7
 const DETECT_RANGE := 240.0
 const WINDUP_TIME := 0.40
 const STRIKE_TIME := 0.20
@@ -91,22 +104,15 @@ const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
 ## ya cayeron en la run (1er boss → demon1, 2do → demon2, 3ro+ → demon3).
 const BOSS_KIND_IDS: Array[String] = ["demon1", "demon2", "demon3"]
 
-## "scale" está calibrado a mano para cada pack — cada uno trae
-## distinto padding dentro de su celda (ver bbox medidos al armar
-## esto), así que un mismo factor los dejaría todos de tamaños
-## distintos entre sí. "collision_scale" sólo se usa para el Golem
-## (boss) — agranda su hitbox y el radio de ataque acorde al sprite
-## gigante en vez de dejarlo con la misma hitbox que una rata.
+## "scale": tamaño fijo del monstruo (ver ELITE_SCALE arriba: nivel 1
+## x1, 2 x1,25, 3 x1,5, jefes x1,5-2). "body": raíz del área opaca del
+## primer cuadro del quieto a x1, para el área de choque (_fit_body).
 ##
-## Cada animación es {file, frames, start} — "start" es el índice
-## (fila*cols + columna) del primer frame dentro de la hoja. Todos
-## los kinds actuales usan un archivo separado por animación (start
-## siempre 0); "start" != 0 sirve para un pack que comparta una
-## única hoja grande con varias animaciones en filas distintas, si
-## se suma alguno más adelante.
-## Cada kind trae paths a sheets pre-cortados (una fila horizontal
-## por animación). "cols" por anim = frame_count. "scale" y opcional
-## "collision_scale" están calibrados a ojo para cada pack.
+## Cada animación es {file, frames, cols, start}: "cols" = cuadros por
+## fila de la hoja, "start" = índice del primer cuadro. Las hojas son
+## una por animación y dirección (_front/_back/_left/_right) o, en
+## beholder, fantasma y slime, una sola hoja con las 4 direcciones en
+## filas. El golpe (Hurt) se deduce del archivo del quieto.
 const KIND_DATA: Dictionary = {
 
 	# ── Packs nuevos (sprites 128x128 y 64x64, animaciones en filas
@@ -124,8 +130,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Demon1_Run_front.png",       "frames": 8,  "cols": 8},
 		"attack": {"file": "Attack/Demon1_Attack_front.png", "frames": 10, "cols": 10},
 		"death":  {"file": "Death/Demon1_Death_front.png",   "frames": 13, "cols": 13},
-		"scale": 1.0,
-		"collision_scale": 1.6,
+		"scale": 1.5, "body": 25.8,
 	},
 	"demon2": {
 		"base": "res://assets/sprites/Demon/Demon2/",
@@ -134,8 +139,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Demon2_Run_front.png",       "frames": 8,  "cols": 8},
 		"attack": {"file": "Attack/Demon2_Attack_front.png", "frames": 10, "cols": 10},
 		"death":  {"file": "Death/Demon2_Death_front.png",   "frames": 13, "cols": 13},
-		"scale": 1.0,
-		"collision_scale": 1.8,
+		"scale": 1.75, "body": 29.0,
 	},
 	"demon3": {
 		"base": "res://assets/sprites/Demon/Demon3/",
@@ -144,8 +148,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Demon3_Run_front.png",       "frames": 8,  "cols": 8},
 		"attack": {"file": "Attack/Demon3_Attack_front.png", "frames": 10, "cols": 10},
 		"death":  {"file": "Death/Demon3_Death_front.png",   "frames": 13, "cols": 13},
-		"scale": 1.0,
-		"collision_scale": 2.0,
+		"scale": 2.0, "body": 32.8,
 	},
 
 	# ── Regulares por tier ──────────────────────────────────────
@@ -162,7 +165,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp1_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp1_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp1_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.0, "hp": 3.0, "coin_reward": 1,
+		"scale": 1.0, "body": 20.0, "hp": 3.0, "coin_reward": 1,
 	},
 	"imp_2": {
 		"base": "res://assets/sprites/IMP/Imp2/",
@@ -171,7 +174,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp2_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp2_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp2_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.0, "hp": 6.0, "coin_reward": 2,
+		"scale": 1.25, "body": 20.6, "hp": 6.0, "coin_reward": 2,
 	},
 	"imp_3": {
 		"base": "res://assets/sprites/IMP/Imp3/",
@@ -180,7 +183,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp3_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp3_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp3_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.0, "hp": 12.0, "coin_reward": 4,
+		"scale": 1.5, "body": 22.3, "hp": 12.0, "coin_reward": 4,
 	},
 
 	# ── LIZARDMAN: mediano equilibrado ──────────────────────────
@@ -191,7 +194,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Lizardman1_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Lizardman1_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman1_Death_front.png",   "frames": 7, "cols": 7},
-		"scale": 1.0, "hp": 4.0, "coin_reward": 1,
+		"scale": 1.0, "body": 21.7, "hp": 4.0, "coin_reward": 1,
 	},
 	"lizardman_2": {
 		"base": "res://assets/sprites/Lizardman/Lizardman2/",
@@ -200,7 +203,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Lizardman2_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Lizardman2_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman2_Death_front.png",   "frames": 7, "cols": 7},
-		"scale": 1.0, "hp": 8.0, "coin_reward": 2,
+		"scale": 1.25, "body": 22.5, "hp": 8.0, "coin_reward": 2,
 	},
 	"lizardman_3": {
 		"base": "res://assets/sprites/Lizardman/Lizardman3/",
@@ -209,7 +212,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Lizardman3_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Lizardman3_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman3_Death_front.png",   "frames": 7, "cols": 7},
-		"scale": 1.0, "hp": 16.0, "coin_reward": 4,
+		"scale": 1.5, "body": 25.5, "hp": 16.0, "coin_reward": 4,
 	},
 
 	# ── SLIME: cada sheet es grid 64x64 con 4 filas (direcciones)
@@ -223,7 +226,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Slime1_Run_without_shadow.png",    "frames": 8, "cols": 8},
 		"attack": {"file": "Slime1_Attack_without_shadow.png", "frames": 9, "cols": 10},
 		"death":  {"file": "Slime1_Death_without_shadow.png",  "frames": 8, "cols": 8},
-		"scale": 1.0, "hp": 2.0, "coin_reward": 1,
+		"scale": 1.0, "body": 14.6, "hp": 2.0, "coin_reward": 1,
 	},
 	"slime_2": {
 		"base": "res://assets/sprites/Slime/Slime2/",
@@ -232,7 +235,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Slime2_Run_without_shadow.png",    "frames": 8, "cols": 8},
 		"attack": {"file": "Slime2_Attack_without_shadow.png", "frames": 9, "cols": 10},
 		"death":  {"file": "Slime2_Death_without_shadow.png",  "frames": 8, "cols": 10},
-		"scale": 1.0, "hp": 5.0, "coin_reward": 2,
+		"scale": 1.25, "body": 17.2, "hp": 5.0, "coin_reward": 2,
 	},
 	"slime_3": {
 		"base": "res://assets/sprites/Slime/Slime3/",
@@ -241,7 +244,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Slime3_Run_without_shadow.png",    "frames": 8, "cols": 8},
 		"attack": {"file": "Slime3_Attack_without_shadow.png", "frames": 9, "cols": 9},
 		"death":  {"file": "Slime3_Death_without_shadow.png",  "frames": 8, "cols": 10},
-		"scale": 1.0, "hp": 10.0, "coin_reward": 3,
+		"scale": 1.5, "body": 16.2, "hp": 10.0, "coin_reward": 3,
 	},
 
 	# ── GHOST: mismo layout 64x64 x 4 filas ─────────────────────
@@ -252,7 +255,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Ghost1_Run_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost1_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "hp": 5.0, "coin_reward": 2,
+		"scale": 1.0, "body": 17.6, "hp": 5.0, "coin_reward": 2,
 	},
 	"ghost_2": {
 		"base": "res://assets/sprites/Ghost/Ghost2/",
@@ -261,7 +264,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Ghost2_Run_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost2_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "hp": 8.0, "coin_reward": 3,
+		"scale": 1.25, "body": 19.3, "hp": 8.0, "coin_reward": 3,
 	},
 	"ghost_3": {
 		"base": "res://assets/sprites/Ghost/Ghost3/",
@@ -270,7 +273,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Ghost3_Run_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost3_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "hp": 14.0, "coin_reward": 5,
+		"scale": 1.5, "body": 22.7, "hp": 14.0, "coin_reward": 5,
 	},
 
 	# ── BEHOLDER: el más animado del pool (12 frames idle) ──────
@@ -281,7 +284,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder1_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder1_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "hp": 6.0, "coin_reward": 2,
+		"scale": 1.0, "body": 25.6, "hp": 6.0, "coin_reward": 2,
 	},
 	"beholder_2": {
 		"base": "res://assets/sprites/Beholder/Beholder2/",
@@ -290,7 +293,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder2_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder2_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "hp": 10.0, "coin_reward": 3,
+		"scale": 1.25, "body": 28.0, "hp": 10.0, "coin_reward": 3,
 	},
 	"beholder_3": {
 		"base": "res://assets/sprites/Beholder/Beholder3/",
@@ -299,7 +302,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder3_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder3_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "hp": 18.0, "coin_reward": 6,
+		"scale": 1.5, "body": 32.9, "hp": 18.0, "coin_reward": 6,
 	},
 
 	# ── RAT: 128x128, muy animado ───────────────────────────────
@@ -310,7 +313,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Rat1_Run_front.png",       "frames": 6, "cols": 6},
 		"attack": {"file": "Attack/Rat1_Attack_front.png", "frames": 8, "cols": 8},
 		"death":  {"file": "Death/Rat1_Death_front.png",   "frames": 5, "cols": 5},
-		"scale": 1.0, "hp": 3.0, "coin_reward": 1,
+		"scale": 1.0, "body": 19.5, "hp": 3.0, "coin_reward": 1,
 	},
 	"rat_2": {
 		"base": "res://assets/sprites/Rat/Rat2/",
@@ -319,7 +322,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Rat2_Run_front.png",       "frames": 6, "cols": 6},
 		"attack": {"file": "Attack/Rat2_Attack_front.png", "frames": 8, "cols": 8},
 		"death":  {"file": "Death/Rat2_Death_front.png",   "frames": 5, "cols": 5},
-		"scale": 1.0, "hp": 6.0, "coin_reward": 2,
+		"scale": 1.25, "body": 22.3, "hp": 6.0, "coin_reward": 2,
 	},
 	"rat_3": {
 		"base": "res://assets/sprites/Rat/Rat3/",
@@ -328,7 +331,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Rat3_Run_front.png",       "frames": 6, "cols": 6},
 		"attack": {"file": "Attack/Rat3_Attack_front.png", "frames": 8, "cols": 8},
 		"death":  {"file": "Death/Rat3_Death_front.png",   "frames": 5, "cols": 5},
-		"scale": 1.0, "hp": 12.0, "coin_reward": 4,
+		"scale": 1.5, "body": 20.9, "hp": 12.0, "coin_reward": 4,
 	},
 }
 
@@ -377,6 +380,10 @@ var _freeze_t: float = 0.0
 var _pending_setup: Dictionary = {}
 
 var _base_sprite_scale := Vector2.ONE
+var _body_size: float = 20.0
+var _body_radius: float = BASE_BODY_RADIUS
+var _hurt_t: float = 0.0
+var _hurt_cd: float = 0.0
 var _kind_id := ""
 ## Dirección actual del sprite del monstruo. Se actualiza en cada
 ## frame según el vector velocity — el eje dominante manda.
@@ -447,17 +454,20 @@ func set_kind(kind_id: String) -> void:
 	if data.has("coin_reward"):
 		coin_reward = int(data["coin_reward"])
 
-	var collision_scale: float = data.get("collision_scale", 1.0)
-	_attack_range = ATTACK_RANGE * collision_scale
-	if collision_scale != 1.0:
-		# El shape es un SubResource compartido por todas las
-		# instancias de monster.tscn — hay que duplicarlo antes de
-		# mutarlo o agrandaríamos la hitbox de TODOS los monstruos.
-		var shape: CircleShape2D = _collision.shape.duplicate()
-		shape.radius *= collision_scale
-		_collision.shape = shape
+	_body_size = float(data.get("body", 20.0))
+	_fit_body()
 
 	_set_animation("idle")
+
+## Radio de choque y alcance de ataque según el tamaño con que se ve.
+## El shape es un SubResource compartido por todas las instancias de
+## monster.tscn: se duplica antes de cambiarlo.
+func _fit_body() -> void:
+	_body_radius = maxf(MIN_BODY_RADIUS, BODY_RADIUS_FRAC * _body_size * _base_sprite_scale.x)
+	var shape: CircleShape2D = _collision.shape.duplicate()
+	shape.radius = _body_radius
+	_collision.shape = shape
+	_attack_range = ATTACK_RANGE * _body_radius / BASE_BODY_RADIUS
 
 func _exit_tree() -> void:
 	_release_frames()
@@ -479,9 +489,22 @@ func _release_frames() -> void:
 ## ver _frames_cache).
 static func _build_anim_frames(data: Dictionary, frame_size: Vector2, cols: int) -> Dictionary:
 	var anim_frames := {}
+	# El golpe no está en KIND_DATA: sale del archivo del quieto con
+	# "Hurt" en vez de "Idle" (todos los packs lo traen así), con tantos
+	# cuadros como quepan en la hoja.
+	var anims: Dictionary = {}
 	for anim_name in ["idle", "run", "attack", "death"]:
 		if data.has(anim_name):
-			var info: Dictionary = data[anim_name]
+			anims[anim_name] = data[anim_name]
+	if data.has("idle"):
+		var hurt_file: String = data["idle"]["file"].replace("Idle", "Hurt")
+		if ResourceLoader.exists(data["base"] + hurt_file):
+			var hurt_sheet: Texture2D = load(data["base"] + hurt_file)
+			var n: int = int(hurt_sheet.get_width() / frame_size.x)
+			anims["hurt"] = {"file": hurt_file, "frames": n, "cols": n}
+	for anim_name in anims:
+		if true:
+			var info: Dictionary = anims[anim_name]
 			# "cols" = frames por anim en las hojas horizontales (1 fila).
 			var anim_cols: int = info.get("cols", cols)
 			# Los packs nuevos traen SHEETS SEPARADAS por dirección con
@@ -490,14 +513,22 @@ static func _build_anim_frames(data: Dictionary, frame_size: Vector2, cols: int)
 			# _update_animation elige según _facing.
 			var front_path: String = info["file"]
 			var per_dir: Dictionary = {}
-			for dir_name in DIRECTIONS:
+			# Beholder, fantasma y slime: una sola hoja con las 4
+			# direcciones en filas (frente, espalda, izquierda, derecha).
+			var rows: int = 1
+			if not front_path.contains("_front"):
+				var sheet: Texture2D = load(data["base"] + front_path)
+				rows = int(sheet.get_height() / frame_size.y)
+			for d in range(DIRECTIONS.size()):
+				var dir_name: String = DIRECTIONS[d]
 				var dir_path: String = front_path.replace("_front", "_" + dir_name)
 				var full_path: String = data["base"] + dir_path
 				if not ResourceLoader.exists(full_path):
 					# Fallback al _front si no existe esa dirección
 					full_path = data["base"] + front_path
+				var row: int = d if rows >= DIRECTIONS.size() else 0
 				per_dir[dir_name] = _slice_frames(
-					full_path, frame_size, anim_cols, info["frames"], info.get("start", 0)
+					full_path, frame_size, anim_cols, info["frames"], info.get("start", 0) + row * anim_cols
 				)
 			anim_frames[anim_name] = per_dir
 	return anim_frames
@@ -769,6 +800,7 @@ func _apply_pending_setup() -> void:
 	coin_reward = 0
 	_base_sprite_scale *= setup["scale"]
 	_sprite.scale = _base_sprite_scale
+	_fit_body()
 	if target != null:
 		_enter_chase()
 
@@ -855,6 +887,16 @@ func _frames_for(anim: String) -> Array:
 	return per_dir.get(_facing, per_dir.get("front", []))
 
 func _update_animation(delta: float) -> void:
+	# Golpe recibido: se muestra encima de quieto/correr (no corta un
+	# ataque ni la muerte).
+	_hurt_cd = maxf(0.0, _hurt_cd - delta)
+	if _hurt_t > 0.0:
+		_hurt_t = maxf(0.0, _hurt_t - delta)
+		var hurt_frames := _frames_for("hurt")
+		if not hurt_frames.is_empty() and _anim_name != "attack" and _anim_name != "death":
+			var i: int = clampi(int((hurt_frames.size() / HURT_FPS - _hurt_t) * HURT_FPS), 0, hurt_frames.size() - 1)
+			_sprite.texture = hurt_frames[i]
+			return
 	# _anim_frames[anim] ahora es Dictionary[direction] = Array[Texture2D].
 	# Elige la dirección actual; cae en "front" si no existe.
 	var per_dir = _anim_frames.get(_anim_name, {})
@@ -944,6 +986,8 @@ func take_damage(amount: float, source: String = "otro", show_number: bool = tru
 	if show_number or crit:
 		DAMAGE_NUMBER.spawn(DAMAGE_NUMBER, get_tree().current_scene, global_position, amount, crit)
 	emit_signal("hp_changed", max(0.0, hp), max_hp)
+	if hp > 0.0:
+		_start_hurt()
 	# Habilidad legendaria "Veneno" (Pantano): los golpes envenenan.
 	if GameState.run_poison > 0.0 and source != "veneno":
 		apply_poison(amount * GameState.run_poison, 3.0)
@@ -952,6 +996,15 @@ func take_damage(amount: float, source: String = "otro", show_number: bool = tru
 	Audio.play_sfx("monster_hit", global_position, 0.15)
 	if hp <= 0.0:
 		_die()
+
+func _start_hurt() -> void:
+	if _hurt_cd > 0.0 or _anim_name == "attack" or _anim_name == "death":
+		return
+	var frames := _frames_for("hurt")
+	if frames.is_empty():
+		return
+	_hurt_t = frames.size() / HURT_FPS
+	_hurt_cd = HURT_COOLDOWN
 
 func is_boss() -> bool:
 	return _kind_id in BOSS_KIND_IDS
@@ -1017,15 +1070,16 @@ func make_elite() -> void:
 	hp = max_hp
 	coin_reward *= 4
 	xp_reward *= 5
-	# Sin agrandarlo: todo va a escala x1 (mismo tamaño de píxel que los
-	# héroes). Se distingue por el tinte dorado y el aro que late.
+	_base_sprite_scale *= ELITE_SCALE
+	_sprite.scale = _base_sprite_scale
 	_sprite.self_modulate = ELITE_COLOR
+	_fit_body()
 
 ## Aro dorado que late a los pies del élite (se dibuja debajo del sprite).
 func _draw() -> void:
 	if not is_elite or _dead:
 		return
-	var r: float = 18.0
+	var r: float = _body_radius + 4.0
 	var a: float = 0.55 + 0.3 * sin(_elite_t * 6.0)
 	draw_arc(Vector2(0, 6), r, 0.0, TAU, 28, Color(ELITE_COLOR, a), 2.5, false)
 

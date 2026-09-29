@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://drov7uxlq14th"
-path="res://.godot/imported/Rat3_Death_front.png-c05e45862f7b80b11081b1cbec6b4bfb.ctex"
+uid="uid://rp1118i2iyt7"
+path="res://.godot/imported/Rat3_Hurt_back.png-67617c39b10b6d32249a8aa1a6fb10b3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/Rat/Rat3/Hurt/Rat3_Death_front.png"
-dest_files=["res://.godot/imported/Rat3_Death_front.png-c05e45862f7b80b11081b1cbec6b4bfb.ctex"]
+source_file="res://assets/sprites/Rat/Rat3/Hurt/Rat3_Hurt_back.png"
+dest_files=["res://.godot/imported/Rat3_Hurt_back.png-67617c39b10b6d32249a8aa1a6fb10b3.ctex"]
 
 [params]
 
