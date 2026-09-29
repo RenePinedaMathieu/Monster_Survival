@@ -4,13 +4,13 @@ const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 const BOLT_SCRIPT := preload("res://scenes/bolt_effect.gd")
 
 const LEVELS: Array = [
-	{"cooldown": 1.7, "damage": 2.0},
-	{"cooldown": 1.55, "damage": 2.5},
-	{"cooldown": 1.4, "damage": 3.0},
-	{"cooldown": 1.25, "damage": 3.5},
-	{"cooldown": 1.1, "damage": 4.0},
+	{"cooldown": 1.7, "damage": 1.5},
+	{"cooldown": 1.55, "damage": 1.9},
+	{"cooldown": 1.4, "damage": 2.3},
+	{"cooldown": 1.25, "damage": 2.7},
+	{"cooldown": 1.1, "damage": 3.2},
 ]
-const RANGE := 3600.0
+const RANGE := 260.0
 const FIRE_DPS_FRAC := 0.03
 const FIRE_DURATION := 3.0
 const ELECTRIC_STUN := 0.75

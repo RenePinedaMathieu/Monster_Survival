@@ -46,13 +46,14 @@ const CHARACTERS: Array[Dictionary] = [
 		"blurb": "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final.",
 		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
 	},
-	# TOREN, BRAN y VAEL: GAROTH recoloreado (tools/recolor_hero.py);
+	# TOREN, BRAN y VAEL: GAROTH recoloreado (sprites con
+	# tools/recolor_hero.py, ilustración con tools/recolor_illustration.py);
 	# evolucionan como él. Se ganan en los desafíos (GameState.TRIALS).
 	{
 		"id": "toren",
 		"name": "TOREN",
-		"portrait": "res://assets/main_characters/toren_portrait.png",
-		"portrait_pending": true,   # sprite ampliado; falta ilustración como la de GAROTH
+		"portrait": "res://assets/main_characters/toren_char.png",
+		"face_rect": Rect2i(490, 260, 330, 330),
 		"idle_sheet": "res://assets/main_characters/toren_idle_strip.png",
 		"idle_frames": 12,
 		"accent": Color("8fcf5a"),
@@ -63,8 +64,8 @@ const CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "bran",
 		"name": "BRAN",
-		"portrait": "res://assets/main_characters/bran_portrait.png",
-		"portrait_pending": true,
+		"portrait": "res://assets/main_characters/bran_char.png",
+		"face_rect": Rect2i(490, 260, 330, 330),
 		"idle_sheet": "res://assets/main_characters/bran_idle_strip.png",
 		"idle_frames": 12,
 		"accent": Color("e0703a"),
@@ -75,8 +76,8 @@ const CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "vael",
 		"name": "VAEL",
-		"portrait": "res://assets/main_characters/vael_portrait.png",
-		"portrait_pending": true,
+		"portrait": "res://assets/main_characters/vael_char.png",
+		"face_rect": Rect2i(490, 260, 330, 330),
 		"idle_sheet": "res://assets/main_characters/vael_idle_strip.png",
 		"idle_frames": 12,
 		"accent": Color("a070e0"),

@@ -167,7 +167,7 @@ func _reset() -> void:
 	for i in range(6):
 		var d := DummyMonster.new()
 		d.frames = frames
-		d.sprite_scale = float(data["scale"])
+		d.sprite_scale = Monster.kind_scale(data)
 		var ang := TAU * i / 6.0 + 0.3
 		d.position = Vector2(cos(ang), sin(ang) * 0.75) * (95.0 + (i % 2) * 45.0)
 		add_child(d)

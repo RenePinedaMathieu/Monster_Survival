@@ -10,13 +10,13 @@ const BOLT_SCRIPT := preload("res://scenes/bolt_effect.gd")
 
 ## Por nivel: segundos entre rayos, cuántos enemigos toca, daño.
 const LEVELS: Array = [
-	{"cooldown": 2.0, "chain": 2, "damage": 6.0},
-	{"cooldown": 1.8, "chain": 3, "damage": 7.0},
-	{"cooldown": 1.6, "chain": 3, "damage": 8.5},
-	{"cooldown": 1.4, "chain": 4, "damage": 10.0},
-	{"cooldown": 1.2, "chain": 5, "damage": 12.0},
+	{"cooldown": 2.0, "chain": 2, "damage": 4.0},
+	{"cooldown": 1.8, "chain": 3, "damage": 4.6},
+	{"cooldown": 1.6, "chain": 3, "damage": 5.5},
+	{"cooldown": 1.4, "chain": 4, "damage": 6.5},
+	{"cooldown": 1.2, "chain": 5, "damage": 7.8},
 ]
-const RANGE := 300.0
+const RANGE := 230.0
 const JUMP_RANGE := 110.0
 const EVOLVED_CHAIN := 8
 const SECOND_STRIKE_DELAY := 0.18

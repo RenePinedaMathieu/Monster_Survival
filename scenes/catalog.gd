@@ -426,9 +426,10 @@ func _build_monsters() -> void:
 		var is_boss: bool = id in Monster.BOSS_KIND_IDS
 		var info: Dictionary = data.get(anim_name, {"file": data["idle"]["file"].replace("Idle", "Hurt")})
 		var fs: Vector2 = data.get("frame_size", Vector2(64, 64))
-		_card(_anim_preview(frames, float(data.get("scale", 1.0)), 8.0), ("JEFE · " if is_boss else "") + id, "SPRITE", COLOR_SPRITE,
+		var sc: float = Monster.kind_scale(data)
+		_card(_anim_preview(frames, sc, 8.0), ("JEFE · " if is_boss else "") + id, "SPRITE", COLOR_SPRITE,
 			[_short(data["base"] + info["file"].replace("_front", "_" + DIRS[_dir])),
-			"%d cuadros de %dx%d · escala %.2f" % [frames.size(), fs.x, fs.y, float(data.get("scale", 1.0))],
+			"%d cuadros de %dx%d · %s nivel %d · escala %.2f" % [frames.size(), fs.x, fs.y, data.get("size", "?"), int(data.get("tier", 1)), sc],
 			("vida y monedas las calcula main.gd (jefe)" if is_boss else "vida %s · monedas %s" % [str(data.get("hp", "?")), str(data.get("coin_reward", "?"))]) + " · " + Monster._behavior_for(id)])
 
 # ── ACOMPAÑANTES ─────────────────────────────────────────────────

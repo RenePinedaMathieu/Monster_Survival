@@ -105,8 +105,14 @@ const AUTO_FIRE_INTERVAL := 0.65      # segundos entre disparos base
 # siente "raro" que dispare a algo que ni se ve en pantalla, este es
 # el valor a bajar. El proyectil (shot_projectile.gd) tiene
 # SPEED*LIFETIME > esto para que de verdad pueda llegar tan lejos.
-const AUTO_FIRE_RANGE := 3600.0       # rango de auto-target
+# 29-09: bajado a 260 (lo que se ve alrededor del héroe en PC: 335 de
+# alto). A 3600 las armas limpiaban el mapa solas y la espada quedaba
+# en 10 % del daño de la run.
+const AUTO_FIRE_RANGE := 260.0        # rango de auto-target
 const AUTO_FIRE_SPREAD := 0.13        # radianes entre proyectiles extra
+## En los héroes de espada, la carta "disparo a distancia" es un apoyo:
+## sus flechas pegan el 60 % (el golpe fuerte es el tajo).
+const RANGED_BONUS_MELEE_MULT := 0.6
 
 # XP y level
 const XP_TO_NEXT_BASE := 4
@@ -412,7 +418,10 @@ const SWORDMAN_HURT_FRAMES := 5
 const SWORDMAN_DEATH_FRAMES := 7
 const SWORDMAN_SCALE := 1.0
 const SWORDMAN_ATTACK_RANGE := 70.0
-const SWORDMAN_MELEE_DAMAGE := 5.0
+## Regla de daño: el tajo es el golpe más fuerte del juego (hay que
+## meterse entre los bichos para darlo). Ningún arma a distancia pega
+## por golpe más de ~2/3 del tajo del mismo momento.
+const SWORDMAN_MELEE_DAMAGE := 9.0
 const SWORDMAN_MAX_TIER := 9   # formas 7-9: tools/import_swordsman_pack.py
 ## Una forma nueva cada SWORDMAN_TIER_EVERY niveles. Con 3, se gana la
 ## etapa (nivel ~18) en la forma 6-7 y el desafío 21-30 llega a la 8-9.
@@ -950,7 +959,8 @@ func _fire_shot(to_target: Vector2, count: int) -> void:
 		# set_damage ANTES de setup(): setup() multiplica el daño ya
 		# escalado si charged, en vez de que set_damage lo pise.
 		if shot.has_method("set_damage"):
-			shot.set_damage(shot.DAMAGE * damage_mult * (1.0 + ranged_power_level * 0.3))
+			var melee_mult: float = RANGED_BONUS_MELEE_MULT if (_is_swordman or _is_axel or _is_pixel_skin) else 1.0
+			shot.set_damage(shot.DAMAGE * damage_mult * melee_mult * (1.0 + ranged_power_level * 0.3))
 		shot.setup(dir, charged and i == 0, ranged_power_level)
 		if _arrow_pierce > 0:
 			shot.pierce = _arrow_pierce

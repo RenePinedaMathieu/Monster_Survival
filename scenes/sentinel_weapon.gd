@@ -2,11 +2,11 @@ extends Node2D
 
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
 
-const RANGE := 3600.0
+const RANGE := 240.0
 const ORBIT_RADIUS := 42.0
 const FIRE_COOLDOWN := 1.15
-const DAMAGE_BASE := 1.8
-const DAMAGE_STEP := 0.55
+const DAMAGE_BASE := 1.3
+const DAMAGE_STEP := 0.4
 
 var player = null
 var level: int = 1

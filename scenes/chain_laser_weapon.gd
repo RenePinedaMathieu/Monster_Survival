@@ -3,13 +3,13 @@ extends Node2D
 const LASER_EFFECT_SCRIPT := preload("res://scenes/laser_effect.gd")
 
 const LEVELS: Array = [
-	{"cooldown": 2.4, "damage": 5.0},
-	{"cooldown": 2.2, "damage": 6.0},
-	{"cooldown": 2.0, "damage": 7.2},
-	{"cooldown": 1.8, "damage": 8.6},
-	{"cooldown": 1.6, "damage": 10.0},
+	{"cooldown": 2.4, "damage": 3.0},
+	{"cooldown": 2.2, "damage": 3.6},
+	{"cooldown": 2.0, "damage": 4.3},
+	{"cooldown": 1.8, "damage": 5.2},
+	{"cooldown": 1.6, "damage": 6.0},
 ]
-const RANGE := 320.0
+const RANGE := 230.0
 const BOUNCE_RANGE := 135.0
 const TARGETS := 3
 ## Evolución "Cadena carmesí" (láser + Sed de sangre).

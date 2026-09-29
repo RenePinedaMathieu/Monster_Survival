@@ -253,7 +253,11 @@ func _pick_spawn_position() -> Vector2:
 
 ## Dificultad por oleada: los monstruos tienen más vida y pegan más
 ## fuerte a medida que avanza la run (además de ser más y más rápidos).
-const WAVE_HP_STEP := 0.07      # oleada 20 ≈ x2.3 de vida
+const WAVE_HP_STEP := 0.08      # oleada 20 ≈ x2.5 de vida
+## Vida base de todos los monstruos comunes (no jefes): x1,1 desde el
+## 29-09, cuando la espada pasó a 9 y las armas a distancia bajaron de
+## daño y de alcance (ya no limpian el mapa entero).
+const MONSTER_HP_MULT := 1.1
 const WAVE_POWER_STEP := 0.04   # oleada 20 ≈ x1.76 de daño
 ## Desafío (oleadas 21-30): cada oleada suma bastante más.
 const CHALLENGE_HP_STEP := 0.25     # oleada 30 ≈ x4.8 de vida
@@ -312,7 +316,7 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 		m.set_kind(kind_id)
 		m.ground_fire_attacks = GameState.selected_map == "desierto" \
 			and (kind_id.begins_with("imp") or kind_id.begins_with("beholder"))
-		m.max_hp *= _wave_hp_mult()
+		m.max_hp *= _wave_hp_mult() * MONSTER_HP_MULT
 		m.hp = m.max_hp
 		if is_elite:
 			m.make_elite()

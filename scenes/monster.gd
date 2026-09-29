@@ -56,11 +56,22 @@ const WANDER_SPEED := 10.0
 const CHASE_SPEED  := 33.0
 const WANDER_CHANGE_MS := 2000
 const ATTACK_RANGE := 30.0   # a esta distancia empieza el windup (con el cuerpo base; crece con el tamaño)
-## Tamaño fijo por monstruo (decisión del 29-09-2026): cada uno usa su
-## "scale" de KIND_DATA — nivel 1 x1, nivel 2 x1,25, nivel 3 x1,5 y los
-## jefes x1,5 / x1,75 / x2 — y los élites un 30 % más. El área de choque
-## sigue ese tamaño: radio = BODY_RADIUS_FRAC x "body" (raíz del área
-## opaca del dibujo a x1, así no la inflan colas ni chispas) x escala.
+## Regla de tamaños (29-09-2026): el tamaño en pantalla se mide como
+## "masa" = raíz del área opaca (así una rata larga y un fantasma alto se
+## comparan bien) y se fija respecto del héroe (GAROTH forma 1 = 16,4):
+## cada bicho tiene una clase (SIZE_CLASS) y crece con su nivel
+## (TIER_GROWTH). La escala del dibujo sale sola: masa objetivo / "body"
+## (ver kind_scale). Los élites, un 30 % más. El área de choque sigue ese
+## tamaño: radio = BODY_RADIUS_FRAC x masa en pantalla.
+const HERO_MASS := 16.4
+const SIZE_CLASS: Dictionary = {
+	"chico": 0.8,     # rata, slime
+	"mediano": 1.0,   # imp, fantasma: como el héroe
+	"grande": 1.25,   # hombre lagarto
+	"enorme": 1.5,    # beholder
+	"jefe": 2.5,      # demonios
+}
+const TIER_GROWTH: Array = [1.0, 1.2, 1.4]
 const ELITE_SCALE := 1.3
 const BODY_RADIUS_FRAC := 0.62
 const MIN_BODY_RADIUS := 10.0
@@ -104,9 +115,9 @@ const BOSS_KIND_ID := "demon1"                # backwards compat (main.gd)
 ## ya cayeron en la run (1er boss → demon1, 2do → demon2, 3ro+ → demon3).
 const BOSS_KIND_IDS: Array[String] = ["demon1", "demon2", "demon3"]
 
-## "scale": tamaño fijo del monstruo (ver ELITE_SCALE arriba: nivel 1
-## x1, 2 x1,25, 3 x1,5, jefes x1,5-2). "body": raíz del área opaca del
-## primer cuadro del quieto a x1, para el área de choque (_fit_body).
+## "size" y "tier": clase de tamaño y nivel (ver SIZE_CLASS arriba).
+## "body": raíz del área opaca del primer cuadro del quieto a x1; con
+## eso se calcula la escala (kind_scale) y el área de choque (_fit_body).
 ##
 ## Cada animación es {file, frames, cols, start}: "cols" = cuadros por
 ## fila de la hoja, "start" = índice del primer cuadro. Las hojas son
@@ -130,7 +141,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Demon1_Run_front.png",       "frames": 8,  "cols": 8},
 		"attack": {"file": "Attack/Demon1_Attack_front.png", "frames": 10, "cols": 10},
 		"death":  {"file": "Death/Demon1_Death_front.png",   "frames": 13, "cols": 13},
-		"scale": 1.5, "body": 25.8,
+		"size": "jefe", "tier": 1, "body": 25.8,
 	},
 	"demon2": {
 		"base": "res://assets/sprites/Demon/Demon2/",
@@ -139,7 +150,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Demon2_Run_front.png",       "frames": 8,  "cols": 8},
 		"attack": {"file": "Attack/Demon2_Attack_front.png", "frames": 10, "cols": 10},
 		"death":  {"file": "Death/Demon2_Death_front.png",   "frames": 13, "cols": 13},
-		"scale": 1.75, "body": 29.0,
+		"size": "jefe", "tier": 2, "body": 29.0,
 	},
 	"demon3": {
 		"base": "res://assets/sprites/Demon/Demon3/",
@@ -148,7 +159,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Demon3_Run_front.png",       "frames": 8,  "cols": 8},
 		"attack": {"file": "Attack/Demon3_Attack_front.png", "frames": 10, "cols": 10},
 		"death":  {"file": "Death/Demon3_Death_front.png",   "frames": 13, "cols": 13},
-		"scale": 2.0, "body": 32.8,
+		"size": "jefe", "tier": 3, "body": 32.8,
 	},
 
 	# ── Regulares por tier ──────────────────────────────────────
@@ -165,7 +176,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp1_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp1_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp1_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.0, "body": 20.0, "flying": true, "hp": 3.0, "coin_reward": 1,
+		"size": "mediano", "tier": 1, "body": 20.0, "flying": true, "hp": 3.0, "coin_reward": 1,
 	},
 	"imp_2": {
 		"base": "res://assets/sprites/IMP/Imp2/",
@@ -174,7 +185,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp2_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp2_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp2_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.25, "body": 20.6, "flying": true, "hp": 6.0, "coin_reward": 2,
+		"size": "mediano", "tier": 2, "body": 20.6, "flying": true, "hp": 6.0, "coin_reward": 2,
 	},
 	"imp_3": {
 		"base": "res://assets/sprites/IMP/Imp3/",
@@ -183,7 +194,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp3_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp3_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp3_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.5, "body": 22.3, "flying": true, "hp": 12.0, "coin_reward": 4,
+		"size": "mediano", "tier": 3, "body": 22.3, "flying": true, "hp": 12.0, "coin_reward": 4,
 	},
 
 	# ── LIZARDMAN: mediano equilibrado ──────────────────────────
@@ -194,7 +205,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Lizardman1_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Lizardman1_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman1_Death_front.png",   "frames": 7, "cols": 7},
-		"scale": 1.0, "body": 21.7, "hp": 4.0, "coin_reward": 1,
+		"size": "grande", "tier": 1, "body": 21.7, "hp": 4.0, "coin_reward": 1,
 	},
 	"lizardman_2": {
 		"base": "res://assets/sprites/Lizardman/Lizardman2/",
@@ -203,7 +214,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Lizardman2_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Lizardman2_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman2_Death_front.png",   "frames": 7, "cols": 7},
-		"scale": 1.25, "body": 22.5, "hp": 8.0, "coin_reward": 2,
+		"size": "grande", "tier": 2, "body": 22.5, "hp": 8.0, "coin_reward": 2,
 	},
 	"lizardman_3": {
 		"base": "res://assets/sprites/Lizardman/Lizardman3/",
@@ -212,7 +223,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Lizardman3_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Lizardman3_Attack_front.png", "frames": 7, "cols": 7},
 		"death":  {"file": "Death/Lizardman3_Death_front.png",   "frames": 7, "cols": 7},
-		"scale": 1.5, "body": 25.5, "hp": 16.0, "coin_reward": 4,
+		"size": "grande", "tier": 3, "body": 25.5, "hp": 16.0, "coin_reward": 4,
 	},
 
 	# ── SLIME: cada sheet es grid 64x64 con 4 filas (direcciones)
@@ -226,7 +237,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Slime1_Run_without_shadow.png",    "frames": 8, "cols": 8},
 		"attack": {"file": "Slime1_Attack_without_shadow.png", "frames": 9, "cols": 10},
 		"death":  {"file": "Slime1_Death_without_shadow.png",  "frames": 8, "cols": 8},
-		"scale": 1.0, "body": 14.6, "hp": 2.0, "coin_reward": 1,
+		"size": "chico", "tier": 1, "body": 14.6, "hp": 2.0, "coin_reward": 1,
 	},
 	"slime_2": {
 		"base": "res://assets/sprites/Slime/Slime2/",
@@ -235,7 +246,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Slime2_Run_without_shadow.png",    "frames": 8, "cols": 8},
 		"attack": {"file": "Slime2_Attack_without_shadow.png", "frames": 9, "cols": 10},
 		"death":  {"file": "Slime2_Death_without_shadow.png",  "frames": 8, "cols": 10},
-		"scale": 1.25, "body": 17.2, "hp": 5.0, "coin_reward": 2,
+		"size": "chico", "tier": 2, "body": 17.2, "hp": 5.0, "coin_reward": 2,
 	},
 	"slime_3": {
 		"base": "res://assets/sprites/Slime/Slime3/",
@@ -244,7 +255,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Slime3_Run_without_shadow.png",    "frames": 8, "cols": 8},
 		"attack": {"file": "Slime3_Attack_without_shadow.png", "frames": 9, "cols": 9},
 		"death":  {"file": "Slime3_Death_without_shadow.png",  "frames": 8, "cols": 10},
-		"scale": 1.5, "body": 16.2, "hp": 10.0, "coin_reward": 3,
+		"size": "chico", "tier": 3, "body": 16.2, "hp": 10.0, "coin_reward": 3,
 	},
 
 	# ── GHOST: mismo layout 64x64 x 4 filas ─────────────────────
@@ -255,7 +266,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Ghost1_Walk_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost1_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "body": 17.6, "flying": true, "hp": 5.0, "coin_reward": 2,
+		"size": "mediano", "tier": 1, "body": 17.6, "flying": true, "hp": 5.0, "coin_reward": 2,
 	},
 	"ghost_2": {
 		"base": "res://assets/sprites/Ghost/Ghost2/",
@@ -264,7 +275,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Ghost2_Walk_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost2_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.25, "body": 19.3, "flying": true, "hp": 8.0, "coin_reward": 3,
+		"size": "mediano", "tier": 2, "body": 19.3, "flying": true, "hp": 8.0, "coin_reward": 3,
 	},
 	"ghost_3": {
 		"base": "res://assets/sprites/Ghost/Ghost3/",
@@ -273,7 +284,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Ghost3_Walk_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost3_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.5, "body": 22.7, "flying": true, "hp": 14.0, "coin_reward": 5,
+		"size": "mediano", "tier": 3, "body": 22.7, "flying": true, "hp": 14.0, "coin_reward": 5,
 	},
 
 	# ── BEHOLDER: el más animado del pool (12 frames idle) ──────
@@ -284,7 +295,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder1_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder1_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "body": 25.6, "flying": true, "hp": 6.0, "coin_reward": 2,
+		"size": "enorme", "tier": 1, "body": 25.6, "flying": true, "hp": 6.0, "coin_reward": 2,
 	},
 	"beholder_2": {
 		"base": "res://assets/sprites/Beholder/Beholder2/",
@@ -293,7 +304,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder2_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder2_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.25, "body": 28.0, "flying": true, "hp": 10.0, "coin_reward": 3,
+		"size": "enorme", "tier": 2, "body": 28.0, "flying": true, "hp": 10.0, "coin_reward": 3,
 	},
 	"beholder_3": {
 		"base": "res://assets/sprites/Beholder/Beholder3/",
@@ -302,7 +313,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder3_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder3_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.5, "body": 32.9, "flying": true, "hp": 18.0, "coin_reward": 6,
+		"size": "enorme", "tier": 3, "body": 32.9, "flying": true, "hp": 18.0, "coin_reward": 6,
 	},
 
 	# ── RAT: 128x128, muy animado ───────────────────────────────
@@ -313,7 +324,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Rat1_Run_front.png",       "frames": 6, "cols": 6},
 		"attack": {"file": "Attack/Rat1_Attack_front.png", "frames": 8, "cols": 8},
 		"death":  {"file": "Death/Rat1_Death_front.png",   "frames": 5, "cols": 5},
-		"scale": 1.0, "body": 19.5, "hp": 3.0, "coin_reward": 1,
+		"size": "chico", "tier": 1, "body": 19.5, "hp": 3.0, "coin_reward": 1,
 	},
 	"rat_2": {
 		"base": "res://assets/sprites/Rat/Rat2/",
@@ -322,7 +333,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Rat2_Run_front.png",       "frames": 6, "cols": 6},
 		"attack": {"file": "Attack/Rat2_Attack_front.png", "frames": 8, "cols": 8},
 		"death":  {"file": "Death/Rat2_Death_front.png",   "frames": 5, "cols": 5},
-		"scale": 1.25, "body": 22.3, "hp": 6.0, "coin_reward": 2,
+		"size": "chico", "tier": 2, "body": 22.3, "hp": 6.0, "coin_reward": 2,
 	},
 	"rat_3": {
 		"base": "res://assets/sprites/Rat/Rat3/",
@@ -331,7 +342,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Rat3_Run_front.png",       "frames": 6, "cols": 6},
 		"attack": {"file": "Attack/Rat3_Attack_front.png", "frames": 8, "cols": 8},
 		"death":  {"file": "Death/Rat3_Death_front.png",   "frames": 5, "cols": 5},
-		"scale": 1.5, "body": 20.9, "hp": 12.0, "coin_reward": 4,
+		"size": "chico", "tier": 3, "body": 20.9, "hp": 12.0, "coin_reward": 4,
 	},
 }
 
@@ -441,7 +452,7 @@ func set_kind(kind_id: String) -> void:
 	_frames_kind = kind_id
 	_anim_frames = _frames_cache[kind_id]
 
-	_base_sprite_scale = Vector2.ONE * float(data.get("scale", 1.0))
+	_base_sprite_scale = Vector2.ONE * kind_scale(data)
 	_sprite.scale = _base_sprite_scale
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
@@ -461,6 +472,12 @@ func set_kind(kind_id: String) -> void:
 	collision_mask = 8 if data.get("flying", false) else 12
 
 	_set_animation("idle")
+
+## Escala del dibujo según la regla de tamaños (SIZE_CLASS).
+static func kind_scale(data: Dictionary) -> float:
+	var target: float = HERO_MASS * float(SIZE_CLASS.get(data.get("size", "mediano"), 1.0)) \
+		* float(TIER_GROWTH[clampi(int(data.get("tier", 1)), 1, TIER_GROWTH.size()) - 1])
+	return target / float(data.get("body", HERO_MASS))
 
 ## Radio de choque y alcance de ataque según el tamaño con que se ve.
 ## El shape es un SubResource compartido por todas las instancias de
