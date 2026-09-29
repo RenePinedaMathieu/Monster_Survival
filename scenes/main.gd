@@ -12,6 +12,7 @@ const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 const RESULTS_SCENE := preload("res://scenes/results_screen.tscn")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
+const CharSelect := preload("res://scenes/character_select.gd")
 
 ## Muerte: cámara lenta, la pantalla se oscurece y aparece MORISTE;
 ## recién después los resultados (antes saltaban casi al instante y no
@@ -59,6 +60,8 @@ const WAVE_SPEED_CAP := 1.75
 @onready var _world = $World
 
 var _current_wave: int = 0
+## true si el retrato del HUD es la ilustración (no se rehace al subir).
+var _illustrated_portrait: bool = false
 var _monsters_alive: int = 0
 var _in_break: bool = false
 ## Cuenta cuántos bosses ya spawneó la run — para elegir demon1/2/3.
@@ -110,7 +113,14 @@ func _ready() -> void:
 		_player.hp = _player.max_hp
 		_player.damage_mult *= 1.5
 		_player.emit_signal("hp_changed", _player.hp, _player.max_hp)
-	_hud.set_portrait(_player.portrait_texture())
+	# Retrato del círculo: la ilustración del héroe centrada en la cara si
+	# la tiene (GAROTH); si su retrato está pendiente, la cara del sprite.
+	var hero: Dictionary = CharSelect.find_character(GameState.selected_character_id)
+	if hero.has("face_rect") and not hero.get("portrait_pending", false):
+		_hud.set_portrait_illustration(load(hero["portrait"]), hero["face_rect"])
+		_illustrated_portrait = true
+	else:
+		_hud.set_portrait(_player.portrait_texture())
 	_update_wave_hud()
 	# Joystick táctil — vive siempre; en desktop no molesta porque
 	# no recibe eventos de touch. En web/mobile permite jugar sin
@@ -358,8 +368,10 @@ func _on_player_leveled_up(_new_level: int) -> void:
 	# el pollo y las orbas que quedaban podían abrir el menú encima.
 	if _run_over:
 		return
-	# El swordman evoluciona de sprite con el nivel — el retrato lo sigue.
-	_hud.set_portrait(_player.portrait_texture())
+	# El swordman evoluciona de sprite con el nivel — el retrato lo sigue
+	# (salvo que sea la ilustración, que no cambia).
+	if not _illustrated_portrait:
+		_hud.set_portrait(_player.portrait_texture())
 	# Instanciamos el modal, que se auto-pause y auto-destruye al elegir.
 	var menu = LEVEL_UP_MENU_SCENE.instantiate()
 	add_child(menu)

@@ -6,7 +6,7 @@ Uso:
                                              juego no usa (Walk, Walk_Attack,
                                              Run_Attack)
 
-Lee assets/sprites/swordman/Swordsman_lvlN/ (las 6 formas) y escribe
+Lee assets/sprites/swordman/Swordsman_lvlN/ (las 9 formas) y escribe
 assets/sprites/<id>/<Nombre>_lvlN/<Anim>/<Nombre>_lvlN_<Anim>_<dir>.png,
 con un solo formato de nombre (el de GAROTH cambia entre formas 1-3 y
 4-6, y "attack" va en minúscula). Además deja el retrato y la tira del
@@ -69,7 +69,7 @@ def main():
     for vid, v in VARIANTS.items():
         mapping = {rgb(a): rgb(b) for a, b in zip(HAIR + EYES, v["hair"] + v["eyes"])}
         n = 0
-        for tier in range(1, 7):
+        for tier in range(1, 10):
             for anim in anims:
                 for d in DIRS:
                     src = garoth_path(tier, anim, d)

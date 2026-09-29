@@ -390,7 +390,7 @@ var _run_textures: Array = []
 var _is_axel: bool = false
 # ── SWORDMAN (main_char_swordman): melee que EVOLUCIONA visualmente
 # durante la run. Cada 5 niveles del player la tier del sprite sube
-# (lvl1 → lvl2 → … → lvl6 al llegar a level 26+). Las tiers superiores
+# (lvl1 → lvl2 → … → lvl9, una cada 3 niveles). Las tiers superiores
 # tienen armadura/armas más pesadas — se siente que crecés físicamente.
 const SWORDMAN_DIRS: Array[String] = ["front", "back", "side_left", "side_right"]
 const SWORDMAN_FRAME_SIZE := Vector2(64, 64)
@@ -413,7 +413,13 @@ const SWORDMAN_DEATH_FRAMES := 7
 const SWORDMAN_SCALE := 1.0
 const SWORDMAN_ATTACK_RANGE := 70.0
 const SWORDMAN_MELEE_DAMAGE := 5.0
-const SWORDMAN_MAX_TIER := 6
+const SWORDMAN_MAX_TIER := 9   # formas 7-9: tools/import_swordsman_pack.py
+## Una forma nueva cada SWORDMAN_TIER_EVERY niveles. Con 3, se gana la
+## etapa (nivel ~18) en la forma 6-7 y el desafío 21-30 llega a la 8-9.
+const SWORDMAN_TIER_EVERY := 3
+## Daño extra del tajo por forma: forma 9 = x2,2 (antes, con 6 formas y
+## +0,24 cada una, también llegaba a x2,2).
+const SWORDMAN_TIER_DAMAGE := 0.15
 ## TOREN, BRAN y VAEL: GAROTH recoloreado (pelo y ojos) con
 ## tools/recolor_hero.py. Evolucionan igual que él en 6 formas; "hp" y
 ## "speed" ajustan su vida y velocidad base.
@@ -605,17 +611,13 @@ func _slice_sheet(path: String, frame_size: Vector2, frame_count: int) -> Array[
 		frames.append(atlas)
 	return frames
 
-## Swordman: 4-direction melee que evoluciona por tier (lvl1..lvl6).
-## Se carga tier N según el level del player. Convención:
-##   - Level 1-5 → tier 1
-##   - Level 6-10 → tier 2
-##   - Level 11-15 → tier 3
-##   - Level 16-20 → tier 4
-##   - Level 21-25 → tier 5
-##   - Level 26+ → tier 6
+## Swordman: 4-direction melee que evoluciona por tier (lvl1..lvl9).
+## Forma N desde el nivel 1 + 3(N-1): 1, 4, 7, 10, 13, 16, 19, 22, 25.
+## (Antes cada 5 niveles y 6 formas: como se gana la etapa cerca del
+## nivel 18, casi nadie veía la 5 ni la 6.)
 ## Cada evolución cambia de sprites in-place — se siente el poder crecer.
 func _tier_for_level(lvl: int) -> int:
-	return clampi(1 + (lvl - 1) / 5, 1, SWORDMAN_MAX_TIER)
+	return clampi(1 + (lvl - 1) / SWORDMAN_TIER_EVERY, 1, SWORDMAN_MAX_TIER)
 
 ## Path builder — el folder es INCONSISTENTE entre tiers:
 ## Lvl 1-3 usan prefijo "Swordsman_lvlN_Anim/" (ej Swordsman_lvl1_Idle/)
@@ -1033,8 +1035,8 @@ func _update_swordman_attack(delta: float) -> void:
 		_swordman_attacking = false
 
 func _swordman_apply_melee_damage() -> void:
-	# Damage boost por tier: tier 1 = 1.0x, tier 6 = 2.2x (0.24x extra per tier)
-	var tier_mult: float = 1.0 + (_swordman_tier - 1) * 0.24
+	# Daño extra por forma: forma 1 = x1, forma 9 = x2,2.
+	var tier_mult: float = 1.0 + (_swordman_tier - 1) * SWORDMAN_TIER_DAMAGE
 	var dmg: float = SWORDMAN_MELEE_DAMAGE * damage_mult * tier_mult
 	for body in _attack_area.get_overlapping_bodies():
 		if body.has_method("take_damage"):

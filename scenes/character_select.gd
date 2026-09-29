@@ -34,6 +34,8 @@ const CHARACTERS: Array[Dictionary] = [
 		"id": "swordman",
 		"name": "GAROTH",
 		"portrait": "res://assets/main_characters/swordman_char.png",
+		# Recorte de la cara en la ilustración para el círculo del HUD.
+		"face_rect": Rect2i(490, 260, 330, 330),
 		# Preview con lvl3 — el tier del medio, para que el jugador vea
 		# a qué evoluciona (lvl1 se ve muy débil, lvl6 spoilería el
 		# clímax visual).

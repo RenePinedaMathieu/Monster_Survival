@@ -285,7 +285,30 @@ func set_portrait(tex: Texture2D) -> void:
 	var crop := Image.create_empty(side, side, false, Image.FORMAT_RGBA8)
 	crop.blit_rect(src, clipped, clipped.position - region.position)
 	crop.resize(PORTRAIT_SIZE, PORTRAIT_SIZE, Image.INTERPOLATE_NEAREST)
+	_round_portrait(crop)
 
+## Retrato desde la ilustración de la selección de personaje, recortado
+## en la cara (CHARACTERS "face_rect"): se ve mucho mejor que la cara del
+## sprite. No cambia con las formas del héroe.
+func set_portrait_illustration(tex: Texture2D, face: Rect2i) -> void:
+	if tex == null:
+		return
+	var src := tex.get_image()
+	if src == null or src.is_empty():
+		return
+	if src.is_compressed():
+		src.decompress()
+	src.convert(Image.FORMAT_RGBA8)
+	var clipped := face.intersection(Rect2i(Vector2i.ZERO, src.get_size()))
+	if clipped.size.x <= 0 or clipped.size.y <= 0:
+		return
+	var crop := src.get_region(clipped)
+	crop.resize(PORTRAIT_SIZE, PORTRAIT_SIZE, Image.INTERPOLATE_LANCZOS)
+	_round_portrait(crop)
+
+## Fondo azul del pack, la imagen encima y recorte en círculo (el aro de
+## madera de char_panel.png tapa el borde).
+func _round_portrait(crop: Image) -> void:
 	var out := Image.create_empty(PORTRAIT_SIZE, PORTRAIT_SIZE, false, Image.FORMAT_RGBA8)
 	out.fill(PORTRAIT_BG)
 	out.blend_rect(crop, Rect2i(0, 0, PORTRAIT_SIZE, PORTRAIT_SIZE), Vector2i.ZERO)
