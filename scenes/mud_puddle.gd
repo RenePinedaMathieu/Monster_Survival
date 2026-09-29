@@ -13,10 +13,14 @@ func _ready() -> void:
 	collision_mask = 1   # el player
 	monitorable = false
 	z_index = -1
+	# La zona que frena es la elipse que se dibuja (ancha y aplastada),
+	# no un círculo: antes frenaba por arriba y por abajo del charco.
 	var shape := CollisionShape2D.new()
-	var circle := CircleShape2D.new()
-	circle.radius = radius * 0.8
-	shape.shape = circle
+	var capsule := CapsuleShape2D.new()
+	capsule.radius = radius * 0.5
+	capsule.height = radius * 1.8
+	shape.shape = capsule
+	shape.rotation = PI / 2.0
 	add_child(shape)
 	body_entered.connect(func(b): if b.has_method("enter_mud"): b.enter_mud())
 	body_exited.connect(func(b): if b.has_method("exit_mud"): b.exit_mud())
