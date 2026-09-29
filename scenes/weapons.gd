@@ -30,6 +30,9 @@ const SOURCES: Dictionary = {
 	"quemadura": {"name": "Quemadura", "icon": SKILL + "skill_22.png"},
 	"disparo_electrico": {"name": "Disparo electrico", "icon": SKILL + "skill_70.png"},
 	"disparo_congelante": {"name": "Disparo congelante", "icon": SKILL + "skill_30.png"},
+	"centinela": {"name": "Centinela dron", "icon": SKILL + "skill_91.png"},
+	"sierras": {"name": "Sierras orbitales", "icon": SKILL + "skill_36.png"},
+	"aura_lenta": {"name": "Aura helada", "icon": SKILL + "skill_21.png"},
 	"escudo_fuerza": {"name": "Escudo de fuerza", "icon": SKILL + "skill_76.png"},
 	"pulso": {"name": "Pulso", "icon": SKILL + "skill_62.png"},
 	# Evoluciones (upgrades.gd EVOLUTIONS) — el arma evolucionada reporta

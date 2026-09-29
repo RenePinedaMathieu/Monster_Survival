@@ -1,6 +1,7 @@
 extends Node2D
 
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
+const BOLT_SCRIPT := preload("res://scenes/bolt_effect.gd")
 
 const LEVELS: Array = [
 	{"cooldown": 1.7, "damage": 2.0},
@@ -38,12 +39,15 @@ func _process(delta: float) -> void:
 	if target == null:
 		_cd = 0.2
 		return
-	var dir: Vector2 = (target.global_position - player.global_position).normalized()
-	_fire(dir)
+	_fire(target)
 	_cd = LEVELS[level - 1]["cooldown"] / player.atk_speed_mult
 
-func _fire(dir: Vector2) -> void:
+func _fire(target: Node2D) -> void:
 	var data: Dictionary = LEVELS[level - 1]
+	if element == "electric":
+		_fire_electric(target, data["damage"] * player.damage_mult)
+		return
+	var dir: Vector2 = (target.global_position - player.global_position).normalized()
 	var shot = SHOT_SCENE.instantiate()
 	get_tree().current_scene.add_child(shot)
 	shot.global_position = player.global_position + dir * 24.0
@@ -53,14 +57,32 @@ func _fire(dir: Vector2) -> void:
 			shot.source = "disparo_fuego"
 			shot.set_effect("fire", FIRE_DURATION, FIRE_DPS_FRAC)
 			shot.setup(dir, false, 5)
-		"electric":
-			shot.source = "disparo_electrico"
-			shot.set_effect("electric", ELECTRIC_STUN, 0.0, ELECTRIC_RADIUS, ELECTRIC_CHANCE)
-			shot.setup(dir, false, 2)
 		"freeze":
 			shot.source = "disparo_congelante"
 			shot.set_effect("freeze", FREEZE_DURATION)
 			shot.setup(dir, false, 0)
+
+func _fire_electric(target: Node2D, damage: float) -> void:
+	if not is_instance_valid(target):
+		return
+	var points: Array = [player.global_position, target.global_position]
+	target.take_damage(damage, "disparo_electrico")
+	if target.has_method("apply_stun"):
+		target.apply_stun(ELECTRIC_STUN)
+	for m in get_tree().get_nodes_in_group("monster"):
+		if m == target or not is_instance_valid(m):
+			continue
+		if target.global_position.distance_to(m.global_position) > ELECTRIC_RADIUS:
+			continue
+		if randf() >= ELECTRIC_CHANCE:
+			continue
+		if m.has_method("apply_stun"):
+			m.apply_stun(ELECTRIC_STUN * 0.75)
+		points.append(m.global_position)
+	var bolt := Node2D.new()
+	bolt.set_script(BOLT_SCRIPT)
+	get_tree().current_scene.add_child(bolt)
+	bolt.setup(points, false)
 
 func _nearest_monster() -> Node2D:
 	var best: Node2D = null

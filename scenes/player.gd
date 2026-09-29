@@ -59,6 +59,9 @@ const CHAIN_LASER_SCRIPT := preload("res://scenes/chain_laser_weapon.gd")
 const ELEMENTAL_SHOT_SCRIPT := preload("res://scenes/elemental_shot_weapon.gd")
 const FORCE_SHIELD_SCRIPT := preload("res://scenes/force_shield_weapon.gd")
 const PULSE_SCRIPT := preload("res://scenes/pulse_weapon.gd")
+const SENTINEL_SCRIPT := preload("res://scenes/sentinel_weapon.gd")
+const SAW_SCRIPT := preload("res://scenes/saw_weapon.gd")
+const SLOW_AURA_SCRIPT := preload("res://scenes/slow_aura_weapon.gd")
 
 const BASE_SCALE := 0.5
 ## 220 → 175 → 125. A 175 se cruzaba la pantalla (335 unidades de alto
@@ -219,6 +222,9 @@ var _chain_laser = null
 var _fire_shot_weapon = null
 var _electric_shot = null
 var _freeze_shot = null
+var _sentinels = null
+var _saws = null
+var _slow_aura = null
 var _force_shield = null
 var _pulse_weapon = null
 
@@ -983,10 +989,27 @@ func apply_upgrade(id: String) -> void:
 			_electric_shot = _level_elemental_shot(_electric_shot, "disparo_electrico", "electric")
 		"disparo_congelante":
 			_freeze_shot = _level_elemental_shot(_freeze_shot, "disparo_congelante", "freeze")
+		"centinela":
+			_sentinels = _level_weapon(_sentinels, SENTINEL_SCRIPT, "centinela", true)
+		"sierras":
+			_saws = _level_weapon(_saws, SAW_SCRIPT, "sierras", true)
+		"aura_lenta":
+			_slow_aura = _level_weapon(_slow_aura, SLOW_AURA_SCRIPT, "aura_lenta", true)
 		"escudo_fuerza":
 			_force_shield = _level_weapon(_force_shield, FORCE_SHIELD_SCRIPT, "escudo_fuerza", true)
 		"pulso":
 			_pulse_weapon = _level_weapon(_pulse_weapon, PULSE_SCRIPT, "pulso", false)
+		"overflow_attack":
+			damage_mult *= 1.15
+		"overflow_defense":
+			var gained: float = maxf(8.0, max_defense * 0.20)
+			max_defense += gained
+			defense += gained
+			emit_signal("defense_changed", defense, max_defense)
+		"overflow_hp":
+			max_hp *= 1.20
+			hp = min(max_hp, hp + max_hp * 0.18)
+			emit_signal("hp_changed", hp, max_hp)
 		# Relleno cuando ya no queda nada por mejorar.
 		"coins":
 			GameState.add_run_currency(25)

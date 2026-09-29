@@ -16,7 +16,7 @@ extends RefCounted
 
 const ICON := "res://assets/ui/skill_icons/"
 
-const MAX_WEAPONS := 6
+const MAX_WEAPONS := 8
 const MAX_PASSIVES := 5
 const MAX_LEVEL := 5
 
@@ -48,8 +48,15 @@ const CARDS: Array = [
 	{"id": "disparo_fuego", "title": "DISPARO DE FUEGO",  "desc": "Disparo que quema 3% de vida por segundo durante 3 s", "icon": ICON + "skill_22.png"},
 	{"id": "disparo_electrico", "title": "DISPARO ELECTRICO", "desc": "Paraliza al objetivo y puede aturdir enemigos cercanos", "icon": ICON + "skill_70.png"},
 	{"id": "disparo_congelante", "title": "DISPARO CONGELANTE", "desc": "Congela al enemigo golpeado", "icon": ICON + "skill_30.png"},
+	{"id": "centinela",   "title": "CENTINELA DRON",      "desc": "Un dron te acompaÃ±a y dispara al enemigo mÃ¡s cercano", "icon": ICON + "skill_91.png"},
+	{"id": "sierras",     "title": "SIERRAS ORBITALES",   "desc": "Una sierra gira a tu alrededor y corta al contacto", "icon": ICON + "skill_36.png"},
+	{"id": "aura_lenta",  "title": "AURA HELADA",         "desc": "Frena a los enemigos cercanos", "icon": ICON + "skill_21.png"},
 	{"id": "escudo_fuerza", "title": "ESCUDO DE FUERZA",  "desc": "Se recarga cada pocos segundos y bloquea un disparo", "icon": ICON + "skill_76.png"},
 	{"id": "pulso",        "title": "PULSO",              "desc": "Una onda expansiva golpea enemigos alrededor", "icon": ICON + "skill_62.png"},
+	# â”€â”€ Escalado cuando la build ya tiene sus 8 armas â”€â”€
+	{"id": "overflow_attack",  "title": "+15% ATAQUE",    "desc": "Toda tu build pega mÃ¡s fuerte", "icon": ICON + "skill_96.png"},
+	{"id": "overflow_defense", "title": "+20% DEFENSA",   "desc": "Aumenta tu barra de defensa", "icon": ICON + "skill_76.png"},
+	{"id": "overflow_hp",      "title": "+20% VIDA",      "desc": "Aumenta tu vida mÃ¡xima y cura un poco", "icon": ICON + "skill_83.png"},
 	# ── Relleno cuando no queda nada por mejorar ──
 	{"id": "coins",        "title": "BOLSA DE MONEDAS",   "desc": "+25 monedas para la tienda",         "icon": "res://assets/ui/rpg/coin.png"},
 	{"id": "heal",         "title": "POCIÓN",             "desc": "Recuperas 30% de tu vida",           "icon": ICON + "skill_86.png"},
@@ -79,6 +86,9 @@ const WEAPONS: Dictionary = {
 	"disparo_fuego": {"name": "Disparo de fuego", "unlock": "disparo_fuego", "level": "disparo_fuego", "extras": [], "shop": ""},
 	"disparo_electrico": {"name": "Disparo electrico", "unlock": "disparo_electrico", "level": "disparo_electrico", "extras": [], "shop": ""},
 	"disparo_congelante": {"name": "Disparo congelante", "unlock": "disparo_congelante", "level": "disparo_congelante", "extras": [], "shop": ""},
+	"centinela": {"name": "Centinela dron", "unlock": "centinela", "level": "centinela", "extras": [], "shop": ""},
+	"sierras": {"name": "Sierras orbitales", "unlock": "sierras", "level": "sierras", "extras": [], "shop": ""},
+	"aura_lenta": {"name": "Aura helada", "unlock": "aura_lenta", "level": "aura_lenta", "extras": [], "shop": ""},
 	"escudo_fuerza": {"name": "Escudo de fuerza", "unlock": "escudo_fuerza", "level": "escudo_fuerza", "extras": [], "shop": ""},
 	"pulso": {"name": "Pulso", "unlock": "pulso", "level": "pulso", "extras": [], "shop": ""},
 }
@@ -107,7 +117,7 @@ const EVOLUTIONS: Dictionary = {
 const UNLOCK_IDS: Array = [
 	"ranged_bonus", "flying_swords", "meteors", "aura", "hacha", "rayo",
 	"laser_cadena", "disparo_fuego", "disparo_electrico", "disparo_congelante",
-	"escudo_fuerza", "pulso",
+	"centinela", "sierras", "aura_lenta", "escudo_fuerza", "pulso",
 ]
 
 static func card(id: String) -> Dictionary:
@@ -127,7 +137,11 @@ static func weapon_of_card(card_id: String) -> String:
 static func is_eligible(player, id: String) -> bool:
 	if id == "coins" or id == "heal":
 		return false
+	if id in ["overflow_attack", "overflow_defense", "overflow_hp"]:
+		return player.weapons_owned() >= MAX_WEAPONS
 	if PASSIVES.has(id):
+		if player.weapons_owned() >= MAX_WEAPONS:
+			return false
 		var lvl: int = player.passive_level(id)
 		if lvl >= PASSIVES[id]:
 			return false
