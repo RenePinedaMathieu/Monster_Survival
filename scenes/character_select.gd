@@ -50,6 +50,7 @@ const CHARACTERS: Array[Dictionary] = [
 		"id": "toren",
 		"name": "TOREN",
 		"portrait": "res://assets/main_characters/toren_portrait.png",
+		"portrait_pending": true,   # sprite ampliado; falta ilustración como la de GAROTH
 		"idle_sheet": "res://assets/main_characters/toren_idle_strip.png",
 		"idle_frames": 12,
 		"accent": Color("8fcf5a"),
@@ -61,6 +62,7 @@ const CHARACTERS: Array[Dictionary] = [
 		"id": "bran",
 		"name": "BRAN",
 		"portrait": "res://assets/main_characters/bran_portrait.png",
+		"portrait_pending": true,
 		"idle_sheet": "res://assets/main_characters/bran_idle_strip.png",
 		"idle_frames": 12,
 		"accent": Color("e0703a"),
@@ -72,6 +74,7 @@ const CHARACTERS: Array[Dictionary] = [
 		"id": "vael",
 		"name": "VAEL",
 		"portrait": "res://assets/main_characters/vael_portrait.png",
+		"portrait_pending": true,
 		"idle_sheet": "res://assets/main_characters/vael_idle_strip.png",
 		"idle_frames": 12,
 		"accent": Color("a070e0"),

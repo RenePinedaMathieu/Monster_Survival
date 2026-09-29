@@ -366,10 +366,14 @@ func _build_heroes() -> void:
 			[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.RANGED_FRAME_SIZE.x, Player.RANGED_FRAME_SIZE.y],
 			"Habilidad: " + skills[id]["name"]])
 	# Retratos de la selección de personaje.
+	# "portrait_pending": el retrato es el sprite ampliado mientras falta
+	# la ilustración al estilo de la de GAROTH.
 	for c in CharSelect.CHARACTERS:
-		var enlarged: bool = c["portrait"].ends_with("_portrait.png")
-		_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"],
-			"SPRITE AMPLIADO" if enlarged else "ILUSTRACIÓN", COLOR_SPRITE if enlarged else COLOR_ICON, [_short(c["portrait"])])
+		if c.get("portrait_pending", false):
+			_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"], "RETRATO PENDIENTE", COLOR_SHARED,
+				[_short(c["portrait"]), "Hoy: sprite ampliado. Falta una ilustración al estilo de la de GAROTH."])
+		else:
+			_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"], "ILUSTRACIÓN", COLOR_ICON, [_short(c["portrait"])])
 	# EDRIC, SIRA y el lobo: arte anterior, fuera del juego hasta tener
 	# sprites al estilo de GAROTH (se muestran a su escala de antes, x0.5).
 	var px_dir: String = ["south", "north", "west", "east"][_dir]
