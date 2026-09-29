@@ -80,6 +80,19 @@ const BASE_BODY_RADIUS := 14.0   # radio con el que se calibró ATTACK_RANGE
 ## que un monstruo al que le pegan seguido no quede trabado en ella.
 const HURT_FPS := 14.0
 const HURT_COOLDOWN := 0.7
+## Regla (29-09): ningún monstruo muere de una flecha. Un golpe a
+## distancia (flechas, disparos, láser, rayo, dron, hachas y espadas
+## lanzadas, meteoros) quita como mucho RANGED_HIT_CAP de su vida
+## máxima: hacen falta 3 como mínimo. La espada, las habilidades y lo
+## que gira o pega alrededor del héroe (sierras, auras, pulso) no tienen
+## tope: el golpe fuerte es el de cerca.
+const RANGED_HIT_CAP := 0.34
+const RANGED_SOURCES: Array[String] = [
+	"disparo", "lluvia_flechas", "disparo_fuego", "infierno", "disparo_congelante",
+	"cero_absoluto", "disparo_electrico", "sobrecarga", "centinela", "laser_cadena",
+	"cadena_carmesi", "rayo", "tormenta_electrica", "hacha", "espadas", "meteoros",
+	"apocalipsis",
+]
 const DETECT_RANGE := 240.0
 const WINDUP_TIME := 0.40
 const STRIKE_TIME := 0.20
@@ -1009,6 +1022,8 @@ func take_damage(amount: float, source: String = "otro", show_number: bool = tru
 	var crit: bool = GameState.run_crit_chance > 0.0 and randf() < GameState.run_crit_chance
 	if crit:
 		amount *= 2.0
+	if source in RANGED_SOURCES:
+		amount = minf(amount, max_hp * RANGED_HIT_CAP)
 	GameState.record_damage(source, minf(amount, hp))
 	_last_hit_source = source
 	hp -= amount
