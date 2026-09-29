@@ -24,3 +24,6 @@ dist/
 
 # Claude Code local settings
 .claude/
+
+# Python
+__pycache__/
