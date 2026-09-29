@@ -44,16 +44,6 @@ const CHARACTERS: Array[Dictionary] = [
 		"blurb": "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final.",
 		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
 	},
-	{
-		"id": "main_char1",
-		"name": "AXEL",
-		"portrait": "res://assets/main_characters/main_char1_selectwindow.png",
-		"idle_sheet": "res://assets/main_characters/main_char1/FREE_Adventurer 2D Pixel Art/Sprites/IDLE/idle_down.png",
-		"accent": Color("ff6b57"),
-		"role": "CUERPO A CUERPO",
-		"blurb": "Espadachín ágil. Pega fuerte de cerca; puede sumar disparos a distancia con la carta correcta.",
-		"stats": {"Daño": 4, "Velocidad": 3, "Alcance": 1, "Dificultad": 3},
-	},
 	# TOREN, BRAN y VAEL: GAROTH recoloreado (tools/recolor_hero.py);
 	# evolucionan como él. Se ganan en los desafíos (GameState.TRIALS).
 	{
@@ -92,10 +82,21 @@ const CHARACTERS: Array[Dictionary] = [
 ]
 
 ## Fuera del juego por ahora, hasta tener sprites al estilo de GAROTH:
-## KAY y LINA (reemplazados por TOREN, BRAN y VAEL el 29-09-2026) y
-## EDRIC y SIRA (arte anterior). Su lógica sigue en player.gd; sus datos
-## quedan acá para el ranking y el reto diario de días anteriores.
+## AXEL (sin golpe ni muerte en su pack) y KAY y LINA (reemplazados por
+## TOREN, BRAN y VAEL), los tres desde el 29-09-2026, y EDRIC y SIRA
+## (arte anterior). Su lógica sigue en player.gd; sus datos quedan acá
+## para el ranking y el reto diario de días anteriores.
 const PENDING_CHARACTERS: Array[Dictionary] = [
+	{
+		"id": "main_char1",
+		"name": "AXEL",
+		"portrait": "res://assets/main_characters/main_char1_selectwindow.png",
+		"idle_sheet": "res://assets/main_characters/main_char1/FREE_Adventurer 2D Pixel Art/Sprites/IDLE/idle_down.png",
+		"accent": Color("ff6b57"),
+		"role": "CUERPO A CUERPO",
+		"blurb": "Espadachín ágil. Pega fuerte de cerca; puede sumar disparos a distancia con la carta correcta.",
+		"stats": {"Daño": 4, "Velocidad": 3, "Alcance": 1, "Dificultad": 3},
+	},
 	{
 		"id": "main_char2",
 		"name": "KAY",

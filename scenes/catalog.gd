@@ -315,7 +315,7 @@ static func _slice(path: String, frame: Vector2, max_frames: int = 64) -> Array:
 # ── HÉROES ───────────────────────────────────────────────────────
 
 func _build_heroes() -> void:
-	_hint.text = "Escala real del juego (x1). GAROTH, TOREN, BRAN y VAEL tienen 6 formas y todas sus animaciones. AXEL no trae golpe ni muerte. KAY, LINA, EDRIC y SIRA están fuera del juego."
+	_hint.text = "Escala real del juego (x1). GAROTH, TOREN, BRAN y VAEL tienen 6 formas y todas sus animaciones. AXEL, KAY, LINA, EDRIC y SIRA están fuera del juego."
 	var anim_name: String = ANIMS[_anim]
 	var label: String = ANIM_NAMES[_anim]
 	var skills: Dictionary = Player.ACTIVE_SKILLS
@@ -339,7 +339,7 @@ func _build_heroes() -> void:
 			_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "%s · forma %d" % [GameState.CHARACTER_NAMES.get(sid, sid), tier], "GAROTH RECOLOREADO", COLOR_SPRITE,
 				[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
 				"Habilidad: " + skills[sid]["name"]])
-	# AXEL (el pack no trae golpe ni muerte).
+	# AXEL (el pack no trae golpe ni muerte), fuera del juego desde el 29-09.
 	var ax_dir: String = Player.AXEL_DIRS[_dir]
 	var ax_folder: String = {"idle": "IDLE/idle_%s.png", "run": "RUN/run_%s.png", "attack": "ATTACK 1/attack1_%s.png"}.get(anim_name, "")
 	if ax_folder == "":
@@ -347,7 +347,7 @@ func _build_heroes() -> void:
 	else:
 		var ax_path: String = Player.AXEL_BASE_PATH + ax_folder % ax_dir
 		var ax_frames := _slice(ax_path, Player.AXEL_FRAME_SIZE, Player.AXEL_FRAME_COUNT)
-		_card(_anim_preview(ax_frames, Player.AXEL_SCALE), "AXEL", "SPRITE", COLOR_SPRITE,
+		_card(_anim_preview(ax_frames, Player.AXEL_SCALE), "AXEL", "FUERA DEL JUEGO", COLOR_SHARED,
 			[_short(ax_path), "%d cuadros de %dx%d" % [ax_frames.size(), Player.AXEL_FRAME_SIZE.x, Player.AXEL_FRAME_SIZE.y],
 			"Habilidad: " + skills["main_char1"]["name"]])
 	# KAY y LINA (6 direcciones: sin izquierda/derecha puras), fuera del

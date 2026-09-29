@@ -248,7 +248,7 @@ const ACHIEVEMENTS: Array = [
 	{"id": "boss_1",      "name": "Matagigantes",     "desc": "Derrota a un jefe",                  "stat": "bosses",     "goal": 1,     "reward": {"coins": 400}},
 	{"id": "evo_1",       "name": "Evolución",        "desc": "Consigue tu primera evolución",      "stat": "evolutions", "goal": 1,     "reward": {"coins": 250}},
 	{"id": "weapons_4",   "name": "Arsenal",          "desc": "Ten 4 armas a la vez",               "stat": "max_weapons", "goal": 4,    "reward": {"coins": 250}},
-	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 500, "character": "main_char1", "map": "desierto"}},
+	{"id": "win_1",       "name": "Héroe",            "desc": "Gana una partida",                   "stat": "wins",       "goal": 1,     "reward": {"coins": 500, "map": "desierto"}},
 	{"id": "kills_1000",  "name": "Exterminador",     "desc": "Derrota 1.000 enemigos",             "stat": "kills",      "goal": 1000,  "reward": {"coins": 400}},
 	{"id": "elites_20",   "name": "Rompe-élites",     "desc": "Derrota 20 élites",                  "stat": "elites",     "goal": 20,    "reward": {"coins": 400}},
 	{"id": "chests_25",   "name": "Cazatesoros",      "desc": "Abre 25 cofres",                     "stat": "chests",     "goal": 25,    "reward": {"coins": 400}},
@@ -395,9 +395,10 @@ func report_win(hero_id: String, map_id: String, difficulty: String) -> void:
 ## SQL de la tabla: docs/supabase_runs.sql.
 
 const DAILY_WAVES := 10
-## Desde el 30-09-2026 (TOREN, BRAN y VAEL reemplazan a KAY y LINA). La
-## lista vieja queda para que el reto de días anteriores no cambie.
-const DAILY_HEROES: Array = ["main_char1", "swordman", "toren", "bran", "vael"]
+## Desde el 30-09-2026 (TOREN, BRAN y VAEL reemplazan a AXEL, KAY y
+## LINA). La lista vieja queda para que el reto de días anteriores no
+## cambie.
+const DAILY_HEROES: Array = ["swordman", "toren", "bran", "vael"]
 const DAILY_HEROES_UNTIL_0929: Array = ["main_char1", "main_char2", "main_char2_female", "swordman"]
 const DAILY_MODIFIERS: Dictionary = {
 	"elites":   {"name": "Noche de élites", "desc": "Cada oleada trae 2 élites (y 2 cofres)"},
