@@ -225,7 +225,9 @@ func is_spawnable_at(world_pos: Vector2) -> bool:
 func _build_borders(map_w: float, map_h: float) -> void:
 	var body := StaticBody2D.new()
 	body.name = "Borders"
-	body.collision_layer = 4
+	# Capa propia (8): los voladores atraviesan árboles y agua (capa 4 de
+	# los tiles) pero no se salen del mapa.
+	body.collision_layer = 8
 	body.collision_mask = 0
 	add_child(body)
 	# Le pegamos ~40px de grosor apenas afuera del mapa

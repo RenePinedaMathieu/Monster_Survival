@@ -165,7 +165,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp1_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp1_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp1_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.0, "body": 20.0, "hp": 3.0, "coin_reward": 1,
+		"scale": 1.0, "body": 20.0, "flying": true, "hp": 3.0, "coin_reward": 1,
 	},
 	"imp_2": {
 		"base": "res://assets/sprites/IMP/Imp2/",
@@ -174,7 +174,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp2_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp2_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp2_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.25, "body": 20.6, "hp": 6.0, "coin_reward": 2,
+		"scale": 1.25, "body": 20.6, "flying": true, "hp": 6.0, "coin_reward": 2,
 	},
 	"imp_3": {
 		"base": "res://assets/sprites/IMP/Imp3/",
@@ -183,7 +183,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Run/Imp3_Run_front.png",       "frames": 8, "cols": 8},
 		"attack": {"file": "Attack/Imp3_Attack_front.png", "frames": 6, "cols": 6},
 		"death":  {"file": "Death/Imp3_Death_front.png",   "frames": 10, "cols": 10},
-		"scale": 1.5, "body": 22.3, "hp": 12.0, "coin_reward": 4,
+		"scale": 1.5, "body": 22.3, "flying": true, "hp": 12.0, "coin_reward": 4,
 	},
 
 	# ── LIZARDMAN: mediano equilibrado ──────────────────────────
@@ -252,28 +252,28 @@ const KIND_DATA: Dictionary = {
 		"base": "res://assets/sprites/Ghost/Ghost1/",
 		"frame_size": Vector2(64, 64),
 		"idle":   {"file": "Ghost1_Idle_without_shadow.png",   "frames": 4,  "cols": 4},
-		"run":    {"file": "Ghost1_Run_without_shadow.png",    "frames": 6,  "cols": 6},
+		"run":    {"file": "Ghost1_Walk_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost1_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "body": 17.6, "hp": 5.0, "coin_reward": 2,
+		"scale": 1.0, "body": 17.6, "flying": true, "hp": 5.0, "coin_reward": 2,
 	},
 	"ghost_2": {
 		"base": "res://assets/sprites/Ghost/Ghost2/",
 		"frame_size": Vector2(64, 64),
 		"idle":   {"file": "Ghost2_Idle_without_shadow.png",   "frames": 4,  "cols": 4},
-		"run":    {"file": "Ghost2_Run_without_shadow.png",    "frames": 6,  "cols": 6},
+		"run":    {"file": "Ghost2_Walk_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost2_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.25, "body": 19.3, "hp": 8.0, "coin_reward": 3,
+		"scale": 1.25, "body": 19.3, "flying": true, "hp": 8.0, "coin_reward": 3,
 	},
 	"ghost_3": {
 		"base": "res://assets/sprites/Ghost/Ghost3/",
 		"frame_size": Vector2(64, 64),
 		"idle":   {"file": "Ghost3_Idle_without_shadow.png",   "frames": 4,  "cols": 4},
-		"run":    {"file": "Ghost3_Run_without_shadow.png",    "frames": 6,  "cols": 6},
+		"run":    {"file": "Ghost3_Walk_without_shadow.png",    "frames": 6,  "cols": 6},
 		"attack": {"file": "Ghost3_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Ghost3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.5, "body": 22.7, "hp": 14.0, "coin_reward": 5,
+		"scale": 1.5, "body": 22.7, "flying": true, "hp": 14.0, "coin_reward": 5,
 	},
 
 	# ── BEHOLDER: el más animado del pool (12 frames idle) ──────
@@ -284,7 +284,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder1_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder1_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder1_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.0, "body": 25.6, "hp": 6.0, "coin_reward": 2,
+		"scale": 1.0, "body": 25.6, "flying": true, "hp": 6.0, "coin_reward": 2,
 	},
 	"beholder_2": {
 		"base": "res://assets/sprites/Beholder/Beholder2/",
@@ -293,7 +293,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder2_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder2_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder2_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.25, "body": 28.0, "hp": 10.0, "coin_reward": 3,
+		"scale": 1.25, "body": 28.0, "flying": true, "hp": 10.0, "coin_reward": 3,
 	},
 	"beholder_3": {
 		"base": "res://assets/sprites/Beholder/Beholder3/",
@@ -302,7 +302,7 @@ const KIND_DATA: Dictionary = {
 		"run":    {"file": "Beholder3_Run_without_shadow.png",    "frames": 8,  "cols": 8},
 		"attack": {"file": "Beholder3_Attack_without_shadow.png", "frames": 12, "cols": 12},
 		"death":  {"file": "Beholder3_Death_without_shadow.png",  "frames": 9,  "cols": 9},
-		"scale": 1.5, "body": 32.9, "hp": 18.0, "coin_reward": 6,
+		"scale": 1.5, "body": 32.9, "flying": true, "hp": 18.0, "coin_reward": 6,
 	},
 
 	# ── RAT: 128x128, muy animado ───────────────────────────────
@@ -456,6 +456,9 @@ func set_kind(kind_id: String) -> void:
 
 	_body_size = float(data.get("body", 20.0))
 	_fit_body()
+	# Voladores (fantasmas, beholders, imps): pasan sobre árboles y agua
+	# (capa 4 de los tiles); todos chocan con los bordes del mapa (8).
+	collision_mask = 8 if data.get("flying", false) else 12
 
 	_set_animation("idle")
 
@@ -757,8 +760,17 @@ func _phase_teleport() -> void:
 	tw.tween_property(_sprite, "modulate:a", 1.0, 0.25)
 
 func _teleport_near_target(ang: float) -> void:
-	if not _dead and target != null and is_instance_valid(target):
-		global_position = target.global_position + Vector2(cos(ang), sin(ang)) * randf_range(95.0, 125.0)
+	if _dead or target == null or not is_instance_valid(target):
+		return
+	# Reaparece sobre tierra: prueba varios ángulos hasta que no sea agua
+	# ni árbol (antes podía aparecer en el lago).
+	var world = get_tree().current_scene.get_node_or_null("World")
+	for i in range(10):
+		var a: float = ang + i * TAU / 10.0
+		var pos: Vector2 = target.global_position + Vector2(cos(a), sin(a)) * randf_range(95.0, 125.0)
+		if world == null or not world.has_method("is_spawnable_at") or world.is_spawnable_at(pos):
+			global_position = pos
+			return
 
 ## Jefe: dos anillos de fuego y a la tercera invoca 3 ratas.
 func _boss_attack() -> void:
@@ -1098,11 +1110,10 @@ func _die() -> void:
 	if is_elite or is_boss():
 		_drop_chest()
 	if behavior == "splitter" and not _is_minion:
-		# Las crías son el slime de un nivel menos (más chico por dibujo,
-		# no achicado: todo va a escala x1).
-		var child: String = {"slime_3": "slime_2", "slime_2": "slime_1"}.get(_kind_id, "slime_1")
+		# Las crías son del mismo slime, más chicas (los niveles de slime
+		# son tipos distintos: negro, de fuego...).
 		for side in [-1.0, 1.0]:
-			_spawn_minion(child, global_position + Vector2(14.0 * side, 0.0), 0.3, 1.0)
+			_spawn_minion(_kind_id, global_position + Vector2(14.0 * side, 0.0), 0.3, 0.65)
 	queue_redraw()
 	# Boss suena distinto — más grave y grande. Cualquier demon (tier)
 	# cuenta como boss.
