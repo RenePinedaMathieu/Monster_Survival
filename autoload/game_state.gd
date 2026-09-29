@@ -395,11 +395,8 @@ func report_win(hero_id: String, map_id: String, difficulty: String) -> void:
 ## SQL de la tabla: docs/supabase_runs.sql.
 
 const DAILY_WAVES := 10
-## Desde el 30-09-2026 (TOREN, BRAN y VAEL reemplazan a AXEL, KAY y
-## LINA). La lista vieja queda para que el reto de días anteriores no
-## cambie.
+## Sólo héroes del juego (AXEL, KAY y LINA salieron el 29-09-2026).
 const DAILY_HEROES: Array = ["swordman", "toren", "bran", "vael"]
-const DAILY_HEROES_UNTIL_0929: Array = ["main_char1", "main_char2", "main_char2_female", "swordman"]
 const DAILY_MODIFIERS: Dictionary = {
 	"elites":   {"name": "Noche de élites", "desc": "Cada oleada trae 2 élites (y 2 cofres)"},
 	"veloces":  {"name": "Frenesí", "desc": "Los monstruos son 30% más rápidos"},
@@ -425,13 +422,10 @@ func daily_info() -> Dictionary:
 	return {
 		"date": date,
 		"seed": h,
-		"hero": _daily_heroes(date)[h % _daily_heroes(date).size()],
+		"hero": DAILY_HEROES[h % DAILY_HEROES.size()],
 		"map": MAP_ORDER[(h / 7) % MAP_ORDER.size()],
 		"modifier": mods[(h / 31) % mods.size()],
 	}
-
-func _daily_heroes(date: String) -> Array:
-	return DAILY_HEROES if date >= "2026-09-30" else DAILY_HEROES_UNTIL_0929
 
 func daily_modifier() -> String:
 	return daily_info()["modifier"] if daily_active else ""
