@@ -408,10 +408,17 @@ func hide_boss_bar() -> void:
 var _wave: int = 0
 
 ## final_wave 0 = modo infinito (sin "/ N").
-func set_wave(n: int, remaining: int, final_wave: int = 0) -> void:
+func set_wave(n: int, final_wave: int = 0) -> void:
 	_wave = n
 	_wave_label.text = ("OLEADA %d / %d" % [n, final_wave]) if final_wave > 0 else ("OLEADA %d" % n)
-	_monsters_label.text = "Enemigos: %d" % remaining
+
+## Lo que le queda a la oleada (las oleadas duran lo mismo, ver
+## main.gd WAVE_DURATION); en 0 con el jefe vivo, lo avisa.
+func set_wave_time(sec: float, boss_alive: bool) -> void:
+	var s := ceili(sec)
+	var txt: String = "¡Derrota al jefe!" if s <= 0 and boss_alive else "Termina en %d:%02d" % [s / 60, s % 60]
+	if _monsters_label.text != txt:
+		_monsters_label.text = txt
 
 func show_wave_break(_duration: float) -> void:
 	_banner.text = "OLEADA %d SUPERADA" % _wave

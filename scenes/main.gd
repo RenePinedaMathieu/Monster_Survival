@@ -32,17 +32,22 @@ const BOSS_EVERY := 10
 const SPAWN_INNER := 500.0
 const SPAWN_OUTER := 800.0
 const WAVE_BREAK_SEC := 2.5
-# Densidad VS: mucho más volumen. Waves cortas y agresivas.
+# Densidad VS: mucho volumen. Con las oleadas por tiempo (30-09) la
+# cantidad crece menos (antes +4 por oleada): el peligro lo ponen el
+# daño y el nivel de los monstruos, no que se acumulen sin fin.
 const BASE_MONSTERS := 8
-const MONSTERS_PER_WAVE := 4
-## Ritmo de la etapa: cada oleada trae el triple de monstruos y los
-## suelta de a poco durante una ventana (43 s la 1ra … 62 s la 20);
-## termina al morir el último. Así una etapa de 20 oleadas dura ~25
-## minutos sin importar lo fuerte que sea la build (antes, con todos
-## de golpe, una build buena la terminaba en 7-8 minutos).
+const MONSTERS_PER_WAVE := 2
+## Ritmo de la etapa (30-09): cada oleada dura WAVE_DURATION aunque
+## queden monstruos vivos (siguen en la siguiente); si se limpia todo
+## antes, pasa antes. Trae el triple de monstruos y los suelta de a poco
+## en el primer SPAWN_WINDOW_FRAC de su tiempo; los que no alcanzaron a
+## salir se descartan. Una etapa de 20 oleadas dura ~21 minutos. Lo que
+## sube con cada oleada es el peligro: pegan más (WAVE_POWER_STEP) y
+## salen monstruos de más nivel (_pick_kind). Las oleadas de jefe no
+## terminan hasta que el jefe cae.
 const WAVE_COUNT_MULT := 3.0
-const SPAWN_WINDOW_BASE := 42.0
-const SPAWN_WINDOW_STEP := 1.0
+const WAVE_DURATION := 60.0
+const SPAWN_WINDOW_FRAC := 0.85
 ## Reto diario: la partida corta del día, la mitad de todo.
 const DAILY_PACE := 0.5
 ## Tope de monstruos vivos a la vez: si se juntan muchos, la cola espera.
@@ -63,7 +68,10 @@ var _current_wave: int = 0
 ## true si el retrato del HUD es la ilustración (no se rehace al subir).
 var _illustrated_portrait: bool = false
 var _monsters_alive: int = 0
-var _in_break: bool = false
+## Reloj de la oleada en curso (false durante la pausa entre oleadas).
+var _wave_running: bool = false
+var _wave_time_left: float = 0.0
+var _boss_alive: bool = false
 ## Cuenta cuántos bosses ya spawneó la run — para elegir demon1/2/3.
 var _bosses_spawned: int = 0
 ## true después de ganar y elegir SEGUIR: el desafío de las oleadas
@@ -73,12 +81,15 @@ var _run_over: bool = false
 var _death_label: Label
 ## FINAL_WAVE salvo en el reto diario (más corto).
 var _final_wave: int = FINAL_WAVE
-## Umbrales de dificultad. Debajo de MID sólo tier 1 (crías). Entre
-## MID y HIGH mix de tier 1 y 2. En HIGH sólo tier 2 y 3 (los más
-## amenazantes). Se siente la escalada de la run sin necesidad de
-## tocar nada más.
-const WAVE_MID_START := 4
-const WAVE_HIGH_START := 7
+## Qué monstruos salen: cada mapa trae 3 grupos, de más débil a más
+## duro. La oleada pasa de uno al siguiente de a poco, cada
+## POOL_WAVES oleadas (en la 9 ya es todo del tercero), y desde la
+## TIER_BIAS_START, dentro del grupo, los de nivel más alto salen cada
+## vez más seguido: en la 20, ~70 % de nivel 3.
+const POOL_WAVES := 4.0
+const TIER_BIAS_START := 9
+const TIER_BIAS_STEP := 0.2
+const MonsterScript := preload("res://scenes/monster.gd")
 
 func _ready() -> void:
 	print("[main] booting…")
@@ -160,7 +171,6 @@ func _start_next_wave() -> void:
 	if _current_wave > 0 and not _player.took_damage:
 		GameState.report_max("no_hit_wave", _current_wave)
 	_current_wave += 1
-	_in_break = false
 	var pace: float = DAILY_PACE if GameState.daily_active or GameState.trial_active != "" else 1.0
 	# En el desafío los monstruos ya son mucho más duros (CHALLENGE_*_STEP):
 	# ahí el doble en vez del triple.
@@ -200,8 +210,11 @@ func _start_next_wave() -> void:
 	for i in range(boss_count):
 		entries.push_front([true, false])
 	_spawn_queue.append_array(entries)
-	var window: float = (SPAWN_WINDOW_BASE + _current_wave * SPAWN_WINDOW_STEP) * pace
+	var window: float = WAVE_DURATION * pace * SPAWN_WINDOW_FRAC
 	_spawn_interval = window / maxf(1.0, float(count))
+	_wave_time_left = WAVE_DURATION * pace
+	_boss_alive = boss_count > 0
+	_wave_running = true
 	_spawn_accum = _spawn_interval * 4.0   # unos pocos de entrada
 	# += y no =: si quedara alguna cría suelta de la oleada anterior,
 	# no se pierde de la cuenta. Cuenta también los que están en cola.
@@ -217,10 +230,13 @@ var _spawn_accum: float = 0.0
 const SPAWNS_PER_FRAME := 3
 
 func _process(delta: float) -> void:
-	if _spawn_queue.is_empty() or get_tree().paused:
+	if get_tree().paused:
 		return
 	if _run_over:
 		_spawn_queue.clear()
+		return
+	_tick_wave(delta)
+	if _spawn_queue.is_empty():
 		return
 	# Si está en el tope de vivos no se acumula de más (saldrían de golpe).
 	_spawn_accum = minf(_spawn_accum + delta, _spawn_interval * 6.0 + delta)
@@ -236,6 +252,34 @@ func _process(delta: float) -> void:
 		_spawn_queue.pop_front()
 		_spawn_monster(entry[0], entry[1])
 		released += 1
+
+## Reloj de la oleada: al terminar su tiempo pasa a la siguiente aunque
+## queden monstruos vivos, salvo que el jefe siga en pie. Si no queda
+## nada vivo ni por salir, pasa antes.
+func _tick_wave(delta: float) -> void:
+	if not _wave_running:
+		return
+	_wave_time_left = maxf(0.0, _wave_time_left - delta)
+	_hud.set_wave_time(_wave_time_left, _boss_alive)
+	if _monsters_alive == 0 or (_wave_time_left <= 0.0 and not _boss_alive):
+		_end_wave()
+
+func _end_wave() -> void:
+	_wave_running = false
+	if _current_wave == _final_wave:
+		_finish_run(true)
+		return
+	# Los que no alcanzaron a salir se descartan (el jefe sale primero).
+	_monsters_alive = maxi(0, _monsters_alive - _spawn_queue.size())
+	_spawn_queue.clear()
+	_update_wave_hud()
+	Audio.play_sfx("wave_clear")
+	# Volver a track normal si veníamos de un boss (wave % 10 == 0)
+	if _current_wave % 10 == 0:
+		var next_track := "gameplay_intense" if _current_wave >= 5 else "gameplay_chill"
+		Audio.play_music(next_track, 1200)
+	_hud.show_wave_break(WAVE_BREAK_SEC)
+	get_tree().create_timer(WAVE_BREAK_SEC).timeout.connect(_start_next_wave)
 
 ## Anillo alrededor del player, pero reintentando si cae en agua o
 ## fuera del mapa — antes tiraba el dado una sola vez y podía
@@ -258,7 +302,7 @@ const WAVE_HP_STEP := 0.08      # oleada 20 ≈ x2.5 de vida
 ## 29-09, cuando la espada pasó a 9 y las armas a distancia bajaron de
 ## daño y de alcance (ya no limpian el mapa entero).
 const MONSTER_HP_MULT := 1.1
-const WAVE_POWER_STEP := 0.04   # oleada 20 ≈ x1.76 de daño
+const WAVE_POWER_STEP := 0.06   # oleada 20 ≈ x2.1 de daño
 ## Desafío (oleadas 21-30): cada oleada suma bastante más.
 const CHALLENGE_HP_STEP := 0.25     # oleada 30 ≈ x4.8 de vida
 const CHALLENGE_POWER_STEP := 0.08  # oleada 30 ≈ x2.6 de daño
@@ -302,17 +346,7 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 		m.coin_reward = 25 + tier * 15
 		_bosses_spawned += 1
 	else:
-		# Pool de spawn depende de la wave — waves altas traen bichos
-		# más grandes/duros (tier 2 y 3 sólo aparecen tarde).
-		var pools: Array = _map["pools"]
-		var pool: Array
-		if _current_wave >= WAVE_HIGH_START:
-			pool = pools[2]
-		elif _current_wave >= WAVE_MID_START:
-			pool = pools[1]
-		else:
-			pool = pools[0]
-		var kind_id: String = pool[randi() % pool.size()]
+		var kind_id: String = _pick_kind()
 		m.set_kind(kind_id)
 		m.ground_fire_attacks = GameState.selected_map == "desierto" \
 			and (kind_id.begins_with("imp") or kind_id.begins_with("beholder"))
@@ -334,6 +368,32 @@ func _spawn_monster(is_boss: bool, is_elite: bool = false) -> void:
 		m.hp_changed.connect(_hud.on_boss_hp_changed)
 		m.died.connect(_hud.hide_boss_bar)
 		m.died.connect(_player.shake.bind(8.0))
+		m.died.connect(func(): _boss_alive = false)
+
+## Monstruo común de esta oleada (ver POOL_WAVES y TIER_BIAS_START).
+func _pick_kind() -> String:
+	var pools: Array = _map["pools"]
+	var pos: float = clampf((_current_wave - 1) / POOL_WAVES, 0.0, pools.size() - 1.0)
+	var i: int = int(pos)
+	if i < pools.size() - 1 and randf() < pos - i:
+		i += 1
+	var pool: Array = pools[i]
+	var bias: float = maxf(0.0, (_current_wave - TIER_BIAS_START) * TIER_BIAS_STEP)
+	if bias <= 0.0:
+		return pool[randi() % pool.size()]
+	# Peso = nivel ^ bias: con bias 2, un nivel 3 sale 9 veces más que un 1.
+	var weights: Array = []
+	var total := 0.0
+	for k in pool:
+		var w: float = pow(float(MonsterScript.KIND_DATA[k].get("tier", 1)), bias)
+		weights.append(w)
+		total += w
+	var r := randf() * total
+	for j in range(pool.size()):
+		r -= weights[j]
+		if r <= 0.0:
+			return pool[j]
+	return pool[pool.size() - 1]
 
 ## Crías que aparecen a mitad de oleada (slimes partidos, ratas que
 ## invoca un jefe): cuentan para cerrar la oleada. Lo llama monster.gd.
@@ -345,27 +405,19 @@ func register_monster(m) -> void:
 	_update_wave_hud()
 
 func _on_monster_hit_player(damage: float) -> void:
+	# Tras ganar pueden quedar monstruos vivos (las oleadas terminan por
+	# tiempo): ya no pegan.
+	if _run_over:
+		return
 	_player.take_damage(damage)
 
 func _update_wave_hud() -> void:
-	_hud.set_wave(_current_wave, _monsters_alive, _final_wave)
+	_hud.set_wave(_current_wave, _final_wave)
 
 func _on_monster_died() -> void:
 	_monsters_alive = max(0, _monsters_alive - 1)
 	_player.on_monster_killed()
 	_update_wave_hud()
-	if _monsters_alive == 0 and not _in_break and not _run_over:
-		_in_break = true
-		if _current_wave == _final_wave:
-			_finish_run(true)
-			return
-		Audio.play_sfx("wave_clear")
-		# Volver a track normal si veníamos de un boss (wave % 10 == 0)
-		if _current_wave % 10 == 0:
-			var next_track := "gameplay_intense" if _current_wave >= 5 else "gameplay_chill"
-			Audio.play_music(next_track, 1200)
-		_hud.show_wave_break(WAVE_BREAK_SEC)
-		get_tree().create_timer(WAVE_BREAK_SEC).timeout.connect(_start_next_wave)
 
 func _on_player_leveled_up(_new_level: int) -> void:
 	# Durante la muerte (o ya terminada la partida) no se sube de nivel:
@@ -382,6 +434,8 @@ func _on_player_leveled_up(_new_level: int) -> void:
 	menu.show_for(_player)
 
 func _on_player_died() -> void:
+	if _run_over:
+		return
 	_player.play_death()
 	_play_death_screen()
 	_finish_run(false)
