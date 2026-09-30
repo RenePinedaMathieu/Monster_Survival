@@ -131,7 +131,10 @@ func _populate() -> void:
 				mud.set_script(MUD_SCRIPT)
 				mud.radius = randf_range(40.0, 70.0)
 				mud.position = _random_spot(160.0)
-				get_parent().add_child(mud)
+				# Hijo del mapa (después del suelo): se dibuja sobre el piso y
+				# bajo monstruos y héroe. Antes colgaba de main con z -1 y el
+				# suelo lo tapaba: frenaba sin que se viera el charco.
+				add_child(mud)
 		"sandstorm":
 			_start_storm_cycle()
 

@@ -12,7 +12,6 @@ func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 1   # el player
 	monitorable = false
-	z_index = -1
 	# La zona que frena es la elipse que se dibuja (ancha y aplastada),
 	# no un círculo: antes frenaba por arriba y por abajo del charco.
 	var shape := CollisionShape2D.new()

@@ -24,6 +24,8 @@ var _win_dist := 0.0
 var _win_expect := 0.0
 var _win_real_us := 0
 var _win_hits := {}
+var _win_mud := false
+var _win_storm := false
 var _last_ratio := 1.0
 var _cooldown := 0.0
 var _copied_t := 0.0
@@ -86,6 +88,8 @@ func _physics_process(delta: float) -> void:
 		return
 	for i in range(player.get_slide_collision_count()):
 		_win_hits[_collider_name(player.get_slide_collision(i))] = true
+	_win_mud = _win_mud or player._mud_zones > 0
+	_win_storm = _win_storm or player.in_sandstorm
 	_win_t += delta
 	_win_dist += step
 	_win_expect += player.move_speed * delta
@@ -104,6 +108,8 @@ func _reset_window() -> void:
 	_win_expect = 0.0
 	_win_real_us = 0
 	_win_hits.clear()
+	_win_mud = false
+	_win_storm = false
 
 func _collider_name(col: KinematicCollision2D) -> String:
 	var c = col.get_collider()
@@ -123,9 +129,9 @@ func _tile_under(pos: Vector2) -> String:
 
 func _add_event(pos: Vector2) -> void:
 	var causes: Array = []
-	if player._mud_zones > 0:
+	if _win_mud:
 		causes.append("barro")
-	if player.in_sandstorm:
+	if _win_storm:
 		causes.append("tormenta")
 	for k in _win_hits:
 		causes.append("choque " + k)
