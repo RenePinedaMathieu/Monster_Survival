@@ -7,6 +7,7 @@ extends Node2D
 ##   - Wire del daño monster→player y muerte del player
 
 const MONSTER_SCENE := preload("res://scenes/monster.tscn")
+const SPEED_DEBUG_SCRIPT := preload("res://scenes/speed_debug.gd")
 const LEVEL_UP_MENU_SCENE := preload("res://scenes/level_up_menu.tscn")
 const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
@@ -118,6 +119,13 @@ func _ready() -> void:
 	# (EDRIC, SIRA) le cambien la vida máxima.
 	_hud.on_hp_changed(_player.hp, _player.max_hp)
 	_hud.on_defense_changed(_player.defense, _player.max_defense)
+	# Detector de lentitud (F3): anota dónde y por qué el héroe camina
+	# más lento de lo que debería.
+	var speed_debug := CanvasLayer.new()
+	speed_debug.set_script(SPEED_DEBUG_SCRIPT)
+	speed_debug.player = _player
+	speed_debug.world = _world
+	add_child(speed_debug)
 	if GameState.has_modifier("meteoros"):
 		_player.apply_upgrade("meteors")
 	if GameState.has_modifier("cristal"):
