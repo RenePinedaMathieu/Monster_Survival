@@ -24,6 +24,12 @@ const Upgrades := preload("res://scenes/upgrades.gd")
 var _player: Node = null
 var _current_choices: Array = []
 
+## Medio segundo sin aceptar elecciones al abrir: el menú aparece en
+## medio de la pelea, y si justo estabas apretando un botón (o haciendo
+## clic) se elegía una carta sin llegar a leerla.
+const INPUT_GRACE := 0.45
+var _input_locked: bool = true
+
 var _reroll_button: Button
 
 func _ready() -> void:
@@ -134,13 +140,26 @@ func show_for(player: Node) -> void:
 	_fill_cards()
 	Audio.play_sfx("level_up")
 	get_tree().paused = true
+	_input_locked = true
+	# El timer corre aunque el juego esté pausado (process_always).
+	get_tree().create_timer(INPUT_GRACE, true).timeout.connect(_unlock_input)
+
+func _unlock_input() -> void:
+	if not is_inside_tree():
+		return
+	_input_locked = false
+	# Foco en la primera carta: con control/teclado es la única forma de
+	# empezar a elegir (el mouse no lo necesita, pero tampoco le molesta).
+	var cards := _cards()
+	if not cards.is_empty():
+		(cards[0] as Control).grab_focus()
 
 func _fill_cards() -> void:
 	var cards := _cards()
 	_current_choices = _random_choices(cards.size())
 	var left: int = _player.rerolls_left if _player != null and "rerolls_left" in _player else 0
 	_reroll_button.visible = left > 0
-	_reroll_button.text = "RELANZAR (%d)" % left
+	_reroll_button.text = tr("RELANZAR (%d)") % left
 	for i in range(cards.size()):
 		var u = _current_choices[i]
 		var text: Node = cards[i].get_node("Content/Text")
@@ -150,13 +169,15 @@ func _fill_cards() -> void:
 		icon.texture = load(u["icon"]) if u.has("icon") and ResourceLoader.exists(u["icon"]) else null
 
 func _on_reroll() -> void:
-	if _player == null or _player.rerolls_left <= 0:
+	if _input_locked or _player == null or _player.rerolls_left <= 0:
 		return
 	_player.rerolls_left -= 1
 	Audio.play_sfx("ui_click")
 	_fill_cards()
 
 func _pick(idx: int) -> void:
+	if _input_locked:
+		return
 	var u = _current_choices[idx]
 	if _player and _player.has_method("apply_upgrade"):
 		_player.apply_upgrade(u.id)

@@ -66,6 +66,21 @@ static func badge_box() -> StyleBoxTexture:
 	box.content_margin_bottom = 4.0
 	return box
 
+## Aro dorado que marca el control enfocado. Se dibuja ENCIMA del
+## estado actual (normal/hover), así que sólo tiene borde — sin esto,
+## navegando con teclado o control no había forma de ver qué botón
+## estaba seleccionado.
+const COLOR_FOCUS := Color("ffd873")
+static func focus_ring(expand: float = 3.0) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.draw_center = false
+	box.border_color = COLOR_FOCUS
+	box.set_border_width_all(3)
+	box.set_corner_radius_all(3)
+	box.set_expand_margin_all(expand)
+	box.anti_aliasing = false
+	return box
+
 ## Título que va adentro de la cabecera verde de una ventana.
 static func style_header_title(label: Label, font_size: int = 22) -> void:
 	style_light_label(label, font_size)
@@ -110,7 +125,7 @@ static func style_slider(slider: HSlider) -> void:
 	slider.add_theme_stylebox_override("grabber_area_highlight", fill)
 	slider.add_theme_icon_override("grabber", grabber)
 	slider.add_theme_icon_override("grabber_highlight", grabber)
-	slider.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	slider.add_theme_stylebox_override("focus", focus_ring())
 
 ## CheckButton con las casillas del pack: verde = activado.
 static func style_check(check: CheckButton, font_size: int = 16) -> void:
@@ -120,8 +135,9 @@ static func style_check(check: CheckButton, font_size: int = 16) -> void:
 		check.add_theme_icon_override(key, on)
 	for key in ["unchecked", "unchecked_mirrored", "unchecked_disabled", "unchecked_disabled_mirrored"]:
 		check.add_theme_icon_override(key, off)
-	for state in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
 		check.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	check.add_theme_stylebox_override("focus", focus_ring())
 	check.add_theme_font_size_override("font_size", font_size)
 	for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
 		check.add_theme_color_override(key, COLOR_INK)
@@ -158,9 +174,9 @@ static func style_button(button: Button, font_size: int = 16) -> void:
 	button.add_theme_stylebox_override("hover", _button_box("btn_hover.png"))
 	button.add_theme_stylebox_override("pressed", _button_box("btn_pressed.png"))
 	button.add_theme_stylebox_override("disabled", _button_box("btn_pressed.png", Color(0.62, 0.6, 0.56)))
-	# El focus se dibuja ENCIMA del estado actual — vacío para que no
-	# tape la textura (el hover ya marca dónde está el foco con mouse).
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	# Aro dorado sólo de borde (no tapa la textura) — con teclado o
+	# control es la única forma de ver qué botón está seleccionado.
+	button.add_theme_stylebox_override("focus", focus_ring())
 	_button_text(button, font_size)
 
 ## Pestaña: la seleccionada queda en verde claro "apretada".
@@ -169,7 +185,7 @@ static func style_tab(button: Button, selected: bool, font_size: int = 16) -> vo
 	button.add_theme_stylebox_override("normal", _button_box(normal))
 	button.add_theme_stylebox_override("hover", _button_box("btn_light.png" if selected else "btn_hover.png"))
 	button.add_theme_stylebox_override("pressed", _button_box("btn_light.png"))
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("focus", focus_ring())
 	_button_text(button, font_size)
 
 static func _button_text(button: Button, font_size: int) -> void:

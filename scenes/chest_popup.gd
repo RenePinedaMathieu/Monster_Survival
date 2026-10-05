@@ -49,7 +49,7 @@ func open(player) -> void:
 		_name.add_theme_color_override("font_color", COLOR_EVO)
 		_desc.text = e["desc"]
 		if GameState.discover_evolution(evo):
-			extra.append("¡Nueva evolución descubierta!")
+			extra.append(tr("¡Nueva evolución descubierta!"))
 		Audio.play_sfx("wave_clear")
 	else:
 		var pool: Array = []
@@ -72,7 +72,7 @@ func open(player) -> void:
 			player.apply_upgrade(id)
 	GameState.add_run_currency(CHEST_COINS)
 	player.flash(player.FLASH_GOLD)
-	extra.append("+%d monedas" % CHEST_COINS)
+	extra.append(tr("+%d monedas") % CHEST_COINS)
 	_extra.text = "\n".join(extra)
 
 func _close() -> void:

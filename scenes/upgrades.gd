@@ -197,34 +197,39 @@ static func is_eligible(player, id: String) -> bool:
 			return player.sword_attacks_per_cycle() < 3
 	return false
 
+## tr() para funciones static (title_for/desc_for ya devuelven el
+## texto traducido al idioma actual, ver locale/en.po).
+static func _t(text: String) -> String:
+	return String(TranslationServer.translate(text))
+
 ## Título con el nivel que VA A QUEDAR si se elige.
 static func title_for(player, id: String) -> String:
 	var c := card(id)
-	var title: String = c.get("title", id)
+	var title: String = _t(c.get("title", id))
 	if player == null:
 		return title
 	if PASSIVES.has(id) and PASSIVES[id] > 1:
-		return "%s  NV %d" % [title, player.passive_level(id) + 1]
+		return _t("%s  NV %d") % [title, player.passive_level(id) + 1]
 	var w := weapon_of_card(id)
 	if w != "" and id == WEAPONS[w]["level"] and player.weapon_level(w) > 0:
-		return "%s NV %d" % [title, player.weapon_level(w) + 1]
+		return _t("%s NV %d") % [title, player.weapon_level(w) + 1]
 	match id:
 		"ranged_count":
 			return "%s x%d" % [title, player.ranged_bonus_shots + 1]
 		"flying_swords_count":
-			return "%s x%d ATAQUES" % [title, player.sword_attacks_per_cycle() + 1]
+			return _t("%s x%d ATAQUES") % [title, player.sword_attacks_per_cycle() + 1]
 	return title
 
 ## Descripción + pista de evolución si ya la descubriste en otra run.
 static func desc_for(player, id: String) -> String:
-	var desc: String = card(id).get("desc", "")
+	var desc: String = _t(card(id).get("desc", ""))
 	for evo in EVOLUTIONS:
 		var e: Dictionary = EVOLUTIONS[evo]
 		if not GameState.is_evolution_discovered(evo):
 			continue
 		var w := weapon_of_card(id)
 		if (w != "" and e["weapon"] == w and id == WEAPONS[w]["unlock"]) or e["passive"] == id:
-			return desc + "\n• Evoluciona en " + e["name"]
+			return desc + _t("\n• Evoluciona en ") + _t(e["name"])
 	return desc
 
 ## Primera evolución disponible (arma al máximo + pasiva, sin evolucionar).

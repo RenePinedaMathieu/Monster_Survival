@@ -124,11 +124,11 @@ func _map_card(id: String) -> Button:
 	col.add_child(name_label)
 	var desc := Label.new()
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.text = data["desc"] if unlocked else "BLOQUEADO: " + GameState.unlock_hint_for_map(id)
+	desc.text = data["desc"] if unlocked else tr("BLOQUEADO: ") + GameState.unlock_hint_for_map(id)
 	RpgTheme.style_ink_label(desc, 13, not unlocked, unlocked)
 	col.add_child(desc)
 	var mult := Label.new()
-	mult.text = "Enemigos y monedas x%.2f" % data["mult"]
+	mult.text = tr("Enemigos y monedas x%.2f") % data["mult"]
 	RpgTheme.style_ink_label(mult, 12, true)
 	mult.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)
 	col.add_child(mult)
@@ -162,7 +162,7 @@ func _refresh() -> void:
 		var b: Button = _diff_buttons[id]
 		var data: Dictionary = GameState.DIFFICULTIES[id]
 		var unlocked: bool = GameState.is_difficulty_unlocked(id)
-		b.text = data["name"] if unlocked else data["name"] + " (bloq.)"
+		b.text = data["name"] if unlocked else data["name"] + tr(" (bloq.)")
 		RpgTheme.style_tab(b, id == GameState.selected_difficulty, 14)
 		b.disabled = not unlocked
 	var diff: Dictionary = GameState.difficulty_data()
@@ -175,8 +175,8 @@ func _refresh() -> void:
 			var need: String = GameState.DIFFICULTIES[id]["unlock"]
 			for a in GameState.ACHIEVEMENTS:
 				if a["id"] == need:
-					locked_diffs.append("%s: %s" % [GameState.DIFFICULTIES[id]["name"].capitalize(), a["desc"].to_lower()])
-	_info.text = "%s en %s — enemigos x%.2f · monedas x%.2f" % [map["name"], diff["name"].capitalize(), total, coins]
+					locked_diffs.append("%s: %s" % [tr(GameState.DIFFICULTIES[id]["name"]).capitalize(), tr(a["desc"]).to_lower()])
+	_info.text = tr("%s en %s — enemigos x%.2f · monedas x%.2f") % [tr(map["name"]), tr(diff["name"]).capitalize(), total, coins]
 	if not locked_diffs.is_empty():
 		_info.text += "\n" + " · ".join(locked_diffs)
 

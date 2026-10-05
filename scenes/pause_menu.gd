@@ -32,8 +32,7 @@ var _upgrade_titles: Dictionary = {}
 @onready var _powerups_back: Button = $Center/Panel/Margin/VBox/PowerupsView/BackButton
 
 @onready var _options_view: VBoxContainer = $Center/Panel/Margin/VBox/OptionsView
-@onready var _volume_slider: HSlider = $Center/Panel/Margin/VBox/OptionsView/VolumeRow/VolumeSlider
-@onready var _fullscreen_check: CheckButton = $Center/Panel/Margin/VBox/OptionsView/FullscreenRow/FullscreenCheck
+@onready var _options_controls = $Center/Panel/Margin/VBox/OptionsView/OptionsControls   # options_controls.gd
 @onready var _options_back: Button = $Center/Panel/Margin/VBox/OptionsView/BackButton
 
 @onready var _title: Label = $Center/Panel/Margin/VBox/Title
@@ -48,10 +47,6 @@ func _ready() -> void:
 
 	_panel.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(26.0, 22.0))
 	RpgTheme.style_header_title(_title, 24)
-	RpgTheme.style_ink_label($Center/Panel/Margin/VBox/OptionsView/VolumeRow/VolumeLabel, 16, true)
-	RpgTheme.style_ink_label($Center/Panel/Margin/VBox/OptionsView/FullscreenRow/FullscreenLabel, 16, true)
-	RpgTheme.style_slider(_volume_slider)
-	RpgTheme.style_check(_fullscreen_check)
 	for b in [_resume_button, _powerups_button, _options_button, _quit_button, _powerups_back, _options_back]:
 		RpgTheme.style_button(b, 18)
 		b.mouse_entered.connect(UITheme.pulse.bind(b, 1.05, 0.08))
@@ -63,12 +58,6 @@ func _ready() -> void:
 	_quit_button.pressed.connect(_on_quit)
 	_powerups_back.pressed.connect(_show_view.bind(_main_view))
 	_options_back.pressed.connect(_show_view.bind(_main_view))
-
-	var master_idx := AudioServer.get_bus_index("Master")
-	_volume_slider.value = db_to_linear(AudioServer.get_bus_volume_db(master_idx))
-	_volume_slider.value_changed.connect(_on_volume_changed)
-	_fullscreen_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 
 	_show_view(_main_view)
 	_resume_button.grab_focus()
@@ -84,8 +73,13 @@ func _apply_layout(_compact: bool) -> void:
 func setup(player: Node) -> void:
 	_player = player
 
+## ESC / B (ui_cancel) vuelve atrás o reanuda; START (pause) reanuda
+## directo desde cualquier vista.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("pause") and not event.is_action_pressed("ui_cancel"):
+		_on_resume()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel"):
 		if _main_view.visible:
 			_on_resume()
 		else:
@@ -93,11 +87,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _show_view(view: VBoxContainer) -> void:
+	var from_view: VBoxContainer = _options_view if _options_view.visible else (_powerups_view if _powerups_view.visible else null)
 	_main_view.visible = view == _main_view
 	_powerups_view.visible = view == _powerups_view
 	_options_view.visible = view == _options_view
 	if view == _powerups_view:
 		_build_powerups()
+	# El foco sigue a la vista visible (con control no hay mouse para
+	# hacer clic en la pestaña nueva).
+	if view == _options_view and _options_controls.first_control() != null:
+		_options_controls.first_control().grab_focus()
+	elif view == _powerups_view:
+		_powerups_back.grab_focus()
+	elif view == _main_view and is_node_ready():
+		(_options_button if from_view == _options_view else (_powerups_button if from_view == _powerups_view else _resume_button)).grab_focus()
 	_title.text = "PAUSA" if view == _main_view else ("POTENCIADORES" if view == _powerups_view else "OPCIONES")
 
 ## Arma la lista de cartas elegidas + un resumen de stats actuales,
@@ -118,29 +121,29 @@ func _build_powerups() -> void:
 		for id in _player.upgrade_log:
 			counts[id] = counts.get(id, 0) + 1
 		for id in counts:
-			var title: String = _upgrade_titles.get(id, id)
+			var title: String = tr(_upgrade_titles.get(id, id))
 			var count: int = counts[id]
 			_add_stat_line(title + (" x%d" % count if count > 1 else ""))
 
 	if not _player.evolutions.is_empty():
 		_add_section_label("EVOLUCIONES")
 		for evo in _player.evolutions:
-			_add_stat_line("• " + Upgrades.EVOLUTIONS[evo]["name"])
+			_add_stat_line("• " + tr(Upgrades.EVOLUTIONS[evo]["name"]))
 
 	_add_section_label("STATS ACTUALES")
-	_add_stat_line("Vida máxima: %d" % int(round(_player.max_hp)))
+	_add_stat_line(tr("Vida máxima: %d") % int(round(_player.max_hp)))
 	if _player.max_defense > 0.0:
-		_add_stat_line("Defensa máxima: %d" % int(round(_player.max_defense)))
-	_add_stat_line("Multiplicador de daño: x%.2f" % _player.damage_mult)
-	_add_stat_line("Velocidad de ataque: x%.2f" % _player.atk_speed_mult)
-	_add_stat_line("Velocidad de movimiento: %d" % int(round(_player.move_speed)))
+		_add_stat_line(tr("Defensa máxima: %d") % int(round(_player.max_defense)))
+	_add_stat_line(tr("Multiplicador de daño: x%.2f") % _player.damage_mult)
+	_add_stat_line(tr("Velocidad de ataque: x%.2f") % _player.atk_speed_mult)
+	_add_stat_line(tr("Velocidad de movimiento: %d") % int(round(_player.move_speed)))
 	if _player.hp_regen_per_sec > 0.0:
-		_add_stat_line("Regeneración: %.1f HP/s" % _player.hp_regen_per_sec)
-	_add_stat_line("Radio de imán: %d" % int(round(_player.magnet_radius)))
+		_add_stat_line(tr("Regeneración: %.1f HP/s") % _player.hp_regen_per_sec)
+	_add_stat_line(tr("Radio de imán: %d") % int(round(_player.magnet_radius)))
 	if _player.has_method("has_ranged_attack") and _player.has_ranged_attack() and _player.ranged_power_level > 0:
-		_add_stat_line("Disparo a distancia: nivel %d, x%d proyectiles" % [_player.ranged_power_level, _player.projectiles_per_shot + _player.ranged_bonus_shots])
+		_add_stat_line(tr("Disparo a distancia: nivel %d, x%d proyectiles") % [_player.ranged_power_level, _player.projectiles_per_shot + _player.ranged_bonus_shots])
 	if _player.has_method("has_flying_swords") and _player.has_flying_swords():
-		_add_stat_line("Espadas voladoras: nivel %d" % _player.sword_level())
+		_add_stat_line(tr("Espadas voladoras: nivel %d") % _player.sword_level())
 	if _player.has_method("has_meteors") and _player.has_meteors():
 		_add_stat_line("Lluvia de meteoros: activa")
 
@@ -169,10 +172,3 @@ func _on_quit() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MENU_SCENE)
 
-func _on_volume_changed(value: float) -> void:
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(value))
-
-func _on_fullscreen_toggled(pressed: bool) -> void:
-	DisplayServer.window_set_mode(
-		DisplayServer.WINDOW_MODE_FULLSCREEN if pressed else DisplayServer.WINDOW_MODE_WINDOWED
-	)

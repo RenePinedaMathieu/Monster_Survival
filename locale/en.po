@@ -1,0 +1,2174 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: One Last Hero\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: autoload/game_state.gd:107
+msgid "Donde empieza todo: ratas, imps y lizardmen."
+msgstr "Where it all begins: rats, imps and lizardmen."
+
+#: autoload/game_state.gd:107 autoload/game_state.gd:353
+msgid "Pradera"
+msgstr "Meadow"
+
+#: autoload/game_state.gd:117
+msgid "Lodo que te frena, slimes que se parten y fantasmas."
+msgstr "Mud that slows you down, splitting slimes and ghosts."
+
+#: autoload/game_state.gd:117 autoload/game_state.gd:353
+msgid "Pantano"
+msgstr "Swamp"
+
+#: autoload/game_state.gd:127 autoload/game_state.gd:353
+msgid "Desierto"
+msgstr "Desert"
+
+#: autoload/game_state.gd:127
+msgid "Una etapa hostil: tormentas de arena y enemigos que incendian el suelo."
+msgstr "A hostile land: sandstorms and enemies that set the ground on fire."
+
+#: autoload/game_state.gd:143
+msgid "NORMAL"
+msgstr "NORMAL"
+
+#: autoload/game_state.gd:144
+msgid "DIFÍCIL"
+msgstr "HARD"
+
+#: autoload/game_state.gd:145
+msgid "PESADILLA"
+msgstr "NIGHTMARE"
+
+#: autoload/game_state.gd:160
+msgid "ATAQUE"
+msgstr "ATTACK"
+
+#: autoload/game_state.gd:161
+msgid "DEFENSA"
+msgstr "DEFENSE"
+
+#: autoload/game_state.gd:162
+msgid "UTILIDAD"
+msgstr "UTILITY"
+
+#: autoload/game_state.gd:172
+msgid "Desbloquea la carta: meteoritos caen solos sobre los enemigos"
+msgstr "Unlocks the card: meteors rain down on enemies on their own"
+
+#: autoload/game_state.gd:176
+msgid "Desbloquea la carta: 5 espadas te escoltan y atacan solas"
+msgstr "Unlocks the card: 5 swords escort you and strike on their own"
+
+#: autoload/game_state.gd:180
+msgid "Desbloquea la carta: un aura que quema a los enemigos cercanos"
+msgstr "Unlocks the card: an aura that burns nearby enemies"
+
+#: autoload/game_state.gd:184
+msgid "Desbloquea la carta: hachas que van y vuelven atravesando todo"
+msgstr "Unlocks the card: axes that fly out and back, piercing everything"
+
+#: autoload/game_state.gd:188
+msgid "Desbloquea la carta: un rayo que salta entre enemigos"
+msgstr "Unlocks the card: lightning that jumps between enemies"
+
+#: autoload/game_state.gd:198
+msgid "Le tira huevos al enemigo más cercano"
+msgstr "Throws eggs at the nearest enemy"
+
+#: autoload/game_state.gd:199
+msgid "Gallo"
+msgstr "Rooster"
+
+#: autoload/game_state.gd:199
+msgid "Pollito"
+msgstr "Chick"
+
+#: autoload/game_state.gd:200
+msgid "Te junta la experiencia de alrededor"
+msgstr "Gathers nearby experience for you"
+
+#: autoload/game_state.gd:201
+msgid "Conejito"
+msgstr "Bunny"
+
+#: autoload/game_state.gd:201
+msgid "Conejo"
+msgstr "Rabbit"
+
+#: autoload/game_state.gd:202
+msgid "Desentierra monedas durante la partida"
+msgstr "Digs up coins during the run"
+
+#: autoload/game_state.gd:203
+msgid "Chanchito"
+msgstr "Piglet"
+
+#: autoload/game_state.gd:204
+msgid "Te cuida: embiste a los que se te acercan"
+msgstr "Guards you: rams anyone who gets close"
+
+#: autoload/game_state.gd:205
+msgid "Cabrito"
+msgstr "Kid Goat"
+
+#: autoload/game_state.gd:206
+msgid "Grazna y frena a los enemigos cercanos"
+msgstr "Honks and slows nearby enemies"
+
+#: autoload/game_state.gd:207
+msgid "Ansarino"
+msgstr "Gosling"
+
+#: autoload/game_state.gd:208
+msgid "Escudo de lana: te da defensa que se regenera"
+msgstr "Wool shield: grants regenerating defense"
+
+#: autoload/game_state.gd:209
+msgid "Cordero"
+msgstr "Lamb"
+
+#: autoload/game_state.gd:209
+msgid "Oveja"
+msgstr "Sheep"
+
+#: autoload/game_state.gd:210
+msgid "Cada tanto deja comida que te cura"
+msgstr "Drops healing food every so often"
+
+#: autoload/game_state.gd:211
+msgid "Pavo"
+msgstr "Turkey"
+
+#: autoload/game_state.gd:212
+msgid "Corres más rápido y patea a los que se acercan"
+msgstr "You run faster and it kicks anyone who gets close"
+
+#: autoload/game_state.gd:213
+msgid "Potrillo"
+msgstr "Foal"
+
+#: autoload/game_state.gd:214
+msgid "Embiste al enemigo más cercano y lo manda a volar"
+msgstr "Charges the nearest enemy and sends it flying"
+
+#: autoload/game_state.gd:215
+msgid "Ternero"
+msgstr "Calf"
+
+#: autoload/game_state.gd:246
+msgid "Derrota 100 enemigos"
+msgstr "Defeat 100 enemies"
+
+#: autoload/game_state.gd:246
+msgid "Primera sangre"
+msgstr "First Blood"
+
+#: autoload/game_state.gd:247
+msgid "Llega a la oleada 10"
+msgstr "Reach wave 10"
+
+#: autoload/game_state.gd:247
+msgid "Superviviente"
+msgstr "Survivor"
+
+#: autoload/game_state.gd:248
+msgid "Derrota a un jefe"
+msgstr "Defeat a boss"
+
+#: autoload/game_state.gd:248
+msgid "Matagigantes"
+msgstr "Giant Slayer"
+
+#: autoload/game_state.gd:249
+msgid "Consigue tu primera evolución"
+msgstr "Get your first evolution"
+
+#: autoload/game_state.gd:249
+msgid "Evolución"
+msgstr "Evolution"
+
+#: autoload/game_state.gd:250
+msgid "Arsenal"
+msgstr "Arsenal"
+
+#: autoload/game_state.gd:250
+msgid "Ten 4 armas a la vez"
+msgstr "Have 4 weapons at once"
+
+#: autoload/game_state.gd:251
+msgid "Gana una partida"
+msgstr "Win a run"
+
+#: autoload/game_state.gd:251
+msgid "Héroe"
+msgstr "Hero"
+
+#: autoload/game_state.gd:252
+msgid "Derrota 1.000 enemigos"
+msgstr "Defeat 1,000 enemies"
+
+#: autoload/game_state.gd:252
+msgid "Exterminador"
+msgstr "Exterminator"
+
+#: autoload/game_state.gd:253
+msgid "Derrota 20 élites"
+msgstr "Defeat 20 elites"
+
+#: autoload/game_state.gd:253
+msgid "Rompe-élites"
+msgstr "Elite Breaker"
+
+#: autoload/game_state.gd:254
+msgid "Abre 25 cofres"
+msgstr "Open 25 chests"
+
+#: autoload/game_state.gd:254
+msgid "Cazatesoros"
+msgstr "Treasure Hunter"
+
+#: autoload/game_state.gd:255
+msgid "Llega a nivel 20 en una partida"
+msgstr "Reach level 20 in a single run"
+
+#: autoload/game_state.gd:255
+msgid "Veterano"
+msgstr "Veteran"
+
+#: autoload/game_state.gd:256
+msgid "Intocable"
+msgstr "Untouchable"
+
+#: autoload/game_state.gd:256
+msgid "Llega a la oleada 5 sin recibir daño"
+msgstr "Reach wave 5 without taking damage"
+
+#: autoload/game_state.gd:257
+msgid "Cazajefes"
+msgstr "Boss Hunter"
+
+#: autoload/game_state.gd:257
+msgid "Derrota 10 jefes"
+msgstr "Defeat 10 bosses"
+
+#: autoload/game_state.gd:258
+msgid "Gana en el Pantano"
+msgstr "Win in the Swamp"
+
+#: autoload/game_state.gd:258
+msgid "Señor del pantano"
+msgstr "Lord of the Swamp"
+
+#: autoload/game_state.gd:259
+msgid "Gana en el Desierto"
+msgstr "Win in the Desert"
+
+#: autoload/game_state.gd:259
+msgid "Rey del desierto"
+msgstr "King of the Desert"
+
+#: autoload/game_state.gd:260
+msgid "Gana en dificultad Difícil"
+msgstr "Win on Hard difficulty"
+
+#: autoload/game_state.gd:260
+msgid "Pesadilla"
+msgstr "Nightmare"
+
+#: autoload/game_state.gd:261
+msgid "Más allá"
+msgstr "Beyond"
+
+#: autoload/game_state.gd:261
+msgid "Supera la oleada 30 en cualquier mapa"
+msgstr "Clear wave 30 on any map"
+
+#: autoload/game_state.gd:262
+msgid "Coleccionista"
+msgstr "Collector"
+
+#: autoload/game_state.gd:262
+msgid "Descubre las 7 evoluciones"
+msgstr "Discover all 7 evolutions"
+
+#: autoload/game_state.gd:263
+msgid "Gana con 4 héroes distintos"
+msgstr "Win with 4 different heroes"
+
+#: autoload/game_state.gd:263
+msgid "Todos para uno"
+msgstr "All for One"
+
+#: autoload/game_state.gd:264
+msgid "Granjero"
+msgstr "Farmer"
+
+#: autoload/game_state.gd:264
+msgid "Sube un acompañante a nivel 5"
+msgstr "Level a companion up to 5"
+
+#: autoload/game_state.gd:265
+msgid "Derrota 10.000 enemigos"
+msgstr "Defeat 10,000 enemies"
+
+#: autoload/game_state.gd:265
+msgid "Leyenda"
+msgstr "Legend"
+
+#: autoload/game_state.gd:334
+msgid "Nuevo héroe: "
+msgstr "New hero:"
+
+#: autoload/game_state.gd:336
+msgid "Nuevo mapa: "
+msgstr "New map:"
+
+#: autoload/game_state.gd:343
+msgid "Nuevas cartas: "
+msgstr "New cards:"
+
+#: autoload/game_state.gd:365
+msgid "Supera el desafío "
+msgstr "Complete the challenge"
+
+#: autoload/game_state.gd:401
+msgid "Cada oleada trae 2 élites (y 2 cofres)"
+msgstr "Every wave brings 2 elites (and 2 chests)"
+
+#: autoload/game_state.gd:401 autoload/game_state.gd:447
+msgid "Noche de élites"
+msgstr "Elite Night"
+
+#: autoload/game_state.gd:402 autoload/game_state.gd:443
+msgid "Frenesí"
+msgstr "Frenzy"
+
+#: autoload/game_state.gd:402
+msgid "Los monstruos son 30% más rápidos"
+msgstr "Monsters are 30% faster"
+
+#: autoload/game_state.gd:403
+msgid "Arrancas con la lluvia de meteoros"
+msgstr "You start with Meteor Shower"
+
+#: autoload/game_state.gd:403 autoload/game_state.gd:449
+msgid "Lluvia de fuego"
+msgstr "Firestorm"
+
+#: autoload/game_state.gd:404 autoload/game_state.gd:441
+msgid "Cañón de cristal"
+msgstr "Glass Cannon"
+
+#: autoload/game_state.gd:404
+msgid "Mitad de vida, 50% más de daño"
+msgstr "Half health, 50% more damage"
+
+#: autoload/game_state.gd:405
+msgid "50% más monstruos por oleada"
+msgstr "50% more monsters per wave"
+
+#: autoload/game_state.gd:405 autoload/game_state.gd:445
+msgid "La horda"
+msgstr "The Horde"
+
+#: autoload/game_state.gd:451
+msgid "El último héroe"
+msgstr "The Last Hero"
+
+#: autoload/game_state.gd:497
+msgid "Héroe%04d"
+msgstr ""
+
+#: autoload/game_state.gd:537
+msgid "Oleada %d × 1.000"
+msgstr "Wave %d × 1,000"
+
+#: autoload/game_state.gd:538
+msgid "Bajas %d × 2"
+msgstr "Kills %d × 2"
+
+#: autoload/game_state.gd:541
+msgid "Victoria"
+msgstr "Victory"
+
+#: autoload/game_state.gd:542
+msgid "Rapidez (%d:%02d)"
+msgstr "Speed (%d:%02d)"
+
+#: autoload/game_state.gd:544
+msgid "Vida restante %d%%"
+msgstr "Health left %d%%"
+
+#: autoload/game_state.gd:61
+msgid "+5% daño"
+msgstr "+5% damage"
+
+#: autoload/game_state.gd:61
+msgid "Fuerza"
+msgstr "Strength"
+
+#: autoload/game_state.gd:63
+msgid "+4% velocidad de ataque"
+msgstr "+4% attack speed"
+
+#: autoload/game_state.gd:63
+msgid "Celeridad"
+msgstr "Swiftness"
+
+#: autoload/game_state.gd:65
+msgid "+3% de golpe crítico (doble daño)"
+msgstr "+3% critical hit chance (double damage)"
+
+#: autoload/game_state.gd:65
+msgid "Crítico"
+msgstr "Critical"
+
+#: autoload/game_state.gd:67
+msgid "+10% daño a jefes y élites"
+msgstr "+10% damage to bosses and elites"
+
+#: autoload/game_state.gd:67
+msgid "Cazador"
+msgstr "Hunter"
+
+#: autoload/game_state.gd:70
+msgid "+15 vida máxima"
+msgstr "+15 max health"
+
+#: autoload/game_state.gd:70
+msgid "Vitalidad"
+msgstr "Vitality"
+
+#: autoload/game_state.gd:72
+msgid "+8 de defensa (absorbe daño antes que la vida)"
+msgstr "+8 defense (absorbs damage before health)"
+
+#: autoload/game_state.gd:72
+msgid "Armadura"
+msgstr "Armor"
+
+#: autoload/game_state.gd:74
+msgid "+0.3 vida por segundo"
+msgstr "+0.3 health per second"
+
+#: autoload/game_state.gd:74
+msgid "Vigor"
+msgstr "Vigor"
+
+#: autoload/game_state.gd:76
+msgid "Revives una vez por partida con media vida"
+msgstr "Revive once per run with half health"
+
+#: autoload/game_state.gd:76
+msgid "Segunda vida"
+msgstr "Second Life"
+
+#: autoload/game_state.gd:79
+msgid "+10% radio para juntar experiencia"
+msgstr "+10% experience pickup radius"
+
+#: autoload/game_state.gd:79
+msgid "Imán"
+msgstr "Magnet"
+
+#: autoload/game_state.gd:81
+msgid "+10% monedas"
+msgstr "+10% coins"
+
+#: autoload/game_state.gd:81
+msgid "Codicia"
+msgstr "Greed"
+
+#: autoload/game_state.gd:83
+msgid "+8% experiencia"
+msgstr "+8% experience"
+
+#: autoload/game_state.gd:83
+msgid "Sabiduría"
+msgstr "Wisdom"
+
+#: autoload/game_state.gd:85
+msgid "+1 relanzamiento de cartas por partida"
+msgstr "+1 card reroll per run"
+
+#: autoload/game_state.gd:85
+msgid "Relanzar"
+msgstr "Reroll"
+
+#: autoload/game_state.gd:90
+msgid "Tus golpes envenenan: 10/15/20% del golpe por segundo durante 3 s"
+msgstr "Your hits poison: 10/15/20% of the hit per second for 3 s"
+
+#: autoload/game_state.gd:92
+msgid "Espejismo"
+msgstr "Mirage"
+
+#: autoload/game_state.gd:93
+msgid "6/12/18% de probabilidad de esquivar un golpe"
+msgstr "6/12/18% chance to dodge a hit"
+
+#: autoload/game_state.gd:95
+msgid "Compañerismo"
+msgstr "Fellowship"
+
+#: autoload/game_state.gd:96
+msgid "Nivel 1: llevas 2 acompañantes. Niveles 2 y 3: +25% de fuerza a sus habilidades cada uno"
+msgstr "Level 1: bring 2 companions. Levels 2 and 3: +25% companion ability power each"
+
+#: autoload/game_state.gd:98
+msgid "Suerte"
+msgstr "Luck"
+
+#: autoload/game_state.gd:98
+msgid "Una 4ª carta en cada subida de nivel"
+msgstr "A 4th card on every level-up"
+
+#: autoload/settings.gd:25
+msgid "ENGLISH"
+msgstr ""
+
+#: autoload/settings.gd:25
+msgid "ESPAÑOL"
+msgstr ""
+
+#: scenes/achievements_menu.gd:125
+msgid "Pollo (acompañante)"
+msgstr "Chicken (companion)"
+
+#: scenes/achievements_menu.gd:131
+msgid "%s al máximo + %s"
+msgstr "%s maxed + %s"
+
+#: scenes/achievements_menu.gd:136
+msgid "%s al máximo + ???"
+msgstr "%s maxed + ???"
+
+#: scenes/achievements_menu.gd:148
+msgid "COMPLETADO"
+msgstr "COMPLETED"
+
+#: scenes/achievements_menu.gd:58
+msgid "%d / %d · %d%% completado"
+msgstr "%d / %d · %d%% complete"
+
+#: scenes/achievements_menu.gd:62
+msgid "EVOLUCIONES  %d / %d"
+msgstr "EVOLUTIONS  %d / %d"
+
+#: scenes/achievements_menu.gd:71 scenes/achievements_menu.tscn:55 scenes/main_menu.tscn:69
+msgid "LOGROS"
+msgstr "ACHIEVEMENTS"
+
+#: scenes/achievements_menu.tscn:101 scenes/character_confirm.tscn:103 scenes/character_select.tscn:424
+msgid "VOLVER"
+msgstr "BACK"
+
+#: scenes/character_confirm.gd:58
+msgid "HABILIDAD: %s — %s"
+msgstr "SKILL: %s — %s"
+
+#: scenes/character_confirm.tscn:98
+msgid "CONFIRMAR"
+msgstr "CONFIRM"
+
+#: scenes/character_select.gd:102
+msgid "CUERPO A CUERPO"
+msgstr "MELEE"
+
+#: scenes/character_select.gd:103
+msgid "Espadachín ágil. Pega fuerte de cerca; puede sumar disparos a distancia con la carta correcta."
+msgstr "Agile swordsman. Hits hard up close; can add ranged shots with the right card."
+
+#: scenes/character_select.gd:108 autoload/game_state.gd:349
+msgid "KAY"
+msgstr ""
+
+#: scenes/character_select.gd:112 scenes/character_select.gd:122
+msgid "A DISTANCIA"
+msgstr "RANGED"
+
+#: scenes/character_select.gd:113
+msgid "Aventurero equilibrado. Dispara automáticamente a lo que se ve en pantalla — ideal para empezar."
+msgstr "Balanced adventurer. Shoots automatically at whatever is on screen — ideal for beginners."
+
+#: scenes/character_select.gd:118 autoload/game_state.gd:349
+msgid "LINA"
+msgstr ""
+
+#: scenes/character_select.gd:123
+msgid "Tan letal como KAY pero más ligera de pies — prioriza esquivar por sobre plantarse a pelear."
+msgstr "As deadly as KAY but lighter on her feet — favors dodging over standing her ground."
+
+#: scenes/character_select.gd:128 autoload/game_state.gd:350
+msgid "EDRIC"
+msgstr ""
+
+#: scenes/character_select.gd:132
+msgid "CUERPO A CUERPO · RESISTENTE"
+msgstr "MELEE · TOUGH"
+
+#: scenes/character_select.gd:133
+msgid "Escudero curtido: más vida que nadie y un tajo amplio. Su Remolino limpia todo lo que lo rodea."
+msgstr "Seasoned squire: more health than anyone and a wide slash. His Whirlwind clears everything around him."
+
+#: scenes/character_select.gd:138 autoload/game_state.gd:350
+msgid "SIRA"
+msgstr ""
+
+#: scenes/character_select.gd:143
+msgid "CUERPO A CUERPO · VELOZ"
+msgstr "MELEE · FAST"
+
+#: scenes/character_select.gd:144
+msgid "Cazadora rápida y frágil. Apuñala sin parar y llama a su lobo para cazar en manada."
+msgstr "Fast, fragile huntress. Stabs nonstop and calls her wolf to hunt as a pack."
+
+#: scenes/character_select.gd:288
+msgid "Toca un héroe para elegirlo"
+msgstr "Tap a hero to choose"
+
+#: scenes/character_select.gd:289
+msgid "Flechas / stick para elegir  ·  Enter / A para confirmar  ·  Esc / B para volver"
+msgstr "Arrows / stick to choose  ·  Enter / A to confirm  ·  Esc / B to go back"
+
+#: scenes/character_select.gd:326
+msgid "BLOQUEADO\n"
+msgstr "LOCKED\n"
+
+#: scenes/character_select.gd:35 autoload/game_state.gd:350
+msgid "GAROTH"
+msgstr ""
+
+#: scenes/character_select.gd:45
+msgid "CUERPO A CUERPO · EVOLUTIVO"
+msgstr "MELEE · EVOLVING"
+
+#: scenes/character_select.gd:46
+msgid "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final."
+msgstr "Starts weak, but his look and his power evolve every level — the hardest at first, the most rewarding at the end."
+
+#: scenes/character_select.gd:47 scenes/character_select.gd:62 scenes/character_select.gd:74
+msgid "Alcance"
+msgstr "Range"
+
+#: scenes/character_select.gd:47 scenes/character_select.gd:62 scenes/character_select.gd:74
+msgid "Daño"
+msgstr "Damage"
+
+#: scenes/character_select.gd:47 scenes/character_select.gd:62 scenes/character_select.gd:74
+msgid "Dificultad"
+msgstr "Difficulty"
+
+#: scenes/character_select.gd:47 scenes/character_select.gd:62 scenes/character_select.gd:74
+msgid "Velocidad"
+msgstr "Speed"
+
+#: scenes/character_select.gd:54 autoload/game_state.gd:351
+msgid "TOREN"
+msgstr ""
+
+#: scenes/character_select.gd:60
+msgid "CUERPO A CUERPO · EVOLUTIVO · RESISTENTE"
+msgstr "MELEE · EVOLVING · TOUGH"
+
+#: scenes/character_select.gd:61
+msgid "Rubio de ojos verdes. Crece como GAROTH, con más vida, y su Remolino barre a todos los que lo rodean."
+msgstr "Blond with green eyes. Grows like GAROTH but with more health, and his Whirlwind sweeps everyone around him."
+
+#: scenes/character_select.gd:66 autoload/game_state.gd:351
+msgid "BRAN"
+msgstr ""
+
+#: scenes/character_select.gd:72
+msgid "CUERPO A CUERPO · EVOLUTIVO · VELOZ"
+msgstr "MELEE · EVOLVING · FAST"
+
+#: scenes/character_select.gd:73
+msgid "Colorín de ojos miel. Más rápido y con menos vida; su Voltereta lo saca de cualquier encierro."
+msgstr "Red-haired with honey eyes. Faster but frailer; his Roll gets him out of any trap."
+
+#: scenes/character_select.gd:78 autoload/game_state.gd:351
+msgid "VAEL"
+msgstr ""
+
+#: scenes/character_select.gd:84
+msgid "CUERPO A CUERPO · EVOLUTIVO · RÁFAGA"
+msgstr "MELEE · EVOLVING · BURST"
+
+#: scenes/character_select.gd:85
+msgid "Pelo blanco y ojos violeta. Su Ráfaga lanza 12 proyectiles en círculo y limpia el espacio a su alrededor."
+msgstr "White hair and violet eyes. His Burst fires 12 projectiles in a circle and clears the space around him."
+
+#: scenes/character_select.gd:98 autoload/game_state.gd:349
+msgid "AXEL"
+msgstr ""
+
+#: scenes/character_select.tscn:415
+msgid "Flechas para elegir  ·  Enter / click para confirmar  ·  Esc para volver"
+msgstr "Arrows to choose  ·  Enter / click to confirm  ·  Esc to go back"
+
+#: scenes/character_select.tscn:433 scenes/main_menu.tscn:57 scenes/shop_menu.tscn:55
+msgid "TIENDA"
+msgstr "SHOP"
+
+#: scenes/character_select.tscn:47 scenes/tutorial_overlay.gd:36
+msgid "ELIGE TU HÉROE"
+msgstr "CHOOSE YOUR HERO"
+
+#: scenes/chest_popup.gd:46
+msgid "¡EVOLUCIÓN!"
+msgstr "EVOLUTION!"
+
+#: scenes/chest_popup.gd:52
+msgid "¡Nueva evolución descubierta!"
+msgstr "New evolution discovered!"
+
+#: scenes/chest_popup.gd:59 scenes/chest_popup.tscn:29
+msgid "¡COFRE!"
+msgstr "CHEST!"
+
+#: scenes/chest_popup.gd:63
+msgid "Tesoro"
+msgstr "Treasure"
+
+#: scenes/chest_popup.gd:64
+msgid "Ya tienes todo al máximo."
+msgstr "Everything is already maxed out."
+
+#: scenes/chest_popup.gd:75 autoload/game_state.gd:345
+msgid "+%d monedas"
+msgstr "+%d coins"
+
+#: scenes/chest_popup.tscn:59
+msgid "¡GENIAL!"
+msgstr "AWESOME!"
+
+#: scenes/companion.gd:142
+msgid "%s de %d de daño cada %.1f s"
+msgstr "%s for %d damage every %.1f s"
+
+#: scenes/companion.gd:142
+msgid "Dos huevos"
+msgstr "Two eggs"
+
+#: scenes/companion.gd:142
+msgid "Un huevo"
+msgstr "One egg"
+
+#: scenes/companion.gd:144
+msgid "Junta %d orbes de XP cada %.1f s"
+msgstr "Gathers %d XP orbs every %.1f s"
+
+#: scenes/companion.gd:146
+msgid "+%d monedas cada %d s"
+msgstr "+%d coins every %d s"
+
+#: scenes/companion.gd:148
+msgid "Cabezazo de %d de daño cada %.1f s"
+msgstr "%d damage headbutt every %.1f s"
+
+#: scenes/companion.gd:150
+msgid "Frena y pega %d cada %.1f s"
+msgstr "Slows and hits for %d every %.1f s"
+
+#: scenes/companion.gd:152
+msgid "+%d de defensa que se regenera"
+msgstr "+%d regenerating defense"
+
+#: scenes/companion.gd:154
+msgid "Comida que cura %d%% cada %d s"
+msgstr "Food that heals %d%% every %d s"
+
+#: scenes/companion.gd:156
+msgid "+%d%% velocidad, patadas de %d"
+msgstr "+%d%% speed, %d damage kicks"
+
+#: scenes/companion.gd:158
+msgid "Embestida de %d de daño cada %.1f s"
+msgstr "%d damage charge every %.1f s"
+
+#: scenes/credits_menu.gd:131
+msgid "Un juego de"
+msgstr "A game by"
+
+#: scenes/credits_menu.gd:134
+msgid "Made with Godot Engine — godotengine.org\n\n"
+msgstr ""
+
+#: scenes/credits_menu.gd:134
+msgid "Motor"
+msgstr "Engine"
+
+#: scenes/credits_menu.gd:135
+msgid "Licencias de terceros"
+msgstr "Third-party licenses"
+
+#: scenes/credits_menu.gd:29
+msgid "Comfortable Mystery 3"
+msgstr ""
+
+#: scenes/credits_menu.gd:30
+msgid "Sneaky Adventure"
+msgstr ""
+
+#: scenes/credits_menu.gd:31
+msgid "Kick Shock"
+msgstr ""
+
+#: scenes/credits_menu.gd:32
+msgid "Voxel Revolution"
+msgstr ""
+
+#: scenes/credits_menu.gd:38 scenes/options_controls.gd:20
+msgid "Música"
+msgstr "Music"
+
+#: scenes/credits_menu.gd:39
+msgid "Efectos de sonido"
+msgstr "Sound effects"
+
+#: scenes/credits_menu.gd:40
+msgid "Kenney — kenney.nl (CC0)"
+msgstr ""
+
+#: scenes/credits_menu.gd:41
+msgid "Interface Sounds · Impact Sounds · RPG Audio"
+msgstr ""
+
+#: scenes/credits_menu.gd:43
+msgid "Gráficos"
+msgstr "Graphics"
+
+#: scenes/credits_menu.gd:44
+msgid "Overworld Tileset: Grass Biome — Beast Pixels (CC0)"
+msgstr ""
+
+#: scenes/credits_menu.gd:45
+msgid "Free Basic Pixel Art UI for RPG — CraftPix.net"
+msgstr ""
+
+#: scenes/credits_menu.gd:80 scenes/main_menu.tscn:130
+msgid "CRÉDITOS"
+msgstr "CREDITS"
+
+#: scenes/daily_menu.gd:100 scenes/leaderboard_menu.tscn:115
+msgid "Tu nombre:"
+msgstr "Your name:"
+
+#: scenes/daily_menu.gd:118
+msgid "RANKING DE HOY"
+msgstr "TODAY'S RANKING"
+
+#: scenes/daily_menu.gd:119 scenes/daily_top_panel.gd:40 scenes/leaderboard_menu.gd:182
+msgid "Cargando..."
+msgstr "Loading..."
+
+#: scenes/daily_menu.gd:131 scenes/leaderboard_menu.gd:148
+msgid "El ranking todavía no está activado."
+msgstr "The ranking isn't available yet."
+
+#: scenes/daily_menu.gd:132 scenes/leaderboard_menu.gd:149
+msgid "No se pudo cargar el ranking. Revisa tu conexión."
+msgstr "Couldn't load the ranking. Check your connection."
+
+#: scenes/daily_menu.gd:136
+msgid "Nadie jugó hoy todavía: ¡sé el primero!"
+msgstr "Nobody has played today yet: be the first!"
+
+#: scenes/daily_menu.gd:147
+msgid "%d. %s — %d  (oleada %d%s)"
+msgstr "%d. %s — %d  (wave %d%s)"
+
+#: scenes/daily_menu.gd:148
+msgid ", ganó"
+msgstr ", won"
+
+#: scenes/daily_menu.gd:37
+msgid "RETO DIARIO · "
+msgstr "DAILY CHALLENGE ·"
+
+#: scenes/daily_menu.gd:87 scenes/trials_menu.gd:167
+msgid "HÉROE: "
+msgstr "HERO:"
+
+#: scenes/daily_menu.gd:88
+msgid "MAPA: "
+msgstr "MAP:"
+
+#: scenes/daily_menu.gd:89
+msgid "%d OLEADAS"
+msgstr "%d WAVES"
+
+#: scenes/daily_menu.gd:93
+msgid "Tu mejor puntaje de hoy: %s"
+msgstr "Your best score today: %s"
+
+#: scenes/daily_menu.gd:94
+msgid "Todos juegan lo mismo hoy. Mañana cambia."
+msgstr "Everyone plays the same run today. It changes tomorrow."
+
+#: scenes/daily_menu.gd:95
+msgid "Puntaje: 1.000 por oleada y 2 por baja. Si ganas: +%s, más un bono por rapidez y otro por la vida que te quede."
+msgstr "Score: 1,000 per wave and 2 per kill. If you win: +%s, plus a speed bonus and a bonus for your remaining health."
+
+#: scenes/daily_menu.tscn:52 scenes/main_menu.tscn:87
+msgid "RETO DIARIO"
+msgstr "DAILY CHALLENGE"
+
+#: scenes/daily_menu.tscn:81
+msgid "¡JUGAR EL RETO!"
+msgstr "PLAY THE CHALLENGE!"
+
+#: scenes/daily_top_panel.gd:24
+msgid "Ver el ranking completo"
+msgstr "See the full ranking"
+
+#: scenes/daily_top_panel.gd:29
+msgid "TOP DE HOY"
+msgstr "TODAY'S TOP"
+
+#: scenes/daily_top_panel.gd:30
+msgid "Reto diario · "
+msgstr "Daily challenge ·"
+
+#: scenes/daily_top_panel.gd:37
+msgid "Ver ranking completo"
+msgstr "See full ranking"
+
+#: scenes/daily_top_panel.gd:81
+msgid "Nadie jugó hoy.\n¡Sé el primero!"
+msgstr "Nobody has played today.\nBe the first!"
+
+#: scenes/hud.gd:154
+msgid "¡LOGRO! "
+msgstr "ACHIEVEMENT!"
+
+#: scenes/hud.gd:234
+msgid "%s (Espacio / X)\n%s"
+msgstr "%s (Space / X)\n%s"
+
+#: scenes/hud.gd:257
+msgid "NV %d"
+msgstr "LV %d"
+
+#: scenes/hud.gd:374
+msgid "EVO"
+msgstr "EVO"
+
+#: scenes/hud.gd:413
+msgid "OLEADA %d"
+msgstr "WAVE %d"
+
+#: scenes/hud.gd:413
+msgid "OLEADA %d / %d"
+msgstr "WAVE %d / %d"
+
+#: scenes/hud.gd:419
+msgid "Termina en %d:%02d"
+msgstr "Ends in %d:%02d"
+
+#: scenes/hud.gd:419
+msgid "¡Derrota al jefe!"
+msgstr "Defeat the boss!"
+
+#: scenes/hud.gd:424
+msgid "OLEADA %d SUPERADA"
+msgstr "WAVE %d CLEARED"
+
+#: scenes/hud.tscn:100
+msgid "Termina en 1:00"
+msgstr "Ends in 1:00"
+
+#: scenes/hud.tscn:153
+msgid "JEFE"
+msgstr "BOSS"
+
+#: scenes/hud.tscn:206
+msgid "OLEADA SUPERADA"
+msgstr "WAVE CLEARED"
+
+#: scenes/hud.tscn:70
+msgid "NV 1"
+msgstr "LV 1"
+
+#: scenes/hud.tscn:96
+msgid "OLEADA 0"
+msgstr "WAVE 0"
+
+#: scenes/leaderboard_menu.gd:186
+msgid "Todavía no hay partidas: ¡sé el primero!"
+msgstr "No runs yet: be the first!"
+
+#: scenes/leaderboard_menu.gd:187
+msgid "Nadie jugó el reto de hoy todavía: ¡sé el primero!"
+msgstr "Nobody has played today's challenge yet: be the first!"
+
+#: scenes/leaderboard_menu.gd:196
+msgid "Tu puesto: #%d de %d — %d puntos"
+msgstr "Your rank: #%d of %d — %d points"
+
+#: scenes/leaderboard_menu.gd:198
+msgid "Todavía no apareces acá: ¡juega una partida!"
+msgstr "You're not on the board yet: play a run!"
+
+#: scenes/leaderboard_menu.gd:229
+msgid "  (tú)"
+msgstr "  (you)"
+
+#: scenes/leaderboard_menu.gd:25
+msgid "Todos juegan el mismo héroe, mapa y modificador hoy. Mañana se reinicia."
+msgstr "Everyone plays the same hero, map and modifier today. It resets tomorrow."
+
+#: scenes/leaderboard_menu.gd:253
+msgid "Oleada %d"
+msgstr "Wave %d"
+
+#: scenes/leaderboard_menu.gd:255
+msgid " (ganó)"
+msgstr " (won)"
+
+#: scenes/leaderboard_menu.gd:26
+msgid "Partidas normales de siempre. Mapas y dificultades más duras multiplican el puntaje."
+msgstr "Regular runs. Harder maps and difficulties multiply your score."
+
+#: scenes/leaderboard_menu.tscn:137
+msgid "JUGAR EL RETO"
+msgstr "PLAY THE CHALLENGE"
+
+#: scenes/leaderboard_menu.tscn:55 scenes/main_menu.tscn:65
+msgid "RANKING"
+msgstr "RANKING"
+
+#: scenes/leaderboard_menu.tscn:80
+msgid "RETO DE HOY"
+msgstr "TODAY'S CHALLENGE"
+
+#: scenes/leaderboard_menu.tscn:86
+msgid "HISTÓRICO"
+msgstr "ALL-TIME"
+
+#: scenes/level_up_menu.gd:162
+msgid "RELANZAR (%d)"
+msgstr "REROLL (%d)"
+
+#: scenes/level_up_menu.tscn:28
+msgid "¡SUBISTE DE NIVEL!"
+msgstr "LEVEL UP!"
+
+#: scenes/level_up_menu.tscn:39
+msgid "Card 1"
+msgstr ""
+
+#: scenes/level_up_menu.tscn:45
+msgid "Card 2"
+msgstr ""
+
+#: scenes/level_up_menu.tscn:51
+msgid "Card 3"
+msgstr ""
+
+#: scenes/main.gd:489
+msgid "MORISTE"
+msgstr "YOU DIED"
+
+#: scenes/main.gd:556
+msgid "El héroe"
+msgstr "The hero"
+
+#: scenes/main.gd:561
+msgid "¡DESAFÍO SUPERADO! "
+msgstr "CHALLENGE COMPLETE!"
+
+#: scenes/main.gd:564
+msgid "¡HABILIDAD LEGENDARIA: %s! %s (ya tienes el nivel 1, mejórala en la tienda)"
+msgstr "LEGENDARY SKILL: %s! %s (you already have level 1, upgrade it in the shop)"
+
+#: scenes/main_menu.gd:176
+msgid "RÉCORD — Oleada %d · %02d:%02d"
+msgstr "BEST — Wave %d · %02d:%02d"
+
+#: scenes/main_menu.gd:181
+msgid "v "
+msgstr ""
+
+#: scenes/main_menu.tscn:125
+msgid "TUTORIAL"
+msgstr "TUTORIAL"
+
+#: scenes/main_menu.tscn:138
+msgid "QA ROOM (DEV)"
+msgstr ""
+
+#: scenes/main_menu.tscn:143
+msgid "CATÁLOGO (DEV)"
+msgstr ""
+
+#: scenes/main_menu.tscn:48 scenes/trials_menu.gd:74
+msgid "JUGAR"
+msgstr "PLAY"
+
+#: scenes/main_menu.tscn:61 scenes/trials_menu.gd:49
+msgid "DESAFÍOS"
+msgstr "CHALLENGES"
+
+#: scenes/main_menu.tscn:73 scenes/main_menu.tscn:114 scenes/pause_menu.gd:104
+msgid "OPCIONES"
+msgstr "OPTIONS"
+
+#: scenes/main_menu.tscn:77 scenes/pause_menu.tscn:61
+msgid "SALIR"
+msgstr "QUIT"
+
+#: scenes/map_select.gd:127
+msgid "BLOQUEADO: "
+msgstr "LOCKED:"
+
+#: scenes/map_select.gd:131
+msgid "Enemigos y monedas x%.2f"
+msgstr "Enemies and coins x%.2f"
+
+#: scenes/map_select.gd:165
+msgid " (bloq.)"
+msgstr " (locked)"
+
+#: scenes/map_select.gd:179
+msgid "%s en %s — enemigos x%.2f · monedas x%.2f"
+msgstr "%s on %s — enemies x%.2f · coins x%.2f"
+
+#: scenes/map_select.tscn:52
+msgid "ELIGE EL MAPA"
+msgstr "CHOOSE THE MAP"
+
+#: scenes/map_select.tscn:63
+msgid "DIFICULTAD"
+msgstr "DIFFICULTY"
+
+#: scenes/map_select.tscn:89 scenes/tutorial_overlay.gd:161
+msgid "¡A JUGAR!"
+msgstr "LET'S GO!"
+
+#: scenes/monster.gd:533 scenes/player.gd:657
+msgid "Hurt"
+msgstr ""
+
+#: scenes/monster.gd:533 scenes/player.gd:654
+msgid "Idle"
+msgstr ""
+
+#: scenes/name_prompt.gd:10
+msgid "Tu nombre para el ranking (máximo 16 letras):"
+msgstr "Your name for the ranking (16 letters max):"
+
+#: scenes/options_controls.gd:19 autoload/settings.gd:34
+msgid "Master"
+msgstr ""
+
+#: scenes/options_controls.gd:19
+msgid "Volumen general"
+msgstr "Master volume"
+
+#: scenes/options_controls.gd:20 scenes/options_controls.gd:56 autoload/audio.gd:242
+msgid "Music"
+msgstr ""
+
+#: scenes/options_controls.gd:21
+msgid "Efectos"
+msgstr "Effects"
+
+#: scenes/options_controls.gd:21 autoload/audio.gd:174 autoload/audio.gd:184
+msgid "SFX"
+msgstr ""
+
+#: scenes/options_controls.gd:24
+msgid "Pantalla completa"
+msgstr "Fullscreen"
+
+#: scenes/options_controls.gd:25
+msgid "VSync"
+msgstr ""
+
+#: scenes/options_controls.gd:71
+msgid "Idioma"
+msgstr "Language"
+
+#: scenes/painted_world.gd:173
+msgid "¡TORMENTA DE ARENA!"
+msgstr "SANDSTORM!"
+
+#: scenes/pause_menu.gd:104 scenes/pause_menu.tscn:37
+msgid "PAUSA"
+msgstr "PAUSED"
+
+#: scenes/pause_menu.gd:104 scenes/pause_menu.tscn:51
+msgid "POTENCIADORES"
+msgstr "POWER-UPS"
+
+#: scenes/pause_menu.gd:116
+msgid "CARTAS ELEGIDAS"
+msgstr "CHOSEN CARDS"
+
+#: scenes/pause_menu.gd:118
+msgid "(todavía ninguna)"
+msgstr "(none yet)"
+
+#: scenes/pause_menu.gd:126
+msgid " x%d"
+msgstr ""
+
+#: scenes/pause_menu.gd:129
+msgid "EVOLUCIONES"
+msgstr "EVOLUTIONS"
+
+#: scenes/pause_menu.gd:133
+msgid "STATS ACTUALES"
+msgstr "CURRENT STATS"
+
+#: scenes/pause_menu.gd:134
+msgid "Vida máxima: %d"
+msgstr "Max health: %d"
+
+#: scenes/pause_menu.gd:136
+msgid "Defensa máxima: %d"
+msgstr "Max defense: %d"
+
+#: scenes/pause_menu.gd:137
+msgid "Multiplicador de daño: x%.2f"
+msgstr "Damage multiplier: x%.2f"
+
+#: scenes/pause_menu.gd:138
+msgid "Velocidad de ataque: x%.2f"
+msgstr "Attack speed: x%.2f"
+
+#: scenes/pause_menu.gd:139
+msgid "Velocidad de movimiento: %d"
+msgstr "Move speed: %d"
+
+#: scenes/pause_menu.gd:141
+msgid "Regeneración: %.1f HP/s"
+msgstr "Regeneration: %.1f HP/s"
+
+#: scenes/pause_menu.gd:142
+msgid "Radio de imán: %d"
+msgstr "Magnet radius: %d"
+
+#: scenes/pause_menu.gd:144
+msgid "Disparo a distancia: nivel %d, x%d proyectiles"
+msgstr "Ranged Shot: level %d, x%d projectiles"
+
+#: scenes/pause_menu.gd:146
+msgid "Espadas voladoras: nivel %d"
+msgstr "Flying Swords: level %d"
+
+#: scenes/pause_menu.gd:148
+msgid "Lluvia de meteoros: activa"
+msgstr "Meteor Shower: active"
+
+#: scenes/pause_menu.tscn:46
+msgid "REANUDAR"
+msgstr "RESUME"
+
+#: scenes/pickup.gd:29
+msgid "+%d VIDA"
+msgstr "+%d HEALTH"
+
+#: scenes/pickup.gd:30
+msgid "¡IMÁN!"
+msgstr "MAGNET!"
+
+#: scenes/pickup.gd:31
+msgid "¡BOMBA!"
+msgstr "BOMB!"
+
+#: scenes/pickup.gd:32
+msgid "+15 MONEDAS"
+msgstr "+15 COINS"
+
+#: scenes/player.gd:1257
+msgid "ESQUIVA"
+msgstr "DODGE"
+
+#: scenes/player.gd:233
+msgid "animations/atk sword/%s/frame_%03d.png"
+msgstr ""
+
+#: scenes/player.gd:29
+msgid "Embestida"
+msgstr "Charge"
+
+#: scenes/player.gd:30
+msgid "Te lanzas hacia adelante golpeando todo a tu paso"
+msgstr "Dash forward, hitting everything in your path"
+
+#: scenes/player.gd:31 scenes/player.gd:47
+msgid "Ráfaga"
+msgstr "Burst"
+
+#: scenes/player.gd:32
+msgid "Disparas 12 flechas en círculo"
+msgstr "Fire 12 arrows in a circle"
+
+#: scenes/player.gd:33 scenes/player.gd:45
+msgid "Voltereta"
+msgstr "Roll"
+
+#: scenes/player.gd:34 scenes/player.gd:46
+msgid "Ruedas lejos y eres invulnerable un instante"
+msgstr "Roll away, invulnerable for a moment"
+
+#: scenes/player.gd:35
+msgid "Escudo divino"
+msgstr "Divine Shield"
+
+#: scenes/player.gd:36
+msgid "2 s invulnerable y empujas a los enemigos cercanos"
+msgstr "2 s of invulnerability and push nearby enemies back"
+
+#: scenes/player.gd:37 scenes/player.gd:43
+msgid "Remolino"
+msgstr "Whirlwind"
+
+#: scenes/player.gd:38 scenes/player.gd:44
+msgid "Giras con la espada 1,2 s golpeando todo a tu alrededor"
+msgstr "Spin your sword for 1.2 s, hitting everything around you"
+
+#: scenes/player.gd:39
+msgid "Llamado del lobo"
+msgstr "Call of the Wolf"
+
+#: scenes/player.gd:40
+msgid "Un lobo caza a tu lado durante 10 s"
+msgstr "A wolf hunts by your side for 10 s"
+
+#: scenes/player.gd:436
+msgid "Toren"
+msgstr ""
+
+#: scenes/player.gd:437
+msgid "Bran"
+msgstr ""
+
+#: scenes/player.gd:438
+msgid "Vael"
+msgstr ""
+
+#: scenes/player.gd:48
+msgid "Lanzas 12 proyectiles en círculo"
+msgstr "Fire 12 projectiles in a circle"
+
+#: scenes/player.gd:643 scenes/player.gd:656
+msgid "Attack"
+msgstr ""
+
+#: scenes/player.gd:655
+msgid "Run"
+msgstr ""
+
+#: scenes/player.gd:658
+msgid "Death"
+msgstr ""
+
+#: scenes/player.gd:673
+msgid "ATTACK 1/attack1_%s.png"
+msgstr ""
+
+#: scenes/results_screen.gd:121
+msgid "Ningún arma llegó a pegar."
+msgstr "No weapon landed a hit."
+
+#: scenes/results_screen.gd:184
+msgid "LOGROS NUEVOS"
+msgstr "NEW ACHIEVEMENTS"
+
+#: scenes/results_screen.gd:19
+msgid "One Last Hero"
+msgstr ""
+
+#: scenes/results_screen.gd:220
+msgid "¡Listo para compartir!"
+msgstr "Ready to share!"
+
+#: scenes/results_screen.gd:223
+msgid "¡Copiado al portapapeles!"
+msgstr "Copied to clipboard!"
+
+#: scenes/results_screen.gd:71
+msgid "PUNTAJE DEL RETO"
+msgstr "CHALLENGE SCORE"
+
+#: scenes/results_screen.gd:75 scenes/results_screen.tscn:28
+msgid "DERROTA"
+msgstr "DEFEAT"
+
+#: scenes/results_screen.gd:75
+msgid "¡VICTORIA!"
+msgstr "VICTORY!"
+
+#: scenes/results_screen.gd:76
+msgid "%s cayó en la oleada %d"
+msgstr "%s fell on wave %d"
+
+#: scenes/results_screen.gd:76
+msgid "%s salvó la región"
+msgstr "%s saved the land"
+
+#: scenes/results_screen.gd:80
+msgid "Oleada"
+msgstr "Wave"
+
+#: scenes/results_screen.gd:81
+msgid "Tiempo"
+msgstr "Time"
+
+#: scenes/results_screen.gd:82
+msgid "Enemigos derrotados"
+msgstr "Enemies defeated"
+
+#: scenes/results_screen.gd:83
+msgid "Jefes derrotados"
+msgstr "Bosses defeated"
+
+#: scenes/results_screen.gd:84
+msgid "Monedas ganadas"
+msgstr "Coins earned"
+
+#: scenes/results_screen.gd:91
+msgid "¡Gané con %s en %s y sobreviví %s! ¿Te atreves?"
+msgstr "I won with %s on %s and survived %s! Dare to try?"
+
+#: scenes/results_screen.gd:92
+msgid "Llegué a la oleada %d con %s en %s (%s). ¿Me superas?"
+msgstr "I reached wave %d with %s on %s (%s). Can you beat me?"
+
+#: scenes/results_screen.gd:94
+msgid "Reto diario de %s (%s): %d puntos. ¿Me superas?"
+msgstr "Daily challenge %s (%s): %d points. Can you beat me?"
+
+#: scenes/results_screen.tscn:58
+msgid "DAÑO POR ARMA"
+msgstr "DAMAGE BY WEAPON"
+
+#: scenes/results_screen.tscn:75
+msgid "IR A LA 30"
+msgstr "GO FOR WAVE 30"
+
+#: scenes/results_screen.tscn:81
+msgid "REINTENTAR"
+msgstr "RETRY"
+
+#: scenes/results_screen.tscn:87
+msgid "COMPARTIR"
+msgstr "SHARE"
+
+#: scenes/results_screen.tscn:93
+msgid "MENÚ"
+msgstr "MENU"
+
+#: scenes/results_screen.tscn:99
+msgid "¡Copiado!"
+msgstr "Copied!"
+
+#: scenes/shop_menu.gd:102 scenes/shop_menu.tscn:93
+msgid "ACOMPAÑANTES"
+msgstr "COMPANIONS"
+
+#: scenes/shop_menu.gd:102
+msgid "MASCOTAS"
+msgstr "PETS"
+
+#: scenes/shop_menu.gd:207
+msgid "  (LEGENDARIA)"
+msgstr "  (LEGENDARY)"
+
+#: scenes/shop_menu.gd:237 scenes/shop_menu.gd:312
+msgid "MÁXIMO"
+msgstr "MAX"
+
+#: scenes/shop_menu.gd:239 scenes/shop_menu.gd:259
+msgid "BLOQUEADO"
+msgstr "LOCKED"
+
+#: scenes/shop_menu.gd:242
+msgid "Supera la oleada %d en %s"
+msgstr "Clear wave %d on %s"
+
+#: scenes/shop_menu.gd:245
+msgid "Requiere %s nivel %d"
+msgstr "Requires %s level %d"
+
+#: scenes/shop_menu.gd:25
+msgid "Árbol de habilidades permanentes: cada rama se abre mejorando el nodo anterior."
+msgstr "Permanent skill tree: each branch opens by upgrading the previous node."
+
+#: scenes/shop_menu.gd:259
+msgid "DESBLOQUEADO"
+msgstr "UNLOCKED"
+
+#: scenes/shop_menu.gd:26
+msgid "Compra única: el poder empieza a salir como carta al subir de nivel durante las oleadas."
+msgstr "One-time purchase: the power starts showing up as a card when you level up during waves."
+
+#: scenes/shop_menu.gd:262
+msgid "COMPRADO"
+msgstr "PURCHASED"
+
+#: scenes/shop_menu.gd:27
+msgid "Te acompañan en cada partida. Mejóralos para que crezcan y se vuelvan más fuertes."
+msgstr "They join you on every run. Upgrade them so they grow up and get stronger."
+
+#: scenes/shop_menu.gd:274
+msgid "  Llevas %d de %d: %s."
+msgstr "  You bring %d of %d: %s."
+
+#: scenes/shop_menu.gd:286
+msgid "  ·  Nv %d/%d"
+msgstr "  ·  Lv %d/%d"
+
+#: scenes/shop_menu.gd:288
+msgid "Ahora: "
+msgstr "Now:"
+
+#: scenes/shop_menu.gd:288
+msgid "Nivel 1: "
+msgstr "Level 1:"
+
+#: scenes/shop_menu.gd:290
+msgid "Próximo: "
+msgstr "Next:"
+
+#: scenes/shop_menu.gd:293
+msgid "Crece a %s en el nivel %d."
+msgstr "Grows into %s at level %d."
+
+#: scenes/shop_menu.gd:308
+msgid "EN RESERVA"
+msgstr "IN RESERVE"
+
+#: scenes/shop_menu.gd:308
+msgid "EQUIPADO"
+msgstr "EQUIPPED"
+
+#: scenes/shop_menu.gd:316
+msgid "MEJORAR %d"
+msgstr "UPGRADE %d"
+
+#: scenes/shop_menu.gd:322
+msgid "EQUIPAR"
+msgstr "EQUIP"
+
+#: scenes/shop_menu.gd:322
+msgid "QUITAR"
+msgstr "REMOVE"
+
+#: scenes/shop_menu.gd:418
+msgid "COMPRAR %d"
+msgstr "BUY %d"
+
+#: scenes/shop_menu.tscn:83
+msgid "MEJORAS"
+msgstr "UPGRADES"
+
+#: scenes/shop_menu.tscn:88
+msgid "PODERES"
+msgstr "POWERS"
+
+#: scenes/shot_projectile.gd:29
+msgid "nace chico"
+msgstr ""
+
+#: scenes/trials_menu.gd:118
+msgid "   · SUPERADO"
+msgstr "   · COMPLETED"
+
+#: scenes/trials_menu.gd:133
+msgid "MAPA: %s  ·  %d OLEADAS"
+msgstr "MAP: %s  ·  %d WAVES"
+
+#: scenes/trials_menu.gd:139
+msgid "Premio conseguido: "
+msgstr "Reward earned:"
+
+#: scenes/trials_menu.gd:139
+msgid "Premio: "
+msgstr "Reward:"
+
+#: scenes/trials_menu.gd:142
+msgid "Se juega con el héroe que elijas. No cuenta para el ranking."
+msgstr "Play with any hero you like. Doesn't count for the ranking."
+
+#: scenes/tutorial_overlay.gd:161 scenes/tutorial_overlay.tscn:104
+msgid "SIGUIENTE"
+msgstr "NEXT"
+
+#: scenes/tutorial_overlay.gd:31
+msgid "BIENVENIDO A ONE LAST HERO"
+msgstr "WELCOME TO ONE LAST HERO"
+
+#: scenes/tutorial_overlay.gd:32
+msgid "A continuación te enseñaremos lo básico para que juegues sin problemas. Solo toma un minuto."
+msgstr "Here's a quick look at the basics so you can jump right in. It only takes a minute."
+
+#: scenes/tutorial_overlay.gd:37
+msgid "Ese es el botón para empezar a jugar. Al presionarlo vas a poder elegir tu personaje — algunos pelean cuerpo a cuerpo, otros disparan a distancia."
+msgstr "That's the button to start playing. Press it to choose your hero — some fight up close, others attack from a distance."
+
+#: scenes/tutorial_overlay.gd:41
+msgid "SUBE DE NIVEL"
+msgstr "LEVEL UP"
+
+#: scenes/tutorial_overlay.gd:42
+msgid "Matar enemigos da experiencia. Al subir de nivel se elige una mejora entre 3 opciones: más daño, más velocidad, o desbloquear armas nuevas como disparos a distancia, espadas voladoras o lluvia de meteoros."
+msgstr "Defeating enemies gives experience. Each time you level up you pick one of 3 upgrades: more damage, more speed, or new weapons like ranged shots, flying swords or meteor showers."
+
+#: scenes/tutorial_overlay.gd:46
+msgid "MONEDA Y MEJORAS PERMANENTES"
+msgstr "COINS AND PERMANENT UPGRADES"
+
+#: scenes/tutorial_overlay.gd:47
+msgid "Ese es el botón de la tienda. Los enemigos sueltan moneda al morir, y esa moneda queda guardada al terminar la partida para comprar mejoras permanentes, poderes nuevos que aparecen al subir de nivel, y acompañantes que pelean contigo."
+msgstr "That's the shop button. Enemies drop coins when they die, and those coins are saved when the run ends — spend them on permanent upgrades, new powers that appear when you level up, and companions that fight by your side."
+
+#: scenes/tutorial_overlay.gd:52
+msgid "Desde aquí se ajustan el volumen, la pantalla completa y el idioma (F11 también cambia la pantalla completa en cualquier momento)."
+msgstr "Adjust the volume, fullscreen and language here (F11 also toggles fullscreen at any time)."
+
+#: scenes/tutorial_overlay.gd:56
+msgid "¡A SOBREVIVIR!"
+msgstr "TIME TO SURVIVE!"
+
+#: scenes/tutorial_overlay.gd:57
+msgid "El movimiento es con WASD, las flechas o un control (en el teléfono, el dedo en la mitad izquierda) — el ataque es automático. ESPACIO, el botón redondo o X / RB usan la habilidad de tu héroe. Sobrevive 20 oleadas y vence al jefe final. Suerte, héroe."
+msgstr "Move with WASD, the arrow keys or a gamepad (on phones, drag on the left half of the screen) — attacks are automatic. SPACE, the round button or X / RB use your hero's skill. Survive 20 waves and defeat the final boss. Good luck, hero."
+
+#: scenes/tutorial_overlay.tscn:82
+msgid "SALTAR"
+msgstr "SKIP"
+
+#: scenes/tutorial_overlay.tscn:92
+msgid "ANTERIOR"
+msgstr "PREVIOUS"
+
+#: scenes/upgrades.gd:100 scenes/weapons.gd:32
+msgid "Disparo electrico"
+msgstr "Electric Shot"
+
+#: scenes/upgrades.gd:101 scenes/weapons.gd:33
+msgid "Disparo congelante"
+msgstr "Freezing Shot"
+
+#: scenes/upgrades.gd:102 scenes/weapons.gd:34
+msgid "Centinela dron"
+msgstr "Sentry Drone"
+
+#: scenes/upgrades.gd:103 scenes/weapons.gd:35
+msgid "Sierras orbitales"
+msgstr "Orbiting Saws"
+
+#: scenes/upgrades.gd:104 scenes/weapons.gd:36
+msgid "Aura helada"
+msgstr "Frost Aura"
+
+#: scenes/upgrades.gd:105 scenes/weapons.gd:37
+msgid "Escudo de fuerza"
+msgstr "Force Shield"
+
+#: scenes/upgrades.gd:106 scenes/weapons.gd:38
+msgid "Pulso"
+msgstr "Pulse"
+
+#: scenes/upgrades.gd:112 scenes/weapons.gd:41
+msgid "Lluvia de flechas"
+msgstr "Arrow Rain"
+
+#: scenes/upgrades.gd:113
+msgid "Las flechas atraviesan 3 enemigos y cada ráfaga suma 2 más"
+msgstr "Arrows pierce 3 enemies and every volley adds 2 more"
+
+#: scenes/upgrades.gd:114 scenes/weapons.gd:42
+msgid "Tormenta de espadas"
+msgstr "Sword Storm"
+
+#: scenes/upgrades.gd:115
+msgid "Las espadas giran a tu alrededor cortando todo lo que tocan"
+msgstr "Swords spin around you, cutting everything they touch"
+
+#: scenes/upgrades.gd:116 scenes/weapons.gd:43
+msgid "Apocalipsis"
+msgstr "Apocalypse"
+
+#: scenes/upgrades.gd:117
+msgid "Caen 3 meteoros a la vez, más grandes y más fuertes"
+msgstr "3 meteors fall at once, bigger and stronger"
+
+#: scenes/upgrades.gd:118 scenes/weapons.gd:44
+msgid "Santuario"
+msgstr "Sanctuary"
+
+#: scenes/upgrades.gd:119
+msgid "El aura crece y te cura mientras quema enemigos"
+msgstr "The aura grows and heals you while it burns enemies"
+
+#: scenes/upgrades.gd:120 scenes/weapons.gd:45
+msgid "Torbellino"
+msgstr "Cyclone"
+
+#: scenes/upgrades.gd:121
+msgid "4 hachas giran sin parar a tu alrededor"
+msgstr "4 axes spin around you nonstop"
+
+#: scenes/upgrades.gd:122 scenes/weapons.gd:46
+msgid "Tormenta eléctrica"
+msgstr "Thunderstorm"
+
+#: scenes/upgrades.gd:123
+msgid "El rayo salta a 8 enemigos y cae dos veces"
+msgstr "Lightning jumps to 8 enemies and strikes twice"
+
+#: scenes/upgrades.gd:124 scenes/weapons.gd:47
+msgid "Gallina dorada"
+msgstr "Golden Hen"
+
+#: scenes/upgrades.gd:125
+msgid "El pollo pone huevos de oro: doble daño y +1 moneda por golpe"
+msgstr "The chicken lays golden eggs: double damage and +1 coin per hit"
+
+#: scenes/upgrades.gd:126
+msgid "Bastión"
+msgstr "Bastion"
+
+#: scenes/upgrades.gd:127
+msgid "El escudo aguanta 3 golpes (también cuerpo a cuerpo) y se recarga el doble de rápido"
+msgstr "The shield blocks 3 hits (melee too) and recharges twice as fast"
+
+#: scenes/upgrades.gd:128 scenes/weapons.gd:48
+msgid "Terremoto"
+msgstr "Earthquake"
+
+#: scenes/upgrades.gd:129
+msgid "Cada pulso retumba dos veces, más grande, y aturde a los que toca"
+msgstr "Every pulse booms twice, bigger, and stuns what it hits"
+
+#: scenes/upgrades.gd:130 scenes/weapons.gd:49
+msgid "Infierno"
+msgstr "Inferno"
+
+#: scenes/upgrades.gd:131
+msgid "El fuego se contagia: cada impacto quema a los enemigos de alrededor"
+msgstr "Fire spreads: every hit burns surrounding enemies"
+
+#: scenes/upgrades.gd:132 scenes/weapons.gd:50
+msgid "Cero absoluto"
+msgstr "Absolute Zero"
+
+#: scenes/upgrades.gd:133
+msgid "Congela el doble de tiempo y los congelados reciben +50% de daño"
+msgstr "Freezes twice as long and frozen enemies take +50% damage"
+
+#: scenes/upgrades.gd:134 scenes/weapons.gd:51
+msgid "Sobrecarga"
+msgstr "Overload"
+
+#: scenes/upgrades.gd:135
+msgid "El rayo aturde siempre a todos alrededor, en el doble de radio"
+msgstr "Lightning always stuns everything around it, in double the radius"
+
+#: scenes/upgrades.gd:136 scenes/weapons.gd:52
+msgid "Cadena carmesí"
+msgstr "Crimson Chain"
+
+#: scenes/upgrades.gd:137
+msgid "El láser rebota a 6 enemigos y cada golpe te cura"
+msgstr "The laser bounces to 6 enemies and every hit heals you"
+
+#: scenes/upgrades.gd:212
+msgid "%s  NV %d"
+msgstr "%s  LV %d"
+
+#: scenes/upgrades.gd:215
+msgid "%s NV %d"
+msgstr "%s LV %d"
+
+#: scenes/upgrades.gd:218
+msgid "%s x%d"
+msgstr ""
+
+#: scenes/upgrades.gd:220
+msgid "%s x%d ATAQUES"
+msgstr "%s x%d STRIKES"
+
+#: scenes/upgrades.gd:232
+msgid "\n• Evoluciona en "
+msgstr "\n• Evolves into"
+
+#: scenes/upgrades.gd:25
+msgid "+25% DAÑO"
+msgstr "+25% DAMAGE"
+
+#: scenes/upgrades.gd:25
+msgid "Todas tus armas pegan más"
+msgstr "All your weapons hit harder"
+
+#: scenes/upgrades.gd:26
+msgid "+20% VEL. ATAQUE"
+msgstr "+20% ATTACK SPEED"
+
+#: scenes/upgrades.gd:26
+msgid "Atacas y disparas más seguido"
+msgstr "Attack and shoot more often"
+
+#: scenes/upgrades.gd:27
+msgid "+8% VELOCIDAD"
+msgstr "+8% SPEED"
+
+#: scenes/upgrades.gd:27
+msgid "Corres más rápido"
+msgstr "Move faster"
+
+#: scenes/upgrades.gd:28
+msgid "+25% VIDA MÁXIMA"
+msgstr "+25% MAX HEALTH"
+
+#: scenes/upgrades.gd:28
+msgid "Aguantas más golpes"
+msgstr "Take more hits"
+
+#: scenes/upgrades.gd:29
+msgid "+1 VIDA/S"
+msgstr "+1 HEALTH/S"
+
+#: scenes/upgrades.gd:29
+msgid "Regeneración pasiva"
+msgstr "Passive regeneration"
+
+#: scenes/upgrades.gd:30
+msgid "+40% IMÁN"
+msgstr "+40% MAGNET"
+
+#: scenes/upgrades.gd:30
+msgid "Absorbes experiencia desde más lejos"
+msgstr "Pick up experience from farther away"
+
+#: scenes/upgrades.gd:31
+msgid "+10% de daño en cada nivel futuro"
+msgstr "+10% damage on every future level"
+
+#: scenes/upgrades.gd:31
+msgid "INSTINTO ASESINO"
+msgstr "KILLER INSTINCT"
+
+#: scenes/upgrades.gd:34
+msgid "PIEL DE HIERRO"
+msgstr "IRON SKIN"
+
+#: scenes/upgrades.gd:34
+msgid "Recibes 6% menos daño"
+msgstr "Take 6% less damage"
+
+#: scenes/upgrades.gd:35
+msgid "+10% de tamaño: pulso, aura, meteoros y aturdir"
+msgstr "+10% size: pulse, aura, meteors and stuns"
+
+#: scenes/upgrades.gd:35
+msgid "EXPANSIÓN"
+msgstr "EXPANSION"
+
+#: scenes/upgrades.gd:36
+msgid "PERSISTENCIA"
+msgstr "PERSISTENCE"
+
+#: scenes/upgrades.gd:36
+msgid "Quemar, congelar y aturdir duran 20% más"
+msgstr "Burn, freeze and stun last 20% longer"
+
+#: scenes/upgrades.gd:37
+msgid "+5% de golpe crítico (doble daño)"
+msgstr "+5% critical hit chance (double damage)"
+
+#: scenes/upgrades.gd:37
+msgid "OJO CERTERO"
+msgstr "KEEN EYE"
+
+#: scenes/upgrades.gd:38
+msgid "PRISA"
+msgstr "HASTE"
+
+#: scenes/upgrades.gd:38
+msgid "Tu habilidad y tus armas se recargan 8% más rápido"
+msgstr "Your skill and weapons recharge 8% faster"
+
+#: scenes/upgrades.gd:39
+msgid "Cada enemigo que muere te cura 0,3 de vida"
+msgstr "Every enemy killed heals you for 0.3"
+
+#: scenes/upgrades.gd:39
+msgid "SED DE SANGRE"
+msgstr "BLOODLUST"
+
+#: scenes/upgrades.gd:41 scenes/upgrades.gd:42 scenes/upgrades.gd:43
+msgid "DISPARO A DISTANCIA"
+msgstr "RANGED SHOT"
+
+#: scenes/upgrades.gd:41
+msgid "Un disparo automático al enemigo más cercano"
+msgstr "An automatic shot at the nearest enemy"
+
+#: scenes/upgrades.gd:42
+msgid "Más fuerte y más brillante"
+msgstr "Stronger and brighter"
+
+#: scenes/upgrades.gd:43
+msgid "Suma otro disparo a la ráfaga"
+msgstr "Adds another shot to each volley"
+
+#: scenes/upgrades.gd:44
+msgid "+1 PROYECTIL"
+msgstr "+1 PROJECTILE"
+
+#: scenes/upgrades.gd:44
+msgid "Un proyectil extra por ráfaga"
+msgstr "One extra projectile per volley"
+
+#: scenes/upgrades.gd:46
+msgid "5 espadas te escoltan y atacan solas"
+msgstr "5 swords escort you and strike on their own"
+
+#: scenes/upgrades.gd:46 scenes/upgrades.gd:47 scenes/upgrades.gd:48
+msgid "ESPADAS VOLADORAS"
+msgstr "FLYING SWORDS"
+
+#: scenes/upgrades.gd:47
+msgid "Más fuertes y más brillantes"
+msgstr "Stronger and brighter"
+
+#: scenes/upgrades.gd:48
+msgid "Más espadas atacan a la vez"
+msgstr "More swords strike at once"
+
+#: scenes/upgrades.gd:50
+msgid "LLUVIA DE METEOROS"
+msgstr "METEOR SHOWER"
+
+#: scenes/upgrades.gd:50
+msgid "Meteoritos caen solos sobre los enemigos"
+msgstr "Meteors rain down on enemies on their own"
+
+#: scenes/upgrades.gd:52
+msgid "AURA SAGRADA"
+msgstr "HOLY AURA"
+
+#: scenes/upgrades.gd:52
+msgid "Quema a los enemigos que se te acercan"
+msgstr "Burns enemies that get close to you"
+
+#: scenes/upgrades.gd:53
+msgid "HACHA GIRATORIA"
+msgstr "SPINNING AXE"
+
+#: scenes/upgrades.gd:53
+msgid "Lanza hachas que van y vuelven atravesando todo"
+msgstr "Throws axes that fly out and back, piercing everything"
+
+#: scenes/upgrades.gd:54
+msgid "RAYO EN CADENA"
+msgstr "CHAIN LIGHTNING"
+
+#: scenes/upgrades.gd:54
+msgid "Un rayo que salta entre enemigos cercanos"
+msgstr "Lightning that jumps between nearby enemies"
+
+#: scenes/upgrades.gd:55
+msgid "LASER EN CADENA"
+msgstr "CHAIN LASER"
+
+#: scenes/upgrades.gd:55
+msgid "Un laser rebota hacia dos enemigos cercanos"
+msgstr "A laser that bounces to two nearby enemies"
+
+#: scenes/upgrades.gd:56
+msgid "DISPARO DE FUEGO"
+msgstr "FIRE SHOT"
+
+#: scenes/upgrades.gd:56
+msgid "Disparo que quema 3% de vida por segundo durante 3 s"
+msgstr "A shot that burns 3% health per second for 3 s"
+
+#: scenes/upgrades.gd:57
+msgid "DISPARO ELECTRICO"
+msgstr "ELECTRIC SHOT"
+
+#: scenes/upgrades.gd:57
+msgid "Paraliza al objetivo y puede aturdir enemigos cercanos"
+msgstr "Paralyzes the target and can stun nearby enemies"
+
+#: scenes/upgrades.gd:58
+msgid "Congela al enemigo golpeado"
+msgstr "Freezes the enemy it hits"
+
+#: scenes/upgrades.gd:58
+msgid "DISPARO CONGELANTE"
+msgstr "FREEZING SHOT"
+
+#: scenes/upgrades.gd:59
+msgid "CENTINELA DRON"
+msgstr "SENTRY DRONE"
+
+#: scenes/upgrades.gd:59
+msgid "Un dron te acompaña y dispara al enemigo más cercano"
+msgstr "A drone follows you and shoots the nearest enemy"
+
+#: scenes/upgrades.gd:60
+msgid "SIERRAS ORBITALES"
+msgstr "ORBITING SAWS"
+
+#: scenes/upgrades.gd:60
+msgid "Una sierra gira a tu alrededor y corta al contacto"
+msgstr "A saw orbits you and cuts on contact"
+
+#: scenes/upgrades.gd:61
+msgid "AURA HELADA"
+msgstr "FROST AURA"
+
+#: scenes/upgrades.gd:61
+msgid "Frena a los enemigos cercanos"
+msgstr "Slows nearby enemies"
+
+#: scenes/upgrades.gd:62
+msgid "ESCUDO DE FUERZA"
+msgstr "FORCE SHIELD"
+
+#: scenes/upgrades.gd:62
+msgid "Se recarga cada pocos segundos y bloquea un disparo"
+msgstr "Recharges every few seconds and blocks one shot"
+
+#: scenes/upgrades.gd:63
+msgid "PULSO"
+msgstr "PULSE"
+
+#: scenes/upgrades.gd:63
+msgid "Una onda expansiva golpea enemigos alrededor"
+msgstr "A shockwave hits enemies all around you"
+
+#: scenes/upgrades.gd:65
+msgid "+15% ATAQUE"
+msgstr "+15% ATTACK"
+
+#: scenes/upgrades.gd:65
+msgid "Toda tu build pega más fuerte"
+msgstr "Your whole build hits harder"
+
+#: scenes/upgrades.gd:66
+msgid "+20% DEFENSA"
+msgstr "+20% DEFENSE"
+
+#: scenes/upgrades.gd:66
+msgid "Aumenta tu barra de defensa"
+msgstr "Increases your defense bar"
+
+#: scenes/upgrades.gd:67
+msgid "+20% VIDA"
+msgstr "+20% HEALTH"
+
+#: scenes/upgrades.gd:67
+msgid "Aumenta tu vida máxima y cura un poco"
+msgstr "Increases your max health and heals a little"
+
+#: scenes/upgrades.gd:69
+msgid "+25 monedas para la tienda"
+msgstr "+25 coins for the shop"
+
+#: scenes/upgrades.gd:69
+msgid "BOLSA DE MONEDAS"
+msgstr "BAG OF COINS"
+
+#: scenes/upgrades.gd:70
+msgid "POCIÓN"
+msgstr "POTION"
+
+#: scenes/upgrades.gd:70
+msgid "Recuperas 30% de tu vida"
+msgstr "Restore 30% of your health"
+
+#: scenes/upgrades.gd:90 scenes/weapons.gd:13
+msgid "Disparo a distancia"
+msgstr "Ranged Shot"
+
+#: scenes/upgrades.gd:92 scenes/weapons.gd:14 autoload/game_state.gd:175
+msgid "Espadas voladoras"
+msgstr "Flying Swords"
+
+#: scenes/upgrades.gd:94 scenes/weapons.gd:15 autoload/game_state.gd:171
+msgid "Lluvia de meteoros"
+msgstr "Meteor Shower"
+
+#: scenes/upgrades.gd:95 scenes/weapons.gd:26 autoload/game_state.gd:179
+msgid "Aura sagrada"
+msgstr "Holy Aura"
+
+#: scenes/upgrades.gd:96 scenes/weapons.gd:27 autoload/game_state.gd:183
+msgid "Hacha giratoria"
+msgstr "Spinning Axe"
+
+#: scenes/upgrades.gd:97 scenes/weapons.gd:28 autoload/game_state.gd:187
+msgid "Rayo en cadena"
+msgstr "Chain Lightning"
+
+#: scenes/upgrades.gd:98 scenes/weapons.gd:29
+msgid "Laser en cadena"
+msgstr "Chain Laser"
+
+#: scenes/upgrades.gd:99 scenes/weapons.gd:30
+msgid "Disparo de fuego"
+msgstr "Fire Shot"
+
+#: scenes/weapons.gd:12
+msgid "Ataque básico"
+msgstr "Basic Attack"
+
+#: scenes/weapons.gd:17 autoload/game_state.gd:199
+msgid "Gallina"
+msgstr "Hen"
+
+#: scenes/weapons.gd:18 autoload/game_state.gd:215
+msgid "Toro"
+msgstr "Bull"
+
+#: scenes/weapons.gd:19 autoload/game_state.gd:213
+msgid "Caballo"
+msgstr "Horse"
+
+#: scenes/weapons.gd:20 autoload/game_state.gd:205
+msgid "Cabra"
+msgstr "Goat"
+
+#: scenes/weapons.gd:21 autoload/game_state.gd:207
+msgid "Ganso"
+msgstr "Goose"
+
+#: scenes/weapons.gd:22 autoload/game_state.gd:89
+msgid "Veneno"
+msgstr "Poison"
+
+#: scenes/weapons.gd:23
+msgid "Habilidad"
+msgstr "Skill"
+
+#: scenes/weapons.gd:24
+msgid "Lobo"
+msgstr "Wolf"
+
+#: scenes/weapons.gd:25
+msgid "Bomba"
+msgstr "Bomb"
+
+#: scenes/weapons.gd:31
+msgid "Quemadura"
+msgstr "Burn"
+
+#: scenes/world.gd:86
+msgid "top-down"
+msgstr ""
+
+#~ msgid "Desde aquí se ajusta el volumen y se activa la pantalla completa (F11 también funciona en cualquier momento durante la partida)."
+#~ msgstr "Adjust the volume and toggle fullscreen here (F11 also works at any time during a run)."

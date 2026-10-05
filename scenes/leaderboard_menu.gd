@@ -193,7 +193,7 @@ func _render() -> void:
 		if i < TOP:
 			_list.add_child(_make_row(i + 1, rows[i], mine))
 	if my_place > 0:
-		_mine.text = "Tu puesto: #%d de %d — %d puntos" % [my_place, rows.size(), int(rows[my_place - 1].get("score", 0))]
+		_mine.text = tr("Tu puesto: #%d de %d — %d puntos") % [my_place, rows.size(), int(rows[my_place - 1].get("score", 0))]
 	elif Supabase.user_id != "":
 		_mine.text = "Todavía no apareces acá: ¡juega una partida!"
 
@@ -250,7 +250,7 @@ func _make_row(place: int, r: Dictionary, mine: bool) -> Control:
 ## mismo mapa/dificultad: ahí basta la oleada y el héroe).
 func _detail_text(r: Dictionary) -> String:
 	var parts: Array[String] = []
-	var wave_text := "Oleada %d" % int(r.get("wave", 0))
+	var wave_text := tr("Oleada %d") % int(r.get("wave", 0))
 	if r.get("victory", false):
 		wave_text += " (ganó)"
 	parts.append(wave_text)

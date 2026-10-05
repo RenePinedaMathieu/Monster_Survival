@@ -49,12 +49,12 @@ const PAGES: Array[Dictionary] = [
 	},
 	{
 		"title": "OPCIONES",
-		"body": "Desde aquí se ajusta el volumen y se activa la pantalla completa (F11 también funciona en cualquier momento durante la partida).",
+		"body": "Desde aquí se ajustan el volumen, la pantalla completa y el idioma (F11 también cambia la pantalla completa en cualquier momento).",
 		"target": "MenuButtons/Grid/OptionsButton",
 	},
 	{
 		"title": "¡A SOBREVIVIR!",
-		"body": "El movimiento es con WASD o las flechas (en el teléfono, el dedo en la mitad izquierda) — el ataque es automático. ESPACIO o el botón redondo usan la habilidad de tu héroe. Sobrevive 20 oleadas y vence al jefe final. Suerte, héroe.",
+		"body": "El movimiento es con WASD, las flechas o un control (en el teléfono, el dedo en la mitad izquierda) — el ataque es automático. ESPACIO, el botón redondo o X / RB usan la habilidad de tu héroe. Sobrevive 20 oleadas y vence al jefe final. Suerte, héroe.",
 		"target": "",
 	},
 ]

@@ -34,7 +34,7 @@ func _ready() -> void:
 	_hero = SELECT_SCRIPT.find_character(_info["hero"])
 	_window.add_theme_stylebox_override("panel", RpgTheme.window_box_titled(26.0, 22.0))
 	RpgTheme.style_header_title(_title, 24)
-	_title.text = "RETO DIARIO · " + _info["date"]
+	_title.text = tr("RETO DIARIO · ") + _info["date"]
 	RpgTheme.style_button(_back_button, 18)
 	RpgTheme.style_button(_play_button, 20)
 	_back_button.pressed.connect(func(): get_tree().change_scene_to_file(MENU_SCENE))
@@ -84,9 +84,9 @@ func _build_challenge() -> void:
 	row.add_child(col)
 	var map: Dictionary = GameState.MAPS[_info["map"]]
 	var mod: Dictionary = GameState.DAILY_MODIFIERS[_info["modifier"]]
-	_label(col, "HÉROE: " + _hero.get("name", "?"), 17, true)
-	_label(col, "MAPA: " + map["name"].to_upper(), 17, true)
-	_label(col, "%d OLEADAS" % GameState.DAILY_WAVES, 15, true, true)
+	_label(col, tr("HÉROE: ") + _hero.get("name", "?"), 17, true)
+	_label(col, tr("MAPA: ") + tr(map["name"]).to_upper(), 17, true)
+	_label(col, tr("%d OLEADAS") % GameState.DAILY_WAVES, 15, true, true)
 	var mod_label := _label(col, mod["name"].to_upper() + ": " + mod["desc"], 15, true)
 	mod_label.add_theme_color_override("font_color", Color("b8551e"))
 	var best: int = int(GameState.daily_best.get(_info["date"], 0))
@@ -144,8 +144,8 @@ func _on_board(code: int, body: String) -> void:
 			continue
 		seen[who] = true
 		place += 1
-		var l := _label(_board, "%d. %s — %d  (oleada %d%s)" % [place, r.get("player_name", "?"), int(r.get("score", 0)),
-			int(r.get("wave", 0)), ", ganó" if r.get("victory", false) else ""], 14, place <= 3)
+		var l := _label(_board, tr("%d. %s — %d  (oleada %d%s)") % [place, r.get("player_name", "?"), int(r.get("score", 0)),
+			int(r.get("wave", 0)), tr(", ganó") if r.get("victory", false) else ""], 14, place <= 3)
 		if who == Supabase.user_id:
 			l.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)
 		if place >= TOP:

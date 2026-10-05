@@ -120,12 +120,14 @@ func _ready() -> void:
 	_hud.on_hp_changed(_player.hp, _player.max_hp)
 	_hud.on_defense_changed(_player.defense, _player.max_defense)
 	# Detector de lentitud (F3): anota dónde y por qué el héroe camina
-	# más lento de lo que debería.
-	var speed_debug := CanvasLayer.new()
-	speed_debug.set_script(SPEED_DEBUG_SCRIPT)
-	speed_debug.player = _player
-	speed_debug.world = _world
-	add_child(speed_debug)
+	# más lento de lo que debería. Herramienta nuestra: no va en el
+	# build de Steam (ver Settings.dev_tools_enabled).
+	if Settings.dev_tools_enabled():
+		var speed_debug := CanvasLayer.new()
+		speed_debug.set_script(SPEED_DEBUG_SCRIPT)
+		speed_debug.player = _player
+		speed_debug.world = _world
+		add_child(speed_debug)
 	if GameState.has_modifier("meteoros"):
 		_player.apply_upgrade("meteors")
 	if GameState.has_modifier("cristal"):
@@ -148,6 +150,7 @@ func _ready() -> void:
 	var tc = TOUCH_CONTROLS_SCENE.instantiate()
 	add_child(tc)
 	tc.move_input.connect(_player.set_touch_input)
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	# Música de gameplay al arrancar la scene
 	Audio.play_music("gameplay_chill", 1200)
 	# Primer wave con un delay corto para que veas el mundo un
@@ -155,21 +158,36 @@ func _ready() -> void:
 	get_tree().create_timer(1.5).timeout.connect(_start_next_wave)
 
 ## F11 para agrandar/achicar la ventana sin tener que volver al menú
-## (ahí las Opciones ya tienen el mismo toggle vía checkbox).
+## (pasa por Settings para que la elección quede guardada).
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
-		var fullscreen := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-		DisplayServer.window_set_mode(
-			DisplayServer.WINDOW_MODE_WINDOWED if fullscreen else DisplayServer.WINDOW_MODE_FULLSCREEN
-		)
-	# ESC abre pausa — sólo si nada más ya pausó el juego (ej: el modal
-	# de level-up), para no apilar dos menús pausados a la vez.
-	if event.is_action_pressed("ui_cancel") and not get_tree().paused and not _run_over:
-		var pause_menu = PAUSE_MENU_SCENE.instantiate()
-		add_child(pause_menu)
-		pause_menu.setup(_player)
-		get_tree().paused = true
+		Settings.toggle_fullscreen()
+	# ESC / START abren la pausa (acción "pause", ver Settings). No se
+	# usa ui_cancel: en el control es el botón B, y abrir la pausa con B
+	# en medio de la pelea es un clásico error de juegos con mando.
+	if event.is_action_pressed("pause"):
+		_open_pause_menu()
 		get_viewport().set_input_as_handled()
+
+## Sólo si nada más ya pausó el juego (ej: el modal de level-up), para
+## no apilar dos menús pausados a la vez.
+func _open_pause_menu() -> void:
+	if not is_node_ready() or get_tree().paused or _run_over:
+		return
+	var pause_menu = PAUSE_MENU_SCENE.instantiate()
+	add_child(pause_menu)
+	pause_menu.setup(_player)
+	get_tree().paused = true
+
+## Alt-tab, minimizar, notificación del teléfono, se desconecta el
+## control: se pausa solo — que nadie vuelva y encuentre al héroe muerto.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+		_open_pause_menu()
+
+func _on_joy_connection_changed(_device: int, connected: bool) -> void:
+	if not connected:
+		_open_pause_menu()
 
 # ── Waves ────────────────────────────────────────────────────────
 
@@ -540,10 +558,10 @@ func _show_results(victory: bool, score: int) -> void:
 	results.show_results(victory, _current_wave, _hud.get_run_time(), hero,
 		victory and not _challenge and not special_run, score if GameState.daily_active else -1)
 	if not _trial_reward.is_empty():
-		results.add_highlight("¡DESAFÍO SUPERADO! " + GameState.reward_text(_trial_reward))
+		results.add_highlight(tr("¡DESAFÍO SUPERADO! ") + GameState.reward_text(_trial_reward))
 	if _new_legend != "":
 		var skill: Dictionary = GameState.SKILL_TREE[_new_legend]
-		results.add_highlight("¡HABILIDAD LEGENDARIA: %s! %s (ya tienes el nivel 1, mejórala en la tienda)" % [skill["name"].to_upper(), skill["desc"]])
+		results.add_highlight(tr("¡HABILIDAD LEGENDARIA: %s! %s (ya tienes el nivel 1, mejórala en la tienda)") % [tr(skill["name"]).to_upper(), tr(skill["desc"])])
 	results.continue_pressed.connect(_on_continue_challenge)
 
 ## SEGUIR tras la victoria: el desafío de las oleadas 21-30.

@@ -139,24 +139,28 @@ static func describe(id: String, lvl: int) -> String:
 	var s := stats(id, lvl)
 	match GameState.COMPANIONS[id]["ability"]:
 		"eggs":
-			return "%s de %d de daño cada %.1f s" % ["Dos huevos" if s["eggs"] > 1 else "Un huevo", roundi(s["dmg"]), s["cd"]]
+			return _t("%s de %d de daño cada %.1f s") % [_t("Dos huevos") if s["eggs"] > 1 else _t("Un huevo"), roundi(s["dmg"]), s["cd"]]
 		"collector":
-			return "Junta %d orbes de XP cada %.1f s" % [s["count"], s["cd"]]
+			return _t("Junta %d orbes de XP cada %.1f s") % [s["count"], s["cd"]]
 		"truffle":
-			return "+%d monedas cada %d s" % [s["coins"], roundi(s["cd"])]
+			return _t("+%d monedas cada %d s") % [s["coins"], roundi(s["cd"])]
 		"headbutt":
-			return "Cabezazo de %d de daño cada %.1f s" % [roundi(s["dmg"]), s["cd"]]
+			return _t("Cabezazo de %d de daño cada %.1f s") % [roundi(s["dmg"]), s["cd"]]
 		"honk":
-			return "Frena y pega %d cada %.1f s" % [roundi(s["dmg"]), s["cd"]]
+			return _t("Frena y pega %d cada %.1f s") % [roundi(s["dmg"]), s["cd"]]
 		"wool":
-			return "+%d de defensa que se regenera" % roundi(s["shield"])
+			return _t("+%d de defensa que se regenera") % roundi(s["shield"])
 		"feast":
-			return "Comida que cura %d%% cada %d s" % [roundi(s["heal"] * 100.0), roundi(s["cd"])]
+			return _t("Comida que cura %d%% cada %d s") % [roundi(s["heal"] * 100.0), roundi(s["cd"])]
 		"gallop":
-			return "+%d%% velocidad, patadas de %d" % [roundi(s["speed"] * 100.0), roundi(s["dmg"])]
+			return _t("+%d%% velocidad, patadas de %d") % [roundi(s["speed"] * 100.0), roundi(s["dmg"])]
 		"charge":
-			return "Embestida de %d de daño cada %.1f s" % [roundi(s["dmg"]), s["cd"]]
+			return _t("Embestida de %d de daño cada %.1f s") % [roundi(s["dmg"]), s["cd"]]
 	return ""
+
+## tr() para funciones static (describe() no tiene instancia).
+static func _t(text: String) -> String:
+	return String(TranslationServer.translate(text))
 
 ## Efectos permanentes mientras está (velocidad del caballo, lana de la oveja).
 func _apply_passive() -> void:

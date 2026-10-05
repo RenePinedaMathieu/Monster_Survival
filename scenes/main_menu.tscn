@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/main_menu.gd" id="1_menu"]
+[ext_resource type="Script" path="res://scenes/options_controls.gd" id="2_opts"]
 
 [node name="MainMenu" type="Control"]
 anchor_right = 1.0
@@ -91,10 +92,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -196.0
-offset_right = 200.0
-offset_bottom = 196.0
+offset_left = -230.0
+offset_top = -270.0
+offset_right = 230.0
+offset_bottom = 270.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -106,45 +107,39 @@ offset_right = -26.0
 offset_bottom = -22.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="OptionsPanel/Content"]
 horizontal_alignment = 1
 text = "OPCIONES"
 
-[node name="VolumeRow" type="HBoxContainer" parent="OptionsPanel/Content"]
-theme_override_constants/separation = 12
+[node name="OptionsControls" type="VBoxContainer" parent="OptionsPanel/Content"]
+script = ExtResource("2_opts")
 
-[node name="VolumeLabel" type="Label" parent="OptionsPanel/Content/VolumeRow"]
-custom_minimum_size = Vector2(140, 0)
-text = "Volumen"
+[node name="ExtraRow" type="HBoxContainer" parent="OptionsPanel/Content"]
+theme_override_constants/separation = 10
 
-[node name="VolumeSlider" type="HSlider" parent="OptionsPanel/Content/VolumeRow"]
+[node name="TutorialButton" type="Button" parent="OptionsPanel/Content/ExtraRow"]
+custom_minimum_size = Vector2(0, 42)
 size_flags_horizontal = 3
-min_value = 0.0
-max_value = 1.0
-step = 0.01
-value = 1.0
+text = "TUTORIAL"
 
-[node name="FullscreenRow" type="HBoxContainer" parent="OptionsPanel/Content"]
-theme_override_constants/separation = 12
-
-[node name="FullscreenLabel" type="Label" parent="OptionsPanel/Content/FullscreenRow"]
-custom_minimum_size = Vector2(140, 0)
-text = "Pantalla completa"
-
-[node name="FullscreenCheck" type="CheckButton" parent="OptionsPanel/Content/FullscreenRow"]
-
-[node name="TutorialButton" type="Button" parent="OptionsPanel/Content"]
+[node name="CreditsButton" type="Button" parent="OptionsPanel/Content/ExtraRow"]
 custom_minimum_size = Vector2(0, 42)
-text = "VER TUTORIAL DE NUEVO"
+size_flags_horizontal = 3
+text = "CRÉDITOS"
 
-[node name="QARoomButton" type="Button" parent="OptionsPanel/Content"]
+[node name="DevRow" type="HBoxContainer" parent="OptionsPanel/Content"]
+theme_override_constants/separation = 10
+
+[node name="QARoomButton" type="Button" parent="OptionsPanel/Content/DevRow"]
 custom_minimum_size = Vector2(0, 42)
+size_flags_horizontal = 3
 text = "QA ROOM (DEV)"
 
-[node name="CatalogButton" type="Button" parent="OptionsPanel/Content"]
+[node name="CatalogButton" type="Button" parent="OptionsPanel/Content/DevRow"]
 custom_minimum_size = Vector2(0, 42)
+size_flags_horizontal = 3
 text = "CATÁLOGO (DEV)"
 
 [node name="BackButton" type="Button" parent="OptionsPanel/Content"]

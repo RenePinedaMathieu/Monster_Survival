@@ -73,7 +73,7 @@ func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_c
 		for part in GameState.last_score_parts:
 			_add_stat("   " + part[0], "+" + DailyTop._thousands(int(part[1])), true)
 	_title.text = "¡VICTORIA!" if victory else "DERROTA"
-	_subtitle.text = ("%s salvó la región" % hero) if victory else ("%s cayó en la oleada %d" % [hero, wave])
+	_subtitle.text = (tr("%s salvó la región") % hero) if victory else (tr("%s cayó en la oleada %d") % [hero, wave])
 	var mins := int(time_sec) / 60
 	var secs := int(time_sec) % 60
 	var time_text := "%02d:%02d" % [mins, secs]
@@ -88,10 +88,10 @@ func show_results(victory: bool, wave: int, time_sec: float, hero: String, can_c
 	_apply_layout(Screen.compact)
 	Audio.play_sfx("wave_clear" if victory else "player_death")
 
-	_share_text = ("¡Gané con %s en %s y sobreviví %s! ¿Te atreves?" % [hero, GAME_NAME, time_text]) if victory \
-		else ("Llegué a la oleada %d con %s en %s (%s). ¿Me superas?" % [wave, hero, GAME_NAME, time_text])
+	_share_text = (tr("¡Gané con %s en %s y sobreviví %s! ¿Te atreves?") % [hero, GAME_NAME, time_text]) if victory \
+		else (tr("Llegué a la oleada %d con %s en %s (%s). ¿Me superas?") % [wave, hero, GAME_NAME, time_text])
 	if daily_score >= 0:
-		_share_text = "Reto diario de %s (%s): %d puntos. ¿Me superas?" % [GAME_NAME, GameState.daily_date(), daily_score]
+		_share_text = tr("Reto diario de %s (%s): %d puntos. ¿Me superas?") % [GAME_NAME, GameState.daily_date(), daily_score]
 	_retry_button.grab_focus()
 
 ## small: fila chica y suave (el desglose del puntaje del reto).
@@ -186,7 +186,7 @@ func _build_new_achievements() -> void:
 	box.add_child(title)
 	for a in list.slice(0, 5):
 		var l := Label.new()
-		l.text = "• %s — %s" % [a["name"], GameState.reward_text(a["reward"])]
+		l.text = "• %s — %s" % [tr(a["name"]), GameState.reward_text(a["reward"])]
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		RpgTheme.style_ink_label(l, 14, true)
 		l.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)

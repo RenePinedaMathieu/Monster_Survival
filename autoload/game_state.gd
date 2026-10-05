@@ -331,18 +331,18 @@ func _grant_reward(reward: Dictionary) -> void:
 func reward_text(reward: Dictionary) -> String:
 	var parts: Array = []
 	if reward.has("character"):
-		parts.append("Nuevo héroe: " + CHARACTER_NAMES.get(reward["character"], reward["character"]))
+		parts.append(tr("Nuevo héroe: ") + CHARACTER_NAMES.get(reward["character"], reward["character"]))
 	if reward.has("map"):
-		parts.append("Nuevo mapa: " + MAP_NAMES.get(reward["map"], reward["map"]))
+		parts.append(tr("Nuevo mapa: ") + tr(MAP_NAMES.get(reward["map"], reward["map"])))
 	if reward.has("cards"):
 		# load() y no preload: upgrades.gd usa GameState (evita el ciclo).
 		var upgrades: Script = load("res://scenes/upgrades.gd")
 		var names: Array = []
 		for card_id in reward["cards"]:
-			names.append(upgrades.card(card_id).get("title", card_id).capitalize())
-		parts.append("Nuevas cartas: " + ", ".join(names))
+			names.append(tr(upgrades.card(card_id).get("title", card_id)).capitalize())
+		parts.append(tr("Nuevas cartas: ") + ", ".join(names))
 	if reward.has("coins"):
-		parts.append("+%d monedas" % reward["coins"])
+		parts.append(tr("+%d monedas") % reward["coins"])
 	return " · ".join(parts)
 
 const CHARACTER_NAMES: Dictionary = {
@@ -362,7 +362,7 @@ func unlock_hint_for_character(id: String) -> String:
 			return a["desc"]
 	for t in TRIALS:
 		if t["reward"].get("character", "") == id:
-			return "Supera el desafío " + t["name"]
+			return tr("Supera el desafío ") + tr(t["name"])
 	return ""
 
 func is_map_unlocked(id: String) -> bool:
@@ -534,16 +534,20 @@ const DAILY_HP_BONUS := 5000         # con la vida llena
 ## Partes del puntaje [texto, puntos], para sumarlas y para mostrarlas.
 static func daily_score_parts(wave: int, kills: int, victory: bool, time_sec: float, hp_frac: float) -> Array:
 	var parts: Array = [
-		["Oleada %d × 1.000" % wave, wave * 1000],
-		["Bajas %d × 2" % kills, kills * 2],
+		[_t("Oleada %d × 1.000") % wave, wave * 1000],
+		[_t("Bajas %d × 2") % kills, kills * 2],
 	]
 	if victory:
-		parts.append(["Victoria", DAILY_WIN_BONUS])
-		parts.append(["Rapidez (%d:%02d)" % [int(time_sec) / 60, int(time_sec) % 60],
+		parts.append([_t("Victoria"), DAILY_WIN_BONUS])
+		parts.append([_t("Rapidez (%d:%02d)") % [int(time_sec) / 60, int(time_sec) % 60],
 			int(maxf(0.0, DAILY_PAR_SEC - time_sec)) * DAILY_POINTS_PER_SEC])
-		parts.append(["Vida restante %d%%" % int(round(clampf(hp_frac, 0.0, 1.0) * 100.0)),
+		parts.append([_t("Vida restante %d%%") % int(round(clampf(hp_frac, 0.0, 1.0) * 100.0)),
 			int(round(clampf(hp_frac, 0.0, 1.0) * DAILY_HP_BONUS))])
 	return parts
+
+## tr() para funciones static (que no tienen instancia).
+static func _t(text: String) -> String:
+	return String(TranslationServer.translate(text))
 
 ## Las partes del último puntaje del reto (las muestra results_screen).
 var last_score_parts: Array = []

@@ -55,11 +55,11 @@ func _rebuild() -> void:
 		c.queue_free()
 	var done: int = GameState.achievements_unlocked.size()
 	var total: int = GameState.ACHIEVEMENTS.size()
-	_progress_label.text = "%d / %d · %d%% completado" % [done, total, int(round(GameState.achievement_progress() * 100.0))]
+	_progress_label.text = tr("%d / %d · %d%% completado") % [done, total, int(round(GameState.achievement_progress() * 100.0))]
 	_progress_bar.max_value = total
 	_progress_bar.value = done
 
-	_list.add_child(_section("EVOLUCIONES  %d / %d" % [GameState.discovered_evolutions.size(), Upgrades.EVOLUTIONS.size()]))
+	_list.add_child(_section(tr("EVOLUCIONES  %d / %d") % [GameState.discovered_evolutions.size(), Upgrades.EVOLUTIONS.size()]))
 	var grid := GridContainer.new()
 	grid.columns = 1 if _compact else 2
 	grid.add_theme_constant_override("h_separation", 10)
@@ -122,18 +122,18 @@ func _evolution_card(evo: String) -> Control:
 	var e: Dictionary = Upgrades.EVOLUTIONS[evo]
 	var found: bool = GameState.is_evolution_discovered(evo)
 	var parts := _card(found)
-	var weapon_name: String = "Pollo (acompañante)" if e["weapon"] == "pollo" else Upgrades.WEAPONS[e["weapon"]]["name"]
+	var weapon_name: String = tr("Pollo (acompañante)") if e["weapon"] == "pollo" else tr(Upgrades.WEAPONS[e["weapon"]]["name"])
 	if found:
 		parts["icon"].texture = load(e["icon"])
 		parts["icon"].texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		_line(parts["col"], e["name"], 16, true, false)
-		var passive_title: String = Upgrades.card(e["passive"]).get("title", e["passive"])
-		_line(parts["col"], "%s al máximo + %s" % [weapon_name, passive_title], 13, false, true)
+		var passive_title: String = tr(Upgrades.card(e["passive"]).get("title", e["passive"]))
+		_line(parts["col"], tr("%s al máximo + %s") % [weapon_name, passive_title], 13, false, true)
 	else:
 		parts["icon"].texture = load("res://assets/ui/rpg/lock.png")
 		parts["icon"].texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_line(parts["col"], "???", 16, true, false)
-		_line(parts["col"], "%s al máximo + ???" % weapon_name, 13, false, true)
+		_line(parts["col"], tr("%s al máximo + ???") % weapon_name, 13, false, true)
 	return parts["card"]
 
 func _achievement_card(a: Dictionary) -> Control:

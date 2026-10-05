@@ -23,6 +23,8 @@ Supabase="*uid://dyju2v7pxnojp"
 GameState="*res://autoload/game_state.gd"
 Audio="*res://autoload/audio.gd"
 Screen="*res://autoload/screen.gd"
+Settings="*res://autoload/settings.gd"
+SteamBridge="*res://autoload/steam_bridge.gd"
 
 [debug]
 
@@ -34,6 +36,11 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://locale/en.po")
+locale/fallback="es"
 
 [input]
 

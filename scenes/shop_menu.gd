@@ -239,10 +239,10 @@ func _skill_node(id: String, color: Color) -> Control:
 		_set_plain(button, "BLOQUEADO", false)
 		var req_label := Label.new()
 		if legend != "":
-			req_label.text = "Supera la oleada %d en %s" % [GameState.CHALLENGE_WAVE, GameState.MAP_NAMES.get(legend, legend)]
+			req_label.text = tr("Supera la oleada %d en %s") % [GameState.CHALLENGE_WAVE, tr(GameState.MAP_NAMES.get(legend, legend))]
 		else:
 			var req: Dictionary = GameState.SKILL_TREE[item["requires"]]
-			req_label.text = "Requiere %s nivel %d" % [req["name"], item["req_level"]]
+			req_label.text = tr("Requiere %s nivel %d") % [tr(req["name"]), item["req_level"]]
 		RpgTheme.style_ink_label(req_label, 12, true)
 		info.add_child(req_label)
 	else:
@@ -271,7 +271,7 @@ func _build_companions() -> void:
 	var names: Array = []
 	for id in GameState.active_companions():
 		names.append(GameState.companion_stage(id)[2])
-	_hint_label.text = TAB_HINTS[Tab.COMPANIONS] + "  Llevas %d de %d: %s." % [names.size(), slots,
+	_hint_label.text = TAB_HINTS[Tab.COMPANIONS] + tr("  Llevas %d de %d: %s.") % [names.size(), slots,
 		", ".join(names) if not names.is_empty() else "ninguno"]
 	for id in GameState.COMPANIONS:
 		var comp: Dictionary = GameState.COMPANIONS[id]
@@ -283,14 +283,14 @@ func _build_companions() -> void:
 		atlas.atlas = load("res://assets/companions/%s/idle_front.png" % form)
 		var fsize: Vector2 = CompanionScript.SPRITES[form]["frame"]
 		atlas.region = Rect2(Vector2.ZERO, fsize)
-		var title: String = stage[2] + ("  ·  Nv %d/%d" % [lvl, GameState.COMPANION_MAX_LEVEL] if owned else "")
+		var title: String = stage[2] + (tr("  ·  Nv %d/%d") % [lvl, GameState.COMPANION_MAX_LEVEL] if owned else "")
 		var lines: Array = [comp["role"] + "."]
 		lines.append(("Ahora: " if owned else "Nivel 1: ") + CompanionScript.describe(id, maxi(1, lvl)))
 		if owned and lvl < GameState.COMPANION_MAX_LEVEL:
-			lines.append("Próximo: " + CompanionScript.describe(id, lvl + 1))
+			lines.append(tr("Próximo: ") + CompanionScript.describe(id, lvl + 1))
 		var next_stage: Array = GameState.companion_next_stage(id)
 		if not next_stage.is_empty():
-			lines.append("Crece a %s en el nivel %d." % [next_stage[2], next_stage[0]])
+			lines.append(tr("Crece a %s en el nivel %d.") % [tr(next_stage[2]), next_stage[0]])
 		var card := _make_card(_texture_icon(atlas, false), title, "
 ".join(lines))
 		if not owned:
@@ -313,7 +313,7 @@ func _build_companions() -> void:
 		else:
 			_set_price(button, cost, GameState.total_currency >= cost)
 			if owned:
-				button.text = "MEJORAR %d" % cost
+				button.text = tr("MEJORAR %d") % cost
 		button.pressed.connect(_on_companion_upgrade.bind(id))
 		# Segundo botón (equipar) debajo del de comprar/mejorar.
 		var equip := Button.new()
@@ -415,7 +415,7 @@ func _status_label(text: String, good: bool) -> Label:
 	return label
 
 func _set_price(button: Button, cost: int, affordable: bool) -> void:
-	button.text = "COMPRAR %d" % cost
+	button.text = tr("COMPRAR %d") % cost
 	button.icon = _coin
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT

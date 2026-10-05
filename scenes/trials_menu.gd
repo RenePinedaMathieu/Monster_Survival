@@ -130,7 +130,7 @@ func _select(id: String) -> void:
 	var t: Dictionary = GameState.trial_data(id)
 	var map: Dictionary = GameState.MAPS[t["map"]]
 	_label(_detail, t["name"].to_upper(), 20, true)
-	_label(_detail, "MAPA: %s  ·  %d OLEADAS" % [map["name"].to_upper(), t["waves"]], 15, true, true)
+	_label(_detail, tr("MAPA: %s  ·  %d OLEADAS") % [tr(map["name"]).to_upper(), t["waves"]], 15, true, true)
 	for mod in t["mods"]:
 		var m: Dictionary = GameState.DAILY_MODIFIERS[mod]
 		var rule := _label(_detail, m["name"].to_upper() + ": " + m["desc"], 15, true)
@@ -164,7 +164,7 @@ func _build_hero_row() -> void:
 	RpgTheme.style_button(prev, 18)
 	prev.pressed.connect(_cycle_hero.bind(-1))
 	row.add_child(prev)
-	var name_label := _label(row, "HÉROE: " + hero["name"], 17, true)
+	var name_label := _label(row, tr("HÉROE: ") + hero["name"], 17, true)
 	name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var next := Button.new()

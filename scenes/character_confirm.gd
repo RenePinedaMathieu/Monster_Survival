@@ -55,7 +55,7 @@ func _ready() -> void:
 	var skill: Dictionary = PLAYER_SCRIPT.ACTIVE_SKILLS.get(data["id"], {})
 	if not skill.is_empty():
 		var skill_label := Label.new()
-		skill_label.text = "HABILIDAD: %s — %s" % [skill["name"], skill["desc"]]
+		skill_label.text = tr("HABILIDAD: %s — %s") % [tr(skill["name"]), tr(skill["desc"])]
 		skill_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		RpgTheme.style_ink_label(skill_label, 15, true)
 		skill_label.add_theme_color_override("font_color", RpgTheme.COLOR_INK_GOOD)

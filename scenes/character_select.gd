@@ -286,7 +286,7 @@ func _apply_layout(compact: bool) -> void:
 	layout.add_theme_constant_override("separation", 8 if small else 14)
 	RpgTheme.style_light_label(_title, 28 if small else 40)
 	_hint.text = "Toca un héroe para elegirlo" if Screen.is_phone \
-		else "Flechas para elegir  ·  Enter / click para confirmar  ·  Esc para volver"
+		else "Flechas / stick para elegir  ·  Enter / A para confirmar  ·  Esc / B para volver"
 	for b in [_back_button, _shop_button]:
 		RpgTheme.style_button(b, 16 if small else 20)
 		b.offset_top = 14.0 if short else 26.0
@@ -323,7 +323,7 @@ func _setup_card(i: int) -> void:
 		_portraits[i].modulate = Color(0.05, 0.05, 0.08, 0.9)
 		_idle_previews[i].visible = false
 		var hint: Label = _lock_hints[i]
-		hint.text = "BLOQUEADO\n" + GameState.unlock_hint_for_character(data["id"])
+		hint.text = tr("BLOQUEADO\n") + tr(GameState.unlock_hint_for_character(data["id"]))
 		RpgTheme.style_ink_label(hint, 13, true)
 		hint.visible = true
 

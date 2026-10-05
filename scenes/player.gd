@@ -713,22 +713,11 @@ func _side_dir_key(v: Vector2) -> String:
 func set_touch_input(v: Vector2) -> void:
 	_touch_input = v
 
-## Flechas (InputMap ui_*) + WASD. WASD no está en el InputMap del
-## proyecto, así que se lee por posición física de tecla (no por
-## layout) para no tocar project.godot a mano — is_physical_key_pressed
-## así funciona igual en QWERTY/AZERTY/etc. Sumar ambos es seguro: si
-## se mantienen flecha y WASD juntas, moving/normalized() más abajo
-## ya manejan la magnitud >1.
+## WASD, flechas, stick izquierdo y cruceta — todas las acciones move_*
+## las registra el autoload Settings (con zona muerta chica para el
+## stick). get_vector ya devuelve como mucho largo 1.
 func _keyboard_input() -> Vector2:
-	var v := Vector2(
-		Input.get_axis("ui_left", "ui_right"),
-		Input.get_axis("ui_up", "ui_down"),
-	)
-	v.x += (1.0 if Input.is_physical_key_pressed(KEY_D) else 0.0) \
-		- (1.0 if Input.is_physical_key_pressed(KEY_A) else 0.0)
-	v.y += (1.0 if Input.is_physical_key_pressed(KEY_S) else 0.0) \
-		- (1.0 if Input.is_physical_key_pressed(KEY_W) else 0.0)
-	return v
+	return Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
 ## Cuántas unidades de mundo entran en el lado corto de la pantalla —
 ## más chico = cámara más cerca. En teléfono va más cerca que en PC: la
@@ -770,11 +759,11 @@ func _input(event: InputEvent) -> void:
 			_set_zoom(cam.zoom.x - CAM_ZOOM_WHEEL_STEP)
 
 func _process(delta: float) -> void:
-	# Q aleja, E acerca — mismo esquema que sandbox.gd.
+	# Q / gatillo izq. aleja, E / gatillo der. acerca (ver Settings).
 	var cam: Camera2D = $Camera2D
-	if Input.is_key_pressed(KEY_Q):
+	if Input.is_action_pressed("zoom_out"):
 		_set_zoom(cam.zoom.x - CAM_ZOOM_KEY_STEP)
-	elif Input.is_key_pressed(KEY_E):
+	elif Input.is_action_pressed("zoom_in"):
 		_set_zoom(cam.zoom.x + CAM_ZOOM_KEY_STEP)
 	_update_shake(cam, delta)
 
@@ -1424,8 +1413,9 @@ func has_meteors() -> bool:
 
 # ── Habilidad activa ────────────────────────────────────────────
 
+## ESPACIO, X/□ o RB (ver Settings).
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
+	if event.is_action_pressed("active_skill"):
 		use_active_skill()
 		get_viewport().set_input_as_handled()
 

@@ -151,7 +151,7 @@ func _show_next_toast() -> void:
 	col.add_theme_constant_override("separation", 0)
 	row.add_child(col)
 	var title := Label.new()
-	title.text = "¡LOGRO! " + a["name"]
+	title.text = tr("¡LOGRO! ") + tr(a["name"])
 	RpgTheme.style_light_label(title, 17)
 	col.add_child(title)
 	var reward := Label.new()
@@ -231,7 +231,7 @@ func setup_skill(skill: Dictionary) -> void:
 	if skill.is_empty():
 		return
 	var icon: Texture2D = load(skill["icon"]) if ResourceLoader.exists(skill["icon"]) else null
-	_skill_button.setup(icon, "%s (Espacio)\n%s" % [skill["name"], skill.get("desc", "")])
+	_skill_button.setup(icon, tr("%s (Espacio / X)\n%s") % [tr(skill["name"]), tr(skill.get("desc", ""))])
 	_skill_button.visible = true
 
 func on_skill_cooldown(remaining: float, total: float) -> void:
@@ -254,7 +254,7 @@ func on_hp_changed(current: float, max_hp: float) -> void:
 func on_xp_changed(current: int, needed: int, level: int) -> void:
 	_xp_bar.max_value = needed
 	_xp_bar.value = current
-	_level_number.text = "NV %d" % level
+	_level_number.text = tr("NV %d") % level
 
 ## Sin armadura comprada max_defense es 0: la pista azul queda vacía.
 func on_defense_changed(current: float, max_defense: float) -> void:
@@ -410,18 +410,18 @@ var _wave: int = 0
 ## final_wave 0 = modo infinito (sin "/ N").
 func set_wave(n: int, final_wave: int = 0) -> void:
 	_wave = n
-	_wave_label.text = ("OLEADA %d / %d" % [n, final_wave]) if final_wave > 0 else ("OLEADA %d" % n)
+	_wave_label.text = (tr("OLEADA %d / %d") % [n, final_wave]) if final_wave > 0 else (tr("OLEADA %d") % n)
 
 ## Lo que le queda a la oleada (las oleadas duran lo mismo, ver
 ## main.gd WAVE_DURATION); en 0 con el jefe vivo, lo avisa.
 func set_wave_time(sec: float, boss_alive: bool) -> void:
 	var s := ceili(sec)
-	var txt: String = "¡Derrota al jefe!" if s <= 0 and boss_alive else "Termina en %d:%02d" % [s / 60, s % 60]
+	var txt: String = tr("¡Derrota al jefe!") if s <= 0 and boss_alive else tr("Termina en %d:%02d") % [s / 60, s % 60]
 	if _monsters_label.text != txt:
 		_monsters_label.text = txt
 
 func show_wave_break(_duration: float) -> void:
-	_banner.text = "OLEADA %d SUPERADA" % _wave
+	_banner.text = tr("OLEADA %d SUPERADA") % _wave
 	var tw := create_tween()
 	tw.tween_property(_banner, "modulate:a", 1.0, 0.3)
 	tw.tween_interval(1.2)
