@@ -33,63 +33,63 @@ const CHARACTERS: Array[Dictionary] = [
 	{
 		"id": "swordman",
 		"name": "GAROTH",
-		"portrait": "res://assets/main_characters/swordman_char.png",
-		# Recorte de la cara en la ilustración para el círculo del HUD.
-		"face_rect": Rect2i(490, 260, 330, 330),
-		# Preview con lvl3 — el tier del medio, para que el jugador vea
-		# a qué evoluciona (lvl1 se ve muy débil, lvl6 spoilería el
-		# clímax visual).
-		"idle_sheet": "res://assets/sprites/swordman/Swordsman_lvl3/Swordsman_lvl3_Idle/Swordsman_lvl3_Idle_front.png",
 		"idle_frames": 12,
 		"accent": Color("d4a648"),
 		"role": "CUERPO A CUERPO · EVOLUTIVO",
 		"blurb": "Empieza débil pero su sprite y su poder evolucionan con cada nivel — el más difícil al principio, el más gratificante al final.",
-		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
+		"stats": {"Daño": 4, "Velocidad": 3, "Alcance": 1, "Dificultad": 4},
+		# Colores: sólo cambian el look (player.gd HERO_CLASSES). Cada uno
+		# con su retrato, el recorte de la cara para el círculo del HUD y
+		# la tira del quieto (forma 3: la del medio, para ver a qué
+		# evoluciona). Los de GAROTH son los antiguos TOREN, BRAN y VAEL
+		# (sprites con tools/recolor_hero.py, ilustración con
+		# tools/recolor_illustration.py).
+		"colors": [
+			{"color": "Castaño", "portrait": "res://assets/main_characters/swordman_char.png", "face_rect": Rect2i(490, 260, 330, 330),
+				"idle_sheet": "res://assets/sprites/swordman/Swordsman_lvl3/Swordsman_lvl3_Idle/Swordsman_lvl3_Idle_front.png"},
+			{"color": "Rubio", "portrait": "res://assets/main_characters/toren_char.png", "face_rect": Rect2i(490, 260, 330, 330), "idle_sheet": "res://assets/main_characters/toren_idle_strip.png"},
+			{"color": "Colorín", "portrait": "res://assets/main_characters/bran_char.png", "face_rect": Rect2i(490, 260, 330, 330), "idle_sheet": "res://assets/main_characters/bran_idle_strip.png"},
+			{"color": "Plata", "portrait": "res://assets/main_characters/vael_char.png", "face_rect": Rect2i(490, 260, 330, 330), "idle_sheet": "res://assets/main_characters/vael_idle_strip.png"},
+		],
 	},
-	# TOREN, BRAN y VAEL: GAROTH recoloreado (sprites con
-	# tools/recolor_hero.py, ilustración con tools/recolor_illustration.py);
-	# evolucionan como él. Se ganan en los desafíos (GameState.TRIALS).
+	# ELARA y DOREN: packs de Craftpix de maga y arquero
+	# (tools/import_class_pack.py). Se ganan en los desafíos
+	# (GameState.TRIALS). Su retrato todavía es el sprite ampliado.
 	{
-		"id": "toren",
-		"name": "TOREN",
-		"portrait": "res://assets/main_characters/toren_char.png",
-		"face_rect": Rect2i(490, 260, 330, 330),
-		"idle_sheet": "res://assets/main_characters/toren_idle_strip.png",
-		"idle_frames": 12,
-		"accent": Color("8fcf5a"),
-		"role": "CUERPO A CUERPO · EVOLUTIVO · RESISTENTE",
-		"blurb": "Rubio de ojos verdes. Crece como GAROTH, con más vida, y su Remolino barre a todos los que lo rodean.",
-		"stats": {"Daño": 3, "Velocidad": 2, "Alcance": 2, "Dificultad": 3},
-	},
-	{
-		"id": "bran",
-		"name": "BRAN",
-		"portrait": "res://assets/main_characters/bran_char.png",
-		"face_rect": Rect2i(490, 260, 330, 330),
-		"idle_sheet": "res://assets/main_characters/bran_idle_strip.png",
+		"id": "elara",
+		"name": "ELARA",
 		"idle_frames": 12,
 		"accent": Color("e0703a"),
-		"role": "CUERPO A CUERPO · EVOLUTIVO · VELOZ",
-		"blurb": "Colorín de ojos miel. Más rápido y con menos vida; su Voltereta lo saca de cualquier encierro.",
-		"stats": {"Daño": 3, "Velocidad": 4, "Alcance": 1, "Dificultad": 4},
+		"role": "A DISTANCIA · EVOLUTIVA · ÁREA",
+		"blurb": "Maga de fuego: sus bolas de fuego explotan en área a media distancia. Evoluciona en 6 formas y su Ráfaga lanza 12 bolas en círculo.",
+		"stats": {"Daño": 3, "Velocidad": 3, "Alcance": 4, "Dificultad": 3},
+		"colors": [
+			{"color": "Colorina", "portrait": "res://assets/main_characters/elara_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/elara_idle_strip.png"},
+			{"color": "Rubia", "portrait": "res://assets/main_characters/elara_2_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/elara_2_idle_strip.png"},
+			{"color": "Morena", "portrait": "res://assets/main_characters/elara_3_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/elara_3_idle_strip.png"},
+			{"color": "Plata", "portrait": "res://assets/main_characters/elara_4_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/elara_4_idle_strip.png"},
+		],
 	},
 	{
-		"id": "vael",
-		"name": "VAEL",
-		"portrait": "res://assets/main_characters/vael_char.png",
-		"face_rect": Rect2i(490, 260, 330, 330),
-		"idle_sheet": "res://assets/main_characters/vael_idle_strip.png",
+		"id": "doren",
+		"name": "DOREN",
 		"idle_frames": 12,
-		"accent": Color("a070e0"),
-		"role": "CUERPO A CUERPO · EVOLUTIVO · RÁFAGA",
-		"blurb": "Pelo blanco y ojos violeta. Su Ráfaga lanza 12 proyectiles en círculo y limpia el espacio a su alrededor.",
-		"stats": {"Daño": 4, "Velocidad": 3, "Alcance": 3, "Dificultad": 3},
+		"accent": Color("8fcf5a"),
+		"role": "A DISTANCIA · EVOLUTIVO · ATRAVIESA",
+		"blurb": "Arquero: sus flechas llegan lejos y atraviesan a varios enemigos en línea. Evoluciona en 3 formas y su Voltereta lo saca de cualquier encierro.",
+		"stats": {"Daño": 2, "Velocidad": 4, "Alcance": 5, "Dificultad": 4},
+		"colors": [
+			{"color": "Azabache", "portrait": "res://assets/main_characters/doren_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/doren_idle_strip.png"},
+			{"color": "Rubio", "portrait": "res://assets/main_characters/doren_2_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/doren_2_idle_strip.png"},
+			{"color": "Colorín", "portrait": "res://assets/main_characters/doren_3_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/doren_3_idle_strip.png"},
+			{"color": "Plata", "portrait": "res://assets/main_characters/doren_4_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/doren_4_idle_strip.png"},
+		],
 	},
 ]
 
 ## Fuera del juego por ahora, hasta tener sprites al estilo de GAROTH:
 ## AXEL (sin golpe ni muerte en su pack) y KAY y LINA (reemplazados por
-## TOREN, BRAN y VAEL), los tres desde el 29-09-2026, y EDRIC y SIRA
+## ELARA y DOREN), los tres desde el 29-09-2026, y EDRIC y SIRA
 ## (arte anterior). Su lógica sigue en player.gd; sus datos quedan acá
 ## para el ranking y el reto diario de días anteriores.
 const PENDING_CHARACTERS: Array[Dictionary] = [
@@ -218,6 +218,11 @@ func _build_cards() -> void:
 	var row: GridContainer = $Layout/CardsRow
 	while row.get_child_count() < CHARACTERS.size():
 		row.add_child(row.get_child(row.get_child_count() - 1).duplicate())
+	# La escena trae 4 cartas: las que sobran se sacan antes de recorrerlas.
+	while row.get_child_count() > CHARACTERS.size():
+		var extra: Node = row.get_child(row.get_child_count() - 1)
+		row.remove_child(extra)
+		extra.queue_free()
 	for card in row.get_children():
 		_card_roots.append(card)
 		_frames.append(card.get_node("Frame"))
@@ -315,6 +320,7 @@ func _setup_card(i: int) -> void:
 	# El túnel de neón no va con el estilo pergamino del resto de la UI
 	# — el retrato va sobre el fondo azul de los retratos del pack.
 	_tunnel_lines[i].visible = false
+	data = colored(data)
 	_portraits[i].texture = portrait_texture(data)
 	_name_labels[i].text = data["name"]
 	RpgTheme.style_light_label(_name_labels[i], 24)
@@ -396,15 +402,33 @@ func _update_card_glow(i: int, active: bool) -> void:
 # ── Selección ────────────────────────────────────────────────────
 
 ## Datos de un héroe por id, esté en el juego o fuera (partidas viejas
-## del ranking, reto diario de un día anterior). {} si no existe.
+## del ranking, reto diario de un día anterior), con su color elegido
+## (ver colored). {} si no existe.
 static func find_character(id: String) -> Dictionary:
 	for c in CHARACTERS + PENDING_CHARACTERS:
 		if c["id"] == id:
-			return c
+			return colored(c)
 	return {}
+
+## La entrada del héroe con los datos de un color (retrato, cara para el
+## HUD, tira del quieto) arriba, como si fueran suyos. idx -1 = el color
+## elegido (GameState.selected_color).
+static func colored(data: Dictionary, idx: int = -1) -> Dictionary:
+	if not data.has("colors"):
+		return data
+	var colors: Array = data["colors"]
+	if idx < 0:
+		idx = GameState.selected_color(data["id"])
+	idx = clampi(idx, 0, colors.size() - 1)
+	var out: Dictionary = data.duplicate()
+	out.merge(colors[idx], true)
+	out["color_index"] = idx
+	return out
 
 ## Textura del retrato (con recorte si "portrait_region" lo pide).
 static func portrait_texture(data: Dictionary) -> Texture2D:
+	if not data.has("portrait"):
+		data = colored(data)
 	var tex: Texture2D = load(data["portrait"])
 	if data.has("portrait_region"):
 		var atlas := AtlasTexture.new()
@@ -427,7 +451,7 @@ func _on_card_selected(i: int) -> void:
 		return
 	_confirmed = true
 	GameState.selected_character_id = CHARACTERS[i]["id"]
-	GameState.pending_character = CHARACTERS[i]
+	GameState.pending_character = colored(CHARACTERS[i])
 
 	for j in range(_card_roots.size()):
 		_hit_buttons[j].disabled = true

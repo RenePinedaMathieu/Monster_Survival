@@ -32,20 +32,16 @@ const ACTIVE_SKILLS: Dictionary = {
 		"desc": "Disparas 12 flechas en círculo"},
 	"main_char2_female": {"id": "roll", "name": "Voltereta", "cooldown": 3.5, "icon": SKILL_ICON + "skill_77.png",
 		"desc": "Ruedas lejos y eres invulnerable un instante"},
-	"swordman": {"id": "shield", "name": "Escudo divino", "cooldown": 8.0, "icon": SKILL_ICON + "skill_27.png",
-		"desc": "2 s invulnerable y empujas a los enemigos cercanos"},
+	"swordman": {"id": "whirl", "name": "Remolino", "cooldown": 7.0, "icon": SKILL_ICON + "skill_89.png",
+		"desc": "Giras con la espada 1,2 s golpeando todo a tu alrededor"},
+	"elara": {"id": "volley", "name": "Ráfaga", "cooldown": 6.0, "icon": SKILL_ICON + "skill_61.png",
+		"desc": "Lanzas 12 bolas de fuego en círculo"},
+	"doren": {"id": "roll", "name": "Voltereta", "cooldown": 3.5, "icon": SKILL_ICON + "skill_77.png",
+		"desc": "Ruedas lejos y eres invulnerable un instante"},
 	"edric": {"id": "whirl", "name": "Remolino", "cooldown": 7.0, "icon": SKILL_ICON + "skill_89.png",
 		"desc": "Giras con la espada 1,2 s golpeando todo a tu alrededor"},
 	"sira": {"id": "wolf", "name": "Llamado del lobo", "cooldown": 14.0, "icon": SKILL_ICON + "skill_75.png",
 		"desc": "Un lobo caza a tu lado durante 10 s"},
-	# TOREN, BRAN y VAEL (GAROTH recoloreado) usan habilidades que ya
-	# existían: la de EDRIC, la de LINA y la de KAY (fuera del juego).
-	"toren": {"id": "whirl", "name": "Remolino", "cooldown": 7.0, "icon": SKILL_ICON + "skill_89.png",
-		"desc": "Giras con la espada 1,2 s golpeando todo a tu alrededor"},
-	"bran": {"id": "roll", "name": "Voltereta", "cooldown": 3.5, "icon": SKILL_ICON + "skill_77.png",
-		"desc": "Ruedas lejos y eres invulnerable un instante"},
-	"vael": {"id": "volley", "name": "Ráfaga", "cooldown": 6.0, "icon": SKILL_ICON + "skill_61.png",
-		"desc": "Lanzas 12 proyectiles en círculo"},
 }
 const DASH_SPEED := 900.0
 const DASH_DAMAGE := 8.0
@@ -65,6 +61,7 @@ const WHIRL_DAMAGE := 6.0
 const WOLF_SCRIPT := preload("res://scenes/wolf_ally.gd")
 
 const SHOT_SCENE := preload("res://scenes/shot_projectile.tscn")
+const HERO_PROJECTILE_SCRIPT := preload("res://scenes/hero_projectile.gd")
 const METEOR_SCRIPT := preload("res://scenes/meteor.gd")
 const FLYING_SWORDS_RIG_SCRIPT := preload("res://scenes/flying_swords_rig.gd")
 const COMPANION_SCRIPT := preload("res://scenes/companion.gd")
@@ -429,16 +426,44 @@ const SWORDMAN_TIER_EVERY := 3
 ## Daño extra del tajo por forma: forma 9 = x2,2 (antes, con 6 formas y
 ## +0,24 cada una, también llegaba a x2,2).
 const SWORDMAN_TIER_DAMAGE := 0.15
-## TOREN, BRAN y VAEL: GAROTH recoloreado (pelo y ojos) con
-## tools/recolor_hero.py. Evolucionan igual que él en 6 formas; "hp" y
-## "speed" ajustan su vida y velocidad base.
-const SWORD_SKINS := {
-	"toren": {"dir": "res://assets/sprites/toren/", "name": "Toren", "hp": 1.2, "speed": 0.95},
-	"bran": {"dir": "res://assets/sprites/bran/", "name": "Bran", "hp": 0.9, "speed": 1.1},
-	"vael": {"dir": "res://assets/sprites/vael/", "name": "Vael", "hp": 1.0, "speed": 1.0},
+## Héroes que cambian de forma con el nivel, cada uno con el pack de
+## Craftpix de su clase: GAROTH (espadachín, 9 formas), ELARA (maga, 6;
+## tools/import_class_pack.py) y DOREN (arquero, 3). Todos usan el mismo
+## camino de sprites (los "_swordman_*" de abajo).
+##   "tier_every": niveles por forma (la última llega cerca del nivel 21-25)
+##   "tier_damage": daño extra por forma (la última pega x2,2)
+##   "attack": "melee" (tajo alrededor), "fireball" (bola que explota)
+##             o "arrow" (flecha que atraviesa)
+##   "attack_frames": cuadros pedidos del ataque (se usan los que trae
+##             cada hoja); "hit_frame": cuadro en que pega o suelta
+##             (revisado en las hojas: la llama sale en el 4, la flecha en el 5)
+##   "attack_time": duración del ataque respecto de AUTO_FIRE_INTERVAL
+##   "range": a qué distancia empieza a atacar
+##   "colors": los 4 colores (sólo cambian el look; tools/recolor_hero.py).
+##             {} = el formato de nombres de GAROTH original.
+const HERO_CLASSES := {
+	"swordman": {"max_tier": 9, "tier_every": 3, "tier_damage": 0.15, "attack": "melee",
+		"attack_frames": 7, "hit_frame": 3, "attack_time": 1.0, "range": 70.0, "hp": 1.0, "speed": 1.0,
+		"colors": [{}, {"dir": "res://assets/sprites/toren/", "name": "Toren"},
+			{"dir": "res://assets/sprites/bran/", "name": "Bran"}, {"dir": "res://assets/sprites/vael/", "name": "Vael"}]},
+	"elara": {"max_tier": 6, "tier_every": 4, "tier_damage": 0.24, "attack": "fireball",
+		"attack_frames": 7, "hit_frame": 4, "attack_time": 1.25, "range": 190.0, "hp": 0.85, "speed": 1.0,
+		"colors": [{"dir": "res://assets/sprites/elara/", "name": "Elara"}, {"dir": "res://assets/sprites/elara_2/", "name": "Elara"},
+			{"dir": "res://assets/sprites/elara_3/", "name": "Elara"}, {"dir": "res://assets/sprites/elara_4/", "name": "Elara"}]},
+	"doren": {"max_tier": 3, "tier_every": 8, "tier_damage": 0.6, "attack": "arrow",
+		"attack_frames": 8, "hit_frame": 5, "attack_time": 1.1, "range": 240.0, "hp": 0.95, "speed": 1.08,
+		"colors": [{"dir": "res://assets/sprites/doren/", "name": "Doren"}, {"dir": "res://assets/sprites/doren_2/", "name": "Doren"},
+			{"dir": "res://assets/sprites/doren_3/", "name": "Doren"}, {"dir": "res://assets/sprites/doren_4/", "name": "Doren"}]},
 }
-var _is_swordman: bool = false
-var _sword_skin: Dictionary = {}   # vacío = GAROTH
+## Bola de fuego de ELARA: daño a todos en el radio de la explosión.
+const ELARA_FIRE_DAMAGE := 6.0
+const ELARA_FIRE_RADIUS := 30.0
+## Flecha de DOREN: atraviesa a 1 + forma enemigos.
+const DOREN_ARROW_DAMAGE := 4.5
+var _is_swordman: bool = false   # héroe de HERO_CLASSES
+var _hero_class: Dictionary = {}
+var _hero_color: Dictionary = {}
+var _attack_dir: Vector2 = Vector2.DOWN
 var _swordman_tier: int = 1
 var _swordman_facing: String = "front"
 var _swordman_idle: Dictionary = {}
@@ -512,17 +537,19 @@ func _ready() -> void:
 	var skin_id: String = GameState.selected_character_id
 	active_skill = ACTIVE_SKILLS.get(skin_id, ACTIVE_SKILLS["main_char1"])
 	_is_axel = skin_id == "main_char1"
-	_is_swordman = skin_id == "swordman" or SWORD_SKINS.has(skin_id)
-	_sword_skin = SWORD_SKINS.get(skin_id, {})
+	_is_swordman = HERO_CLASSES.has(skin_id)
 	_is_ranged_skin = RANGED_SKINS.has(skin_id)
 	if _is_swordman:
+		_hero_class = HERO_CLASSES[skin_id]
+		var colors: Array = _hero_class["colors"]
+		_hero_color = colors[clampi(GameState.selected_color(skin_id), 0, colors.size() - 1)]
+		_attack_time_mult = float(_hero_class["attack_time"])
 		_sprite.scale = Vector2.ONE * SWORDMAN_SCALE
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_load_swordman_textures()
-		if not _sword_skin.is_empty():
-			max_hp *= float(_sword_skin["hp"])
-			hp = max_hp
-			move_speed *= float(_sword_skin["speed"])
+		max_hp *= float(_hero_class["hp"])
+		hp = max_hp
+		move_speed *= float(_hero_class["speed"])
 	elif _is_axel:
 		_sprite.scale = Vector2.ONE * AXEL_SCALE
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -626,7 +653,8 @@ func _slice_sheet(path: String, frame_size: Vector2, frame_count: int) -> Array[
 ## nivel 18, casi nadie veía la 5 ni la 6.)
 ## Cada evolución cambia de sprites in-place — se siente el poder crecer.
 func _tier_for_level(lvl: int) -> int:
-	return clampi(1 + (lvl - 1) / SWORDMAN_TIER_EVERY, 1, SWORDMAN_MAX_TIER)
+	var every: int = int(_hero_class.get("tier_every", SWORDMAN_TIER_EVERY))
+	return clampi(1 + (lvl - 1) / every, 1, int(_hero_class.get("max_tier", SWORDMAN_MAX_TIER)))
 
 ## Path builder — el folder es INCONSISTENTE entre tiers:
 ## Lvl 1-3 usan prefijo "Swordsman_lvlN_Anim/" (ej Swordsman_lvl1_Idle/)
@@ -634,10 +662,10 @@ func _tier_for_level(lvl: int) -> int:
 ## Los filenames adentro también varían — "attack" es lowercase, el
 ## resto capitalizado. Se maneja acá para no ensuciar el caller.
 func _swordman_path(tier: int, anim: String, direction: String) -> String:
-	# TOREN, BRAN y VAEL: un solo formato de nombre para todas las formas.
-	if not _sword_skin.is_empty():
-		var n: String = _sword_skin["name"]
-		return "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [_sword_skin["dir"], n, tier, anim, n, tier, anim, direction]
+	# Los colores de GAROTH, ELARA y DOREN: un solo formato de nombre.
+	if _hero_color.has("dir"):
+		var n: String = _hero_color["name"]
+		return "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [_hero_color["dir"], n, tier, anim, n, tier, anim, direction]
 	var base := "res://assets/sprites/swordman/Swordsman_lvl%d/" % tier
 	var folder := anim if tier >= 4 else "Swordsman_lvl%d_%s" % [tier, anim]
 	var fname := "Swordsman_lvl%d_%s_%s.png" % [tier, anim if anim != "Attack" else "attack", direction]
@@ -653,7 +681,7 @@ func _load_swordman_textures() -> void:
 	for dir_name in SWORDMAN_DIRS:
 		_swordman_idle[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Idle", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_IDLE_FRAMES)
 		_swordman_run[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Run", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_RUN_FRAMES)
-		_swordman_attack[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Attack", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_ATTACK_FRAMES)
+		_swordman_attack[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Attack", dir_name), SWORDMAN_FRAME_SIZE, int(_hero_class.get("attack_frames", SWORDMAN_ATTACK_FRAMES)))
 		_swordman_hurt[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Hurt", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_HURT_FRAMES)
 		_swordman_death[dir_name] = _slice_sheet(_swordman_path(_swordman_tier, "Death", dir_name), SWORDMAN_FRAME_SIZE, SWORDMAN_DEATH_FRAMES)
 
@@ -886,7 +914,7 @@ func _auto_fire() -> void:
 	# flecha — sino nunca dispararían nada a distancia aunque tengan la
 	# carta.
 	var is_melee_char := _is_axel or _is_swordman or _is_pixel_skin
-	var melee_range: float = SWORDMAN_ATTACK_RANGE if _is_swordman else AXEL_ATTACK_RANGE
+	var melee_range: float = float(_hero_class.get("range", SWORDMAN_ATTACK_RANGE)) if _is_swordman else AXEL_ATTACK_RANGE
 	if _is_pixel_skin:
 		melee_range = float(_pixel["range"])
 	var to_target_dist: float = global_position.distance_to(target.global_position)
@@ -1012,6 +1040,7 @@ func _axel_apply_melee_damage() -> void:
 # ── SWORDMAN: ataque melee con evolución por tier ────────────────
 
 func _start_swordman_attack(to_target: Vector2) -> void:
+	_attack_dir = to_target
 	_swordman_facing = _swordman_dir_from_vec(to_target)
 	_swordman_attacking = true
 	_swordman_attack_elapsed = 0.0
@@ -1022,24 +1051,61 @@ func _start_swordman_attack(to_target: Vector2) -> void:
 ## tier de sprite suma 1.2x más daño — sentís que la evolución te da
 ## mucho más punch, no sólo visual.
 func _update_swordman_attack(delta: float) -> void:
+	# Los cuadros reales de la hoja (GAROTH 7, ELARA 7, DOREN 8).
+	var frames: Array = _swordman_attack.get(_swordman_facing, [])
+	if frames.is_empty():
+		_swordman_attacking = false
+		return
 	_swordman_attack_elapsed += delta
-	var duration: float = AUTO_FIRE_INTERVAL / atk_speed_mult
+	var duration: float = AUTO_FIRE_INTERVAL / atk_speed_mult * _attack_time_mult
 	var t: float = clamp(_swordman_attack_elapsed / duration, 0.0, 1.0)
-	var frame: int = min(int(t * SWORDMAN_ATTACK_FRAMES), SWORDMAN_ATTACK_FRAMES - 1)
-	_sprite.texture = _swordman_attack[_swordman_facing][frame]
-	if not _swordman_hit_applied and frame >= SWORDMAN_ATTACK_HIT_FRAME:
+	var frame: int = mini(int(t * frames.size()), frames.size() - 1)
+	_sprite.texture = frames[frame]
+	if not _swordman_hit_applied and frame >= int(_hero_class.get("hit_frame", SWORDMAN_ATTACK_HIT_FRAME)):
 		_swordman_hit_applied = true
-		_swordman_apply_melee_damage()
+		_hero_attack_release()
 	if t >= 1.0:
 		_swordman_attacking = false
 
-func _swordman_apply_melee_damage() -> void:
-	# Daño extra por forma: forma 1 = x1, forma 9 = x2,2.
-	var tier_mult: float = 1.0 + (_swordman_tier - 1) * SWORDMAN_TIER_DAMAGE
-	var dmg: float = SWORDMAN_MELEE_DAMAGE * damage_mult * tier_mult
-	for body in _attack_area.get_overlapping_bodies():
-		if body.has_method("take_damage"):
-			body.take_damage(dmg, "ataque")
+## El golpe sale: tajo alrededor (GAROTH), bola de fuego (ELARA) o
+## flecha (DOREN). Daño extra por forma: la última pega x2,2.
+func _hero_attack_release() -> void:
+	var tier_mult: float = 1.0 + (_swordman_tier - 1) * float(_hero_class.get("tier_damage", SWORDMAN_TIER_DAMAGE))
+	match _hero_class.get("attack", "melee"):
+		"fireball":
+			_launch_hero_projectile("fireball", _aim_dir(), ELARA_FIRE_DAMAGE * damage_mult * tier_mult)
+		"arrow":
+			_launch_hero_projectile("arrow", _aim_dir(), DOREN_ARROW_DAMAGE * damage_mult * tier_mult)
+		_:
+			var dmg: float = SWORDMAN_MELEE_DAMAGE * damage_mult * tier_mult
+			for body in _attack_area.get_overlapping_bodies():
+				if body.has_method("take_damage"):
+					body.take_damage(dmg, "ataque")
+
+## Hacia dónde sale el proyectil: al enemigo más cercano si sigue en
+## alcance (se pudo mover durante la animación), si no hacia donde se
+## empezó a atacar.
+func _aim_dir() -> Vector2:
+	var target := _nearest_monster()
+	if target != null and global_position.distance_to(target.global_position) <= float(_hero_class.get("range", 200.0)) + 40.0:
+		return (target.global_position - global_position).normalized()
+	return _attack_dir
+
+func _launch_hero_projectile(kind: String, dir: Vector2, dmg: float) -> void:
+	var p := Area2D.new()
+	p.set_script(HERO_PROJECTILE_SCRIPT)
+	p.setup(kind, dir, dmg, _swordman_tier)
+	if kind == "fireball":
+		p.radius = ELARA_FIRE_RADIUS * area_mult
+		p.speed = 240.0
+		p.max_dist = float(_hero_class["range"]) + 30.0
+	else:
+		p.pierce = 1 + _swordman_tier
+		p.speed = 520.0
+		p.max_dist = float(_hero_class["range"]) + 120.0
+	get_tree().current_scene.add_child(p)
+	# Sale de la mano / del bastón, no de los pies.
+	p.global_position = global_position + dir * 14.0 + Vector2(0, -6)
 
 # ── EDRIC / SIRA: ataque en 8 direcciones ───────────────────────
 
@@ -1437,8 +1503,14 @@ func use_active_skill() -> void:
 			_invuln_t = maxf(_invuln_t, 1.0)
 			Audio.play_sfx("sword_swing", global_position)
 		"volley":
+			var fire: bool = _hero_class.get("attack", "") == "fireball"
 			for i in range(VOLLEY_ARROWS):
-				_fire_single_shot(Vector2.RIGHT.rotated(TAU * i / VOLLEY_ARROWS), 1.5)
+				var d := Vector2.RIGHT.rotated(TAU * i / VOLLEY_ARROWS)
+				if fire:
+					var tier_mult: float = 1.0 + (_swordman_tier - 1) * float(_hero_class["tier_damage"])
+					_launch_hero_projectile("fireball", d, ELARA_FIRE_DAMAGE * damage_mult * tier_mult * 1.5)
+				else:
+					_fire_single_shot(d, 1.5)
 			Audio.play_sfx("meteor_whoosh", global_position)
 		"shield":
 			_invuln_t = maxf(_invuln_t, 2.0)

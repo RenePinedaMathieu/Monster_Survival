@@ -315,30 +315,31 @@ static func _slice(path: String, frame: Vector2, max_frames: int = 64) -> Array:
 # ── HÉROES ───────────────────────────────────────────────────────
 
 func _build_heroes() -> void:
-	_hint.text = "Escala real del juego (x1). GAROTH, TOREN, BRAN y VAEL tienen 6 formas y todas sus animaciones. AXEL, KAY, LINA, EDRIC y SIRA están fuera del juego."
+	_hint.text = "Escala real del juego (x1). GAROTH (9 formas), ELARA (6) y DOREN (3), cada uno en sus 4 colores. AXEL, KAY, LINA, EDRIC y SIRA están fuera del juego."
 	var anim_name: String = ANIMS[_anim]
 	var label: String = ANIM_NAMES[_anim]
 	var skills: Dictionary = Player.ACTIVE_SKILLS
-	# GAROTH, sus 6 formas.
+	# GAROTH, ELARA y DOREN: todas sus formas en sus 4 colores.
 	var sw_dir: String = ["front", "back", "side_left", "side_right"][_dir]
-	for tier in range(1, Player.SWORDMAN_MAX_TIER + 1):
-		var anim_folder: String = {"idle": "Idle", "run": "Run", "attack": "Attack", "hurt": "Hurt", "death": "Death"}[anim_name]
-		var path := _swordman_path(tier, anim_folder, sw_dir)
-		var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
-		_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "GAROTH · forma %d" % tier, "ESTÁNDAR", COLOR_SPRITE,
-			[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
-			"Habilidad: " + skills["swordman"]["name"]])
-	# TOREN, BRAN y VAEL: GAROTH recoloreado, también en 6 formas.
-	for sid in Player.SWORD_SKINS:
-		var sk: Dictionary = Player.SWORD_SKINS[sid]
-		for tier in range(1, Player.SWORDMAN_MAX_TIER + 1):
-			var anim_folder: String = {"idle": "Idle", "run": "Run", "attack": "Attack", "hurt": "Hurt", "death": "Death"}[anim_name]
-			var n: String = sk["name"]
-			var path: String = "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [sk["dir"], n, tier, anim_folder, n, tier, anim_folder, sw_dir]
-			var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
-			_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "%s · forma %d" % [GameState.CHARACTER_NAMES.get(sid, sid), tier], "GAROTH RECOLOREADO", COLOR_SPRITE,
-				[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
-				"Habilidad: " + skills[sid]["name"]])
+	var anim_folder: String = {"idle": "Idle", "run": "Run", "attack": "Attack", "hurt": "Hurt", "death": "Death"}[anim_name]
+	for hero_id in Player.HERO_CLASSES:
+		var hc: Dictionary = Player.HERO_CLASSES[hero_id]
+		var entry: Dictionary = CharSelect.find_character(hero_id)
+		for ci in range(hc["colors"].size()):
+			var col: Dictionary = hc["colors"][ci]
+			var color_name: String = entry["colors"][ci]["color"] if ci < entry.get("colors", []).size() else str(ci + 1)
+			for tier in range(1, int(hc["max_tier"]) + 1):
+				var path: String
+				if col.has("dir"):
+					var n: String = col["name"]
+					path = "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [col["dir"], n, tier, anim_folder, n, tier, anim_folder, sw_dir]
+				else:
+					path = _swordman_path(tier, anim_folder, sw_dir)
+				var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
+				_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "%s %s · forma %d" % [entry.get("name", hero_id), color_name, tier],
+					"ESTÁNDAR" if ci == 0 else "COLOR %d" % (ci + 1), COLOR_SPRITE,
+					[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
+					"Habilidad: " + skills[hero_id]["name"] + (" · se gana: " + GameState.color_unlock_hint(hero_id, ci) if ci > 0 else "")])
 	# AXEL (el pack no trae golpe ni muerte), fuera del juego desde el 29-09.
 	var ax_dir: String = Player.AXEL_DIRS[_dir]
 	var ax_folder: String = {"idle": "IDLE/idle_%s.png", "run": "RUN/run_%s.png", "attack": "ATTACK 1/attack1_%s.png"}.get(anim_name, "")
@@ -368,12 +369,15 @@ func _build_heroes() -> void:
 	# Retratos de la selección de personaje.
 	# "portrait_pending": el retrato es el sprite ampliado mientras falta
 	# la ilustración al estilo de la de GAROTH.
-	for c in CharSelect.CHARACTERS:
-		if c.get("portrait_pending", false):
-			_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"], "RETRATO PENDIENTE", COLOR_SHARED,
-				[_short(c["portrait"]), "Hoy: sprite ampliado. Falta una ilustración al estilo de la de GAROTH."])
-		else:
-			_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), "Retrato · " + c["name"], "ILUSTRACIÓN", COLOR_ICON, [_short(c["portrait"])])
+	for base in CharSelect.CHARACTERS:
+		for ci in range(base.get("colors", [{}]).size()):
+			var c: Dictionary = CharSelect.colored(base, ci)
+			var title: String = "Retrato · %s %s" % [c["name"], c.get("color", "")]
+			if c.get("portrait_pending", false):
+				_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), title, "RETRATO PENDIENTE", COLOR_SHARED,
+					[_short(c["portrait"]), "Hoy: sprite ampliado. Falta una ilustración al estilo de la de GAROTH."])
+			else:
+				_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), title, "ILUSTRACIÓN", COLOR_ICON, [_short(c["portrait"])])
 	# EDRIC, SIRA y el lobo: arte anterior, fuera del juego hasta tener
 	# sprites al estilo de GAROTH (se muestran a su escala de antes, x0.5).
 	var px_dir: String = ["south", "north", "west", "east"][_dir]

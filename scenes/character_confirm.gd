@@ -30,6 +30,14 @@ const STAT_MAX := 5
 @onready var _confirm_button: Button = $Layout/Right/Buttons/ConfirmButton
 @onready var _back_button: Button = $Layout/Right/Buttons/BackButton
 
+## Selector de color bajo el retrato (sólo cambia el look). Los colores
+## 2 a 4 se ganan ganando la Pradera, el Desierto y el Pantano con ese
+## héroe (GameState.COLOR_MAPS); bloqueado se ve en silueta con la pista.
+var _color_idx: int = 0
+var _color_label: Label
+var _color_hint: Label
+var _color_dots: HBoxContainer
+
 func _ready() -> void:
 	var data: Dictionary = GameState.pending_character
 	if data.is_empty():
@@ -62,6 +70,7 @@ func _ready() -> void:
 		_blurb_label.add_sibling(skill_label)
 
 	_build_stats(data.get("stats", {}))
+	_build_color_picker(data)
 
 	for b in [_confirm_button, _back_button]:
 		RpgTheme.style_button(b, 20)
@@ -90,14 +99,17 @@ func _apply_layout(compact: bool) -> void:
 	layout.offset_right = -margin
 	layout.offset_top = 16.0 if compact else 40.0
 	layout.offset_bottom = -16.0 if compact else -40.0
+	# Con el selector de color abajo, el retrato es más bajo para que todo
+	# entre en la altura de la pantalla.
+	var picker: bool = _color_label != null
 	if compact:
-		var ph: float = clampf(vp.y * 0.34, 200.0, 420.0)
+		var ph: float = clampf(vp.y * (0.28 if picker else 0.34), 200.0, 420.0)
 		_portrait.custom_minimum_size = Vector2(ph * 0.68, ph)
 		right.custom_minimum_size = Vector2(0, 0)
 		right.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	else:
-		_portrait.custom_minimum_size = Vector2(380, 560)
+		_portrait.custom_minimum_size = Vector2(330, 470) if picker else Vector2(380, 560)
 		right.custom_minimum_size = Vector2(460, 0)
 		right.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -106,6 +118,86 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_on_back()
 		get_viewport().set_input_as_handled()
+
+## Izquierda/derecha cambian de color (antes que la navegación de foco
+## entre JUGAR y VOLVER, que no hace falta: Esc vuelve).
+func _input(event: InputEvent) -> void:
+	if _color_label == null:
+		return
+	if event.is_action_pressed("ui_left"):
+		_step_color(-1)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_right"):
+		_step_color(1)
+		get_viewport().set_input_as_handled()
+
+func _build_color_picker(data: Dictionary) -> void:
+	var colors: Array = data.get("colors", [])
+	if colors.size() <= 1:
+		return
+	_color_idx = int(data.get("color_index", 0))
+	# El retrato queda arriba y el selector abajo (Left centraba sólo el marco).
+	var left: Control = $Layout/Left
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	left.add_child(col)
+	_portrait_frame.reparent(col)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	col.add_child(row)
+	for step in [-1, 1]:
+		var b := Button.new()
+		b.text = "<" if step < 0 else ">"
+		b.focus_mode = Control.FOCUS_NONE
+		b.custom_minimum_size = Vector2(44, 40)
+		RpgTheme.style_button(b, 18)
+		b.pressed.connect(_step_color.bind(step))
+		row.add_child(b)
+		if step < 0:
+			_color_label = Label.new()
+			_color_label.custom_minimum_size = Vector2(150, 0)
+			_color_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			RpgTheme.style_light_label(_color_label, 20)
+			row.add_child(_color_label)
+	_color_dots = HBoxContainer.new()
+	_color_dots.alignment = BoxContainer.ALIGNMENT_CENTER
+	_color_dots.add_theme_constant_override("separation", 8)
+	col.add_child(_color_dots)
+	for i in range(colors.size()):
+		var dot := ColorRect.new()
+		dot.custom_minimum_size = Vector2(14, 14)
+		_color_dots.add_child(dot)
+	_color_hint = Label.new()
+	_color_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	RpgTheme.style_light_label(_color_hint, 15)
+	col.add_child(_color_hint)
+	_show_color()
+
+func _step_color(step: int) -> void:
+	var n: int = GameState.pending_character.get("colors", []).size()
+	if n <= 1:
+		return
+	_color_idx = (_color_idx + step + n) % n
+	Audio.play_sfx("ui_click")
+	_show_color()
+
+func _show_color() -> void:
+	var hero_id: String = GameState.pending_character["id"]
+	var data: Dictionary = SELECT_SCRIPT.colored(GameState.pending_character, _color_idx)
+	var unlocked: bool = GameState.is_color_unlocked(hero_id, _color_idx)
+	_portrait.texture = SELECT_SCRIPT.portrait_texture(data)
+	_portrait.modulate = Color.WHITE if unlocked else Color(0.05, 0.05, 0.08, 0.9)
+	_color_label.text = data.get("color", "")
+	_color_hint.text = "" if unlocked else "Bloqueado: " + GameState.color_unlock_hint(hero_id, _color_idx)
+	for i in range(_color_dots.get_child_count()):
+		var dot: ColorRect = _color_dots.get_child(i)
+		var have: bool = GameState.is_color_unlocked(hero_id, i)
+		dot.color = (Color("f2d16b") if i == _color_idx else Color("e8dcc0")) if have else Color(0.25, 0.22, 0.2)
+	_confirm_button.disabled = not unlocked
+	if unlocked:
+		GameState.set_selected_color(hero_id, _color_idx)
+		GameState.pending_character = data
 
 func _build_stats(stats: Dictionary) -> void:
 	for stat_name in stats:

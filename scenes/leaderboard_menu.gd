@@ -51,6 +51,10 @@ func _ready() -> void:
 	$Background.texture = load(BACKGROUND_TEXTURE)
 	for c in SELECT_SCRIPT.CHARACTERS + SELECT_SCRIPT.PENDING_CHARACTERS:
 		_hero_names[c["id"]] = String(c.get("name", c["id"])).capitalize()
+	# Héroes que ya no existen (TOREN, BRAN y VAEL pasaron a ser colores).
+	for id in GameState.CHARACTER_NAMES:
+		if not _hero_names.has(id):
+			_hero_names[id] = String(GameState.CHARACTER_NAMES[id]).capitalize()
 	_window.add_theme_stylebox_override("panel", RpgTheme.window_box())
 	RpgTheme.style_light_label(_title, 26)
 	RpgTheme.style_ink_label(_hint, 14, false, true)

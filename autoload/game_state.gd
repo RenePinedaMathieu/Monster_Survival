@@ -260,7 +260,7 @@ const ACHIEVEMENTS: Array = [
 	{"id": "hard_win",    "name": "Pesadilla",        "desc": "Gana en dificultad Difícil",         "stat": "hard_wins",  "goal": 1,     "reward": {"coins": 1000}},
 	{"id": "wave_30",     "name": "Más allá",         "desc": "Supera la oleada 30 en cualquier mapa", "stat": "challenge_wins", "goal": 1, "reward": {"coins": 1500}},
 	{"id": "evo_7",       "name": "Coleccionista",    "desc": "Descubre las 7 evoluciones",         "stat": "evolutions", "goal": 7,     "reward": {"coins": 2000}},
-	{"id": "heroes_4",    "name": "Todos para uno",   "desc": "Gana con 4 héroes distintos",        "stat": "hero_wins",  "goal": 4,     "reward": {"coins": 1250}},
+	{"id": "heroes_4",    "name": "Todos para uno",   "desc": "Gana con los 3 héroes",              "stat": "hero_wins",  "goal": 3,     "reward": {"coins": 1250}},
 	{"id": "companion_5", "name": "Granjero",         "desc": "Sube un acompañante a nivel 5",      "stat": "companion_max", "goal": 5,  "reward": {"coins": 1000}},
 	{"id": "kills_10000", "name": "Leyenda",          "desc": "Derrota 10.000 enemigos",            "stat": "kills",      "goal": 10000, "reward": {"coins": 1500}},
 ]
@@ -349,11 +349,51 @@ const CHARACTER_NAMES: Dictionary = {
 	"main_char1": "AXEL", "main_char2": "KAY", "main_char2_female": "LINA",
 	"swordman": "GAROTH", "edric": "EDRIC", "sira": "SIRA",
 	"toren": "TOREN", "bran": "BRAN", "vael": "VAEL",
+	"elara": "ELARA", "doren": "DOREN",
 }
 const MAP_NAMES: Dictionary = {"pradera": "Pradera", "pantano": "Pantano", "desierto": "Desierto"}
 
 func is_character_unlocked(id: String) -> bool:
 	return id in unlocked_characters
+
+# ── Colores de los héroes ────────────────────────────────────────
+## Sólo cambian el look (player.gd HERO_CLASSES, character_select.gd).
+## El 0 viene de base; el 1, 2 y 3 se ganan ganando la Pradera, el
+## Desierto y el Pantano con ese héroe (cualquier dificultad; el reto
+## diario y los desafíos no cuentan).
+const COLOR_MAPS: Array = ["", "pradera", "desierto", "pantano"]
+const MAP_NAMES_WITH_ARTICLE: Dictionary = {"pradera": "la Pradera", "desierto": "el Desierto", "pantano": "el Pantano"}
+var hero_colors: Dictionary = {}       # héroe -> índices de colores ganados
+var selected_colors: Dictionary = {}   # héroe -> color elegido
+## Color ganado en la partida que terminó (para los resultados), o {}.
+var run_new_color: Dictionary = {}
+
+func is_color_unlocked(hero_id: String, idx: int) -> bool:
+	return idx == 0 or idx in hero_colors.get(hero_id, [])
+
+func selected_color(hero_id: String) -> int:
+	var idx: int = int(selected_colors.get(hero_id, 0))
+	return idx if is_color_unlocked(hero_id, idx) else 0
+
+func set_selected_color(hero_id: String, idx: int) -> void:
+	if is_color_unlocked(hero_id, idx) and int(selected_colors.get(hero_id, -1)) != idx:
+		selected_colors[hero_id] = idx
+		_save()
+
+## true si el color era nuevo.
+func unlock_color(hero_id: String, idx: int) -> bool:
+	if is_color_unlocked(hero_id, idx):
+		return false
+	var list: Array = hero_colors.get(hero_id, []).duplicate()
+	list.append(idx)
+	list.sort()
+	hero_colors[hero_id] = list
+	return true
+
+func color_unlock_hint(hero_id: String, idx: int) -> String:
+	if idx <= 0 or idx >= COLOR_MAPS.size():
+		return ""
+	return "gana en %s con %s" % [MAP_NAMES_WITH_ARTICLE.get(COLOR_MAPS[idx], COLOR_MAPS[idx]), CHARACTER_NAMES.get(hero_id, hero_id)]
 
 ## Qué logro o desafío desbloquea a un personaje (para el candado).
 func unlock_hint_for_character(id: String) -> String:
@@ -384,6 +424,9 @@ func report_win(hero_id: String, map_id: String, difficulty: String) -> void:
 	stats["hero_wins"] = heroes
 	if difficulty != "normal":
 		stats["hard_wins"] = int(stats.get("hard_wins", 0)) + 1
+	var color_idx: int = COLOR_MAPS.find(map_id)
+	if color_idx > 0 and unlock_color(hero_id, color_idx):
+		run_new_color = {"hero": hero_id, "index": color_idx}
 	check_achievements()
 	_save()
 
@@ -396,7 +439,7 @@ func report_win(hero_id: String, map_id: String, difficulty: String) -> void:
 
 const DAILY_WAVES := 10
 ## Sólo héroes del juego (AXEL, KAY y LINA salieron el 29-09-2026).
-const DAILY_HEROES: Array = ["swordman", "toren", "bran", "vael"]
+const DAILY_HEROES: Array = ["swordman", "elara", "doren"]
 const DAILY_MODIFIERS: Dictionary = {
 	"elites":   {"name": "Noche de élites", "desc": "Cada oleada trae 2 élites (y 2 cofres)"},
 	"veloces":  {"name": "Frenesí", "desc": "Los monstruos son 30% más rápidos"},
@@ -434,22 +477,22 @@ func daily_modifier() -> String:
 ## Partidas cortas con reglas fijas: los modificadores del reto diario,
 ## combinados, en un mapa dado (se juega aunque no lo tengas) y con el
 ## héroe que elijas. Ganar uno da su premio una sola vez: los héroes
-## TOREN, BRAN y VAEL o cartas nuevas (upgrades.gd LOCKED_CARDS). No
+## ELARA y DOREN, cartas nuevas (upgrades.gd LOCKED_CARDS) o monedas. No
 ## suben al ranking ni cuentan como victoria del mapa (como el reto
 ## diario).
 const TRIALS: Array = [
 	{"id": "cristal", "name": "Cañón de cristal", "map": "pradera", "waves": 10, "mods": ["cristal"],
-		"reward": {"character": "toren"}},
+		"reward": {"character": "elara"}},
 	{"id": "frenesi", "name": "Frenesí", "map": "desierto", "waves": 10, "mods": ["veloces"],
 		"reward": {"cards": ["haste", "precision"]}},
 	{"id": "horda", "name": "La horda", "map": "pantano", "waves": 10, "mods": ["horda"],
-		"reward": {"character": "bran"}},
+		"reward": {"character": "doren"}},
 	{"id": "elites", "name": "Noche de élites", "map": "desierto", "waves": 12, "mods": ["elites", "veloces"],
 		"reward": {"cards": ["toughness", "bloodthirst"]}},
 	{"id": "fuego", "name": "Lluvia de fuego", "map": "pantano", "waves": 12, "mods": ["meteoros", "horda"],
 		"reward": {"cards": ["area", "duration"]}},
 	{"id": "ultimo", "name": "El último héroe", "map": "pradera", "waves": 15, "mods": ["cristal", "elites", "veloces"],
-		"reward": {"character": "vael"}},
+		"reward": {"coins": 1500}},
 ]
 
 ## Id del desafío en juego ("" = ninguno). Lo prende trials_menu y lo
@@ -644,6 +687,13 @@ func _load() -> void:
 		if not ("swordman" in unlocked_characters):
 			unlocked_characters.append("swordman")
 		unlocked_characters.erase("chicken")
+		hero_colors = cfg.get_value("progress", "hero_colors", {})
+		selected_colors = cfg.get_value("progress", "selected_colors", {})
+		# TOREN, BRAN y VAEL pasaron a ser colores de GAROTH (el 2, 3 y 4).
+		for old in ["toren", "bran", "vael"]:
+			if old in unlocked_characters:
+				unlock_color("swordman", ["toren", "bran", "vael"].find(old) + 1)
+				unlocked_characters.erase(old)
 		unlocked_maps = cfg.get_value("progress", "unlocked_maps", DEFAULT_MAPS.duplicate())
 		# Migracion: Desierto ahora es la segunda etapa y corresponde a
 		# quienes ya obtuvieron el logro de una victoria.
@@ -651,6 +701,11 @@ func _load() -> void:
 			unlocked_maps.append("desierto")
 		player_name = cfg.get_value("progress", "player_name", "")
 		trials_cleared = cfg.get_value("progress", "trials_cleared", [])
+		# Los desafíos que daban a TOREN y BRAN ahora dan a ELARA y DOREN:
+		# quien ya los superó los recibe.
+		for t in TRIALS:
+			if t["id"] in trials_cleared and t["reward"].has("character") and not (t["reward"]["character"] in unlocked_characters):
+				unlocked_characters.append(t["reward"]["character"])
 		unlocked_cards = cfg.get_value("progress", "unlocked_cards", [])
 		daily_best = cfg.get_value("progress", "daily_best", {})
 		# Partidas guardadas de antes de los logros: si ya tenías el récord
@@ -672,6 +727,8 @@ func _save() -> void:
 	cfg.set_value("progress", "stats", stats)
 	cfg.set_value("progress", "achievements_unlocked", achievements_unlocked)
 	cfg.set_value("progress", "unlocked_characters", unlocked_characters)
+	cfg.set_value("progress", "hero_colors", hero_colors)
+	cfg.set_value("progress", "selected_colors", selected_colors)
 	cfg.set_value("progress", "unlocked_maps", unlocked_maps)
 	cfg.set_value("progress", "player_name", player_name)
 	cfg.set_value("progress", "trials_cleared", trials_cleared)
@@ -709,6 +766,7 @@ var run_stats: Dictionary = {}
 
 func start_run() -> void:
 	run_currency = 0
+	run_new_color = {}
 	run_new_achievements.clear()
 	_compute_run_bonuses()
 	run_stats = {"damage": {}, "kills": {}, "total_kills": 0, "bosses": 0}

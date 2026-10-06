@@ -559,6 +559,13 @@ func _show_results(victory: bool, score: int) -> void:
 		victory and not _challenge and not special_run, score if GameState.daily_active else -1)
 	if not _trial_reward.is_empty():
 		results.add_highlight(tr("¡DESAFÍO SUPERADO! ") + GameState.reward_text(_trial_reward))
+	# Ganar un mapa con un héroe le da un color nuevo (GameState.COLOR_MAPS).
+	if not GameState.run_new_color.is_empty():
+		var nc: Dictionary = GameState.run_new_color
+		var base: Dictionary = CharSelect.find_character(nc["hero"])
+		var colors: Array = base.get("colors", [])
+		if int(nc["index"]) < colors.size():
+			results.add_highlight(tr("¡NUEVO COLOR PARA %s: %s! Elígelo antes de jugar") % [base.get("name", ""), tr(String(colors[nc["index"]]["color"])).to_upper()])
 	if _new_legend != "":
 		var skill: Dictionary = GameState.SKILL_TREE[_new_legend]
 		results.add_highlight(tr("¡HABILIDAD LEGENDARIA: %s! %s (ya tienes el nivel 1, mejórala en la tienda)") % [tr(skill["name"]).to_upper(), tr(skill["desc"])])
