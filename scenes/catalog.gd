@@ -4,8 +4,11 @@ extends Control
 ## lugar para revisar que sea coherente — sirve de guía para los juegos
 ## que salgan de este universo (tower defense, por turnos, artillería).
 ##
-##   HÉROES / MONSTRUOS / ACOMPAÑANTES  todas las animaciones y
-##       direcciones, A LA ESCALA DEL JUEGO (para comparar tamaños).
+##   HÉROES  GAROTH, ELARA y DOREN: sus colores (con cómo se ganan),
+##       sus formas, su ataque y habilidad, y los poderes que le pueden
+##       salir a cada uno (upgrades.gd CLASS_WEAPONS) con su evolución.
+##   MONSTRUOS / ACOMPAÑANTES  todas las animaciones y direcciones,
+##       A LA ESCALA DEL JUEGO (para comparar tamaños).
 ##   ARMAS Y CARTAS / HABILIDADES Y TIENDA / OBJETOS  el ícono o sprite
 ##       asignado a cada cosa.
 ##   EFECTOS  cada arma y efecto reproducido en vivo contra muñecos.
@@ -71,7 +74,14 @@ var _dir_buttons: Array = []
 var _zoom_label: Label
 var _bg_button: Button
 var _scroll: ScrollContainer
-var _grid: GridContainer
+## Secciones una debajo de otra (_section), cada una con sus fichas en
+## una fila que se acomoda al ancho.
+var _list: VBoxContainer
+var _flow: HFlowContainer
+## Forma que muestran las fichas de colores de HÉROES.
+var _tier: int = 1
+var _tier_label: Label
+var _tier_box: HBoxContainer
 var _hint: Label
 
 func _ready() -> void:
@@ -143,16 +153,26 @@ func _ready() -> void:
 		var b := _button(DIR_NAMES[i], 13, _set_dir.bind(i))
 		_dir_buttons.append(b)
 		_anim_bar.add_child(b)
+	_tier_box = HBoxContainer.new()
+	_tier_box.add_theme_constant_override("separation", 6)
+	var sep2 := Control.new()
+	sep2.custom_minimum_size.x = 24.0
+	_tier_box.add_child(sep2)
+	_tier_box.add_child(_button("−", 13, func(): _set_tier(_tier - 1), 34.0))
+	_tier_label = Label.new()
+	RpgTheme.style_light_label(_tier_label, 14)
+	_tier_box.add_child(_tier_label)
+	_tier_box.add_child(_button("+", 13, func(): _set_tier(_tier + 1), 34.0))
+	_anim_bar.add_child(_tier_box)
 
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(_scroll)
-	_grid = GridContainer.new()
-	_grid.add_theme_constant_override("h_separation", 10)
-	_grid.add_theme_constant_override("v_separation", 10)
-	_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_scroll.add_child(_grid)
+	_list = VBoxContainer.new()
+	_list.add_theme_constant_override("separation", 10)
+	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(_list)
 
 	_set_zoom(_zoom)
 
@@ -181,12 +201,16 @@ func _set_dir(i: int) -> void:
 	_dir = i
 	_rebuild()
 
+func _set_tier(t: int) -> void:
+	_tier = clampi(t, 1, 9)
+	_rebuild()
+
 func _select_cat(i: int) -> void:
 	_cat = i
 	_rebuild()
 
 func _rebuild() -> void:
-	if _grid == null:
+	if _list == null:
 		return
 	if _cat == Cat.EFFECTS:
 		get_tree().change_scene_to_file(EFFECTS_SCENE)
@@ -194,9 +218,10 @@ func _rebuild() -> void:
 	if _cat == Cat.MAPS:
 		get_tree().change_scene_to_file(MAPS_SCENE)
 		return
-	for c in _grid.get_children():
-		_grid.remove_child(c)
+	for c in _list.get_children():
+		_list.remove_child(c)
 		c.queue_free()
+	_new_flow()
 	for i in range(_cat_buttons.size()):
 		RpgTheme.style_tab(_cat_buttons[i], i == _cat, 14)
 	var animated: bool = _cat in [Cat.HEROES, Cat.MONSTERS, Cat.COMPANIONS]
@@ -206,8 +231,8 @@ func _rebuild() -> void:
 		_anim_buttons[i].visible = _cat != Cat.COMPANIONS or i < 2
 	for i in range(_dir_buttons.size()):
 		RpgTheme.style_tab(_dir_buttons[i], i == _dir, 13)
-	var card_w: float = _card_width()
-	_grid.columns = maxi(1, int((size.x - 40.0) / (card_w + 10.0)))
+	_tier_box.visible = _cat == Cat.HEROES
+	_tier_label.text = "FORMA %d" % _tier
 	match _cat:
 		Cat.HEROES: _build_heroes()
 		Cat.MONSTERS: _build_monsters()
@@ -255,12 +280,37 @@ func _card(preview: Control, title: String, tag: String, tag_color: Color, lines
 	for line in lines:
 		var l := Label.new()
 		l.text = str(line)
-		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		# Las rutas se cortan en cualquier letra; el texto, por palabras.
+		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY if "/" in l.text else TextServer.AUTOWRAP_WORD_SMART
 		RpgTheme.style_light_label(l, 11)
 		l.modulate.a = 0.8
 		box.add_child(l)
-	_grid.add_child(card)
+	_flow.add_child(card)
 	return card
+
+func _new_flow() -> void:
+	_flow = HFlowContainer.new()
+	_flow.add_theme_constant_override("h_separation", 10)
+	_flow.add_theme_constant_override("v_separation", 10)
+	_flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_list.add_child(_flow)
+
+## Título de sección (y una línea de detalle); las fichas que siguen van
+## debajo de él.
+func _section(title: String, detail: String = "", size: int = 20) -> void:
+	var t := Label.new()
+	t.text = title
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	RpgTheme.style_light_label(t, size)
+	_list.add_child(t)
+	if detail != "":
+		var d := Label.new()
+		d.text = detail
+		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		RpgTheme.style_light_label(d, 13)
+		d.modulate.a = 0.85
+		_list.add_child(d)
+	_new_flow()
 
 ## Caja con un sprite animado a escala de juego x zoom.
 func _anim_preview(frames: Array, game_scale: float, fps: float = 8.0, box_px: float = 0.0) -> Control:
@@ -314,98 +364,107 @@ static func _slice(path: String, frame: Vector2, max_frames: int = 64) -> Array:
 
 # ── HÉROES ───────────────────────────────────────────────────────
 
+## Ataque base de cada clase, para la ficha (los números son los de
+## player.gd, sin mejoras).
+const ATTACK_TEXT := {
+	"melee": "Tajo alrededor · daño %d · alcance %d",
+	"fireball": "Bola de fuego que explota en área · daño %d · alcance %d",
+	"arrow": "Flecha que atraviesa · daño %d · alcance %d",
+}
+
 func _build_heroes() -> void:
-	_hint.text = "Escala real del juego (x1). GAROTH (9 formas), ELARA (6) y DOREN (3), cada uno en sus 4 colores. AXEL, KAY, LINA, EDRIC y SIRA están fuera del juego."
+	_hint.text = "Escala real del juego (x1). Por héroe: sus 4 colores en la FORMA elegida (y cómo se gana cada uno), todas sus formas y los poderes que le pueden salir al subir de nivel. Las pasivas son de todos."
 	var anim_name: String = ANIMS[_anim]
-	var label: String = ANIM_NAMES[_anim]
-	var skills: Dictionary = Player.ACTIVE_SKILLS
-	# GAROTH, ELARA y DOREN: todas sus formas en sus 4 colores.
 	var sw_dir: String = ["front", "back", "side_left", "side_right"][_dir]
 	var anim_folder: String = {"idle": "Idle", "run": "Run", "attack": "Attack", "hurt": "Hurt", "death": "Death"}[anim_name]
 	for hero_id in Player.HERO_CLASSES:
 		var hc: Dictionary = Player.HERO_CLASSES[hero_id]
 		var entry: Dictionary = CharSelect.find_character(hero_id)
+		var skill: Dictionary = Player.ACTIVE_SKILLS[hero_id]
+		var dmg: float = {"melee": Player.SWORDMAN_MELEE_DAMAGE, "fireball": Player.ELARA_FIRE_DAMAGE, "arrow": Player.DOREN_ARROW_DAMAGE}[hc["attack"]]
+		var detail: String = "Ataque: " + ATTACK_TEXT[hc["attack"]] % [int(dmg), int(hc["range"])]
+		detail += "\nHabilidad: %s (cada %.1f s) — %s" % [skill["name"], skill["cooldown"], skill.get("desc", "")]
+		detail += "\nVida x%.2f · velocidad x%.2f · %d formas (una cada %d niveles, +%d%% de daño cada una)" % [
+			hc["hp"], hc["speed"], hc["max_tier"], hc["tier_every"], int(hc["tier_damage"] * 100.0)]
+		_section("%s · %s" % [entry["name"], entry.get("role", "")], detail, 22)
+		# Colores: el sprite en la forma elegida y su retrato.
+		var tier: int = mini(_tier, int(hc["max_tier"]))
 		for ci in range(hc["colors"].size()):
-			var col: Dictionary = hc["colors"][ci]
-			var color_name: String = entry["colors"][ci]["color"] if ci < entry.get("colors", []).size() else str(ci + 1)
-			for tier in range(1, int(hc["max_tier"]) + 1):
-				var path: String
-				if col.has("dir"):
-					var n: String = col["name"]
-					path = "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [col["dir"], n, tier, anim_folder, n, tier, anim_folder, sw_dir]
-				else:
-					path = _swordman_path(tier, anim_folder, sw_dir)
-				var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
-				_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "%s %s · forma %d" % [entry.get("name", hero_id), color_name, tier],
-					"ESTÁNDAR" if ci == 0 else "COLOR %d" % (ci + 1), COLOR_SPRITE,
-					[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y],
-					"Habilidad: " + skills[hero_id]["name"] + (" · se gana: " + GameState.color_unlock_hint(hero_id, ci) if ci > 0 else "")])
-	# AXEL (el pack no trae golpe ni muerte), fuera del juego desde el 29-09.
-	var ax_dir: String = Player.AXEL_DIRS[_dir]
-	var ax_folder: String = {"idle": "IDLE/idle_%s.png", "run": "RUN/run_%s.png", "attack": "ATTACK 1/attack1_%s.png"}.get(anim_name, "")
-	if ax_folder == "":
-		_card(null, "AXEL", "SIN animación '%s'" % label, COLOR_SHARED, ["El pack no la trae: hay que dibujarla"])
-	else:
-		var ax_path: String = Player.AXEL_BASE_PATH + ax_folder % ax_dir
-		var ax_frames := _slice(ax_path, Player.AXEL_FRAME_SIZE, Player.AXEL_FRAME_COUNT)
-		_card(_anim_preview(ax_frames, Player.AXEL_SCALE), "AXEL", "FUERA DEL JUEGO", COLOR_SHARED,
-			[_short(ax_path), "%d cuadros de %dx%d" % [ax_frames.size(), Player.AXEL_FRAME_SIZE.x, Player.AXEL_FRAME_SIZE.y],
-			"Habilidad: " + skills["main_char1"]["name"]])
-	# KAY y LINA (6 direcciones: sin izquierda/derecha puras), fuera del
-	# juego desde el 29-09 (los reemplazan TOREN, BRAN y VAEL).
-	for id in ["main_char2", "main_char2_female"]:
-		var data: Dictionary = Player.RANGED_SKINS[id]
-		var key: String = ["down", "up", "left_down", "right_down"][_dir]
-		var files: Dictionary = {"idle": data["idle_files"], "run": data["run_files"], "death": data.get("death_files", {})}.get(anim_name, {})
-		if files.is_empty():
-			_card(null, GameState.CHARACTER_NAMES.get(id, id), "SIN animación '%s'" % label, COLOR_SHARED,
-				["El pack no la trae" + (" (dispara quieto)" if anim_name == "attack" else "")])
-			continue
-		var path: String = data["base_path"] + files[key]
-		var frames := _slice(path, Player.RANGED_FRAME_SIZE, Player.RANGED_FRAME_COUNT)
-		_card(_anim_preview(frames, Player.RANGED_SCALE), GameState.CHARACTER_NAMES.get(id, id), "FUERA DEL JUEGO", COLOR_SHARED,
-			[_short(path), "%d cuadros de %dx%d" % [frames.size(), Player.RANGED_FRAME_SIZE.x, Player.RANGED_FRAME_SIZE.y],
-			"Habilidad: " + skills[id]["name"]])
-	# Retratos de la selección de personaje.
-	# "portrait_pending": el retrato es el sprite ampliado mientras falta
-	# la ilustración al estilo de la de GAROTH.
-	for base in CharSelect.CHARACTERS:
-		for ci in range(base.get("colors", [{}]).size()):
-			var c: Dictionary = CharSelect.colored(base, ci)
-			var title: String = "Retrato · %s %s" % [c["name"], c.get("color", "")]
-			if c.get("portrait_pending", false):
-				_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), title, "RETRATO PENDIENTE", COLOR_SHARED,
-					[_short(c["portrait"]), "Hoy: sprite ampliado. Falta una ilustración al estilo de la de GAROTH."])
-			else:
-				_card(_icon_preview(CharSelect.portrait_texture(c), 150.0), title, "ILUSTRACIÓN", COLOR_ICON, [_short(c["portrait"])])
-	# EDRIC, SIRA y el lobo: arte anterior, fuera del juego hasta tener
-	# sprites al estilo de GAROTH (se muestran a su escala de antes, x0.5).
-	var px_dir: String = ["south", "north", "west", "east"][_dir]
-	for id in Player.PIXEL_SKINS:
-		var data: Dictionary = Player.PIXEL_SKINS[id]
-		var pattern: String = data.get(anim_name, "")
-		if anim_name == "death":
-			pattern = "animations/death/%s/frame_%03d.png"
-		var frames: Array = []
-		if pattern == "" and anim_name == "idle":
-			frames = [load(data["base"] + data["rest"] % px_dir)]
-		elif pattern != "":
-			var dir_name: String = data.get("alias", {}).get(anim_name, {}).get(px_dir, px_dir)
-			frames = _pixel_frames(data["base"] + pattern, dir_name)
-		if frames.is_empty():
-			_card(null, GameState.CHARACTER_NAMES.get(id, id), "SIN animación '%s'" % label, COLOR_SHARED, ["Arte anterior · fuera del juego"])
-			continue
-		_card(_anim_preview(frames, 0.5), GameState.CHARACTER_NAMES.get(id, id), "ARTE ANTERIOR · FUERA DEL JUEGO", COLOR_SHARED,
-			[_short(data["base"]), "%d cuadros · 8 direcciones" % frames.size(), "Habilidad: " + skills[id]["name"]])
+			var path := _hero_sheet(hc["colors"][ci], tier, anim_folder, sw_dir)
+			var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
+			var c: Dictionary = CharSelect.colored(CharSelect.find_character(hero_id), ci)
+			var preview := HBoxContainer.new()
+			preview.add_child(_anim_preview(frames, Player.SWORDMAN_SCALE))
+			preview.add_child(_icon_preview(CharSelect.portrait_texture(c), 96.0))
+			var how: String = "De base" if ci == 0 else "Se gana: " + GameState.color_unlock_hint(hero_id, ci)
+			_card(preview, "%s %s · forma %d" % [entry["name"], c.get("color", ""), tier],
+				"COLOR %d" % (ci + 1), COLOR_SPRITE if ci == 0 else COLOR_FAMILY,
+				[how, "Retrato pendiente (sprite ampliado)" if c.get("portrait_pending", false) else "Retrato: ilustración", _short(path)])
+		# Formas: todas, en su color de base.
+		_section("Formas de %s" % entry["name"], "", 15)
+		for t in range(1, int(hc["max_tier"]) + 1):
+			var path := _hero_sheet(hc["colors"][0], t, anim_folder, sw_dir)
+			var frames := _slice(path, Player.SWORDMAN_FRAME_SIZE)
+			_card(_anim_preview(frames, Player.SWORDMAN_SCALE), "Forma %d" % t, "desde el nivel %d" % (1 + (t - 1) * int(hc["tier_every"])), COLOR_SPRITE,
+				["%d cuadros de %dx%d" % [frames.size(), Player.SWORDMAN_FRAME_SIZE.x, Player.SWORDMAN_FRAME_SIZE.y]])
+		# Poderes: las armas de su clase (las únicas que le salen).
+		_section("Poderes de %s" % entry["name"], "Las armas que le pueden salir al subir de nivel (sólo las suyas, ver upgrades.gd CLASS_WEAPONS).", 15)
+		for w in Upgrades.CLASS_WEAPONS.get(hero_id, []):
+			_power_card(w)
+	# Pasivas: de todos los héroes.
+	_section("Pasivas (todos los héroes)", "Mejoras que le salen a cualquiera. Las bloqueadas se ganan en los desafíos.")
+	for id in Upgrades.PASSIVES:
+		var c: Dictionary = Upgrades.card(id)
+		var lines: Array = [c["desc"], "nivel máximo %d" % Upgrades.PASSIVES[id]]
+		var tag := "PASIVA"
+		var color := COLOR_ICON
+		if id in Upgrades.LOCKED_CARDS:
+			for t in GameState.TRIALS:
+				if id in t["reward"].get("cards", []):
+					lines.append("Se gana en el desafío: " + t["name"])
+			tag = "PASIVA · DE DESAFÍO"
+			color = COLOR_CODE
+		for e in Upgrades.EVOLUTIONS:
+			if Upgrades.EVOLUTIONS[e]["passive"] == id:
+				lines.append("Evoluciona %s → %s" % [_weapon_name(Upgrades.EVOLUTIONS[e]["weapon"]), Upgrades.EVOLUTIONS[e]["name"]])
+		_card(_icon_preview(_tex(c["icon"]), 56.0), c["title"], tag, color, lines)
 
-func _pixel_frames(pattern: String, dir_name: String) -> Array:
-	var out: Array = []
-	for i in range(16):
-		var path: String = pattern % [dir_name, i]
-		if not ResourceLoader.exists(path):
-			break
-		out.append(load(path))
-	return out
+## Ficha de un arma: su carta, cómo se habilita y su evolución.
+func _power_card(w: String) -> void:
+	var data: Dictionary = Upgrades.WEAPONS[w]
+	var c: Dictionary = Upgrades.card(data["unlock"])
+	var lines: Array = [c.get("desc", "")]
+	if data["shop"] == "":
+		lines.append("Disponible desde el principio")
+	else:
+		var p: Dictionary = GameState.SHOP_POWERS[data["shop"]]
+		lines.append("Se compra en la tienda (PODERES): %d monedas" % p["cost"])
+	if data["extras"].size() > 0:
+		var extras: Array = []
+		for x in data["extras"]:
+			extras.append(Upgrades.card(x).get("desc", x))
+		lines.append("Cartas propias: " + ", ".join(extras))
+	var evo := ""
+	for e in Upgrades.EVOLUTIONS:
+		if Upgrades.EVOLUTIONS[e]["weapon"] == w:
+			evo = e
+	if evo != "":
+		var ev: Dictionary = Upgrades.EVOLUTIONS[evo]
+		lines.append("Evoluciona a %s (al máximo + %s): %s" % [ev["name"], Upgrades.card(ev["passive"]).get("title", ev["passive"]), ev["desc"]])
+	else:
+		lines.append("Sin evolución")
+	_card(_icon_preview(_tex(c.get("icon", "")), 56.0), data["name"], "ARMA" if data["shop"] == "" else "ARMA · DE LA TIENDA",
+		COLOR_ICON if data["shop"] == "" else COLOR_CODE, lines)
+
+func _weapon_name(w: String) -> String:
+	return Upgrades.WEAPONS[w]["name"] if Upgrades.WEAPONS.has(w) else w
+
+## Hoja de un héroe (color con "dir" o el GAROTH original del pack).
+func _hero_sheet(col: Dictionary, tier: int, anim_folder: String, sw_dir: String) -> String:
+	if col.has("dir"):
+		var n: String = col["name"]
+		return "%s%s_lvl%d/%s/%s_lvl%d_%s_%s.png" % [col["dir"], n, tier, anim_folder, n, tier, anim_folder, sw_dir]
+	return _swordman_path(tier, anim_folder, sw_dir)
 
 func _swordman_path(tier: int, anim: String, direction: String) -> String:
 	var base := "res://assets/sprites/swordman/Swordsman_lvl%d/" % tier
