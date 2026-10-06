@@ -290,6 +290,10 @@ func set_portrait(tex: Texture2D) -> void:
 ## Retrato desde la ilustración de la selección de personaje, recortado
 ## en la cara (CHARACTERS "face_rect"): se ve mucho mejor que la cara del
 ## sprite. No cambia con las formas del héroe.
+## Ancho de las ilustraciones de los héroes en el que se midió face_rect
+## (character_select.gd).
+const ILLUSTRATION_WIDTH := 1024.0
+
 func set_portrait_illustration(tex: Texture2D, face: Rect2i) -> void:
 	if tex == null:
 		return
@@ -299,6 +303,10 @@ func set_portrait_illustration(tex: Texture2D, face: Rect2i) -> void:
 	if src.is_compressed():
 		src.decompress()
 	src.convert(Image.FORMAT_RGBA8)
+	# "face" está medido sobre la ilustración original de 1024 de ancho;
+	# el juego la importa más chica (size_limit) para pesar menos.
+	var k: float = src.get_width() / ILLUSTRATION_WIDTH
+	face = Rect2i(Vector2i((Vector2(face.position) * k).round()), Vector2i((Vector2(face.size) * k).round()))
 	var clipped := face.intersection(Rect2i(Vector2i.ZERO, src.get_size()))
 	if clipped.size.x <= 0 or clipped.size.y <= 0:
 		return
