@@ -57,12 +57,17 @@ var _map_rect_tiles: Rect2i = Rect2i(0, 0, 100, 80)   # se sobrescribe con used_
 var _map_origin_world: Vector2 = Vector2.ZERO   # top-left del mapa en world coords
 var _map: Dictionary = {}
 var _image_map_size: Vector2 = Vector2.ZERO
+## Mapa pintado en Tiled (tiled_map.gd), a escala x1.
+var _tiled: Node2D = null
 
 func _ready() -> void:
 	# Mapa elegido en el pueblo: Pantano/Desierto son el mismo mapa
 	# pintado con el tileset recoloreado (mismas colisiones).
 	_map = GameState.map_data()
-	if _map.get("image", "") != "":
+	var tiled_path: String = _map.get("tiled", "")
+	if GameState.qa_tiled_maps and tiled_path != "" and ResourceLoader.exists(tiled_path):
+		_setup_tiled_map(tiled_path)
+	elif _map.get("image", "") != "":
 		_setup_image_map(_map["image"], float(_map.get("playable_top", 0.0)))
 	elif _map["scene"] != "res://scenes/Grass1.tscn":
 		# Reemplazo a mano: replace_by() movería el TileMap de pasto adentro
@@ -75,14 +80,17 @@ func _ready() -> void:
 		add_child(other)
 		move_child(other, idx)
 		_grass = other
-	if _map["tint"] != Color(1, 1, 1):
+	if _map["tint"] != Color(1, 1, 1) and _tiled == null:
 		var tint := CanvasModulate.new()
 		tint.color = _map["tint"]
 		add_child(tint)
 	# Encontrar el TileMap dentro del Grass1
 	var map_w: float
 	var map_h: float
-	if _image_map_size != Vector2.ZERO:
+	if _tiled != null:
+		map_w = _tiled.map_size.x
+		map_h = _tiled.map_size.y
+	elif _image_map_size != Vector2.ZERO:
 		map_w = _image_map_size.x
 		map_h = _image_map_size.y
 	else:
@@ -98,6 +106,41 @@ func _ready() -> void:
 	# Diferido: los barriles/charcos van al padre (la escena), que
 	# todavía está armándose mientras corre este _ready.
 	_populate.call_deferred()
+
+## Mapa de Tiled: centrado en (0,0) como los demás. Lo alto (árboles,
+## ruinas) se ordena por altura con el héroe y los monstruos, así que
+## la escena entera pasa a ordenar por y.
+func _setup_tiled_map(path: String) -> void:
+	_tiled = load(path).instantiate()
+	remove_child(_grass)
+	_grass.queue_free()
+	add_child(_tiled)
+	move_child(_tiled, 0)
+	_grass = _tiled
+	_tiled.position = -_tiled.map_size * 0.5
+	_map_origin_world = _tiled.position
+	y_sort_enabled = true
+	get_parent().y_sort_enabled = true
+	var monsters := get_parent().get_node_or_null("Monsters")
+	if monsters:
+		monsters.y_sort_enabled = true
+	_place_player_free.call_deferred()
+
+## El héroe arranca en el centro del mapa; si ahí hay agua o un árbol,
+## va al lugar libre más cercano (en espiral).
+func _place_player_free() -> void:
+	var player := get_parent().get_node_or_null("Player") as Node2D
+	if player == null:
+		return
+	var free := func(p: Vector2) -> bool: return is_spawnable_at(p) and is_spawnable_at(p + Vector2(0, 10))
+	if free.call(player.global_position):
+		return
+	for r in range(16, 1200, 16):
+		for k in range(16):
+			var p: Vector2 = player.global_position + Vector2.RIGHT.rotated(TAU * k / 16.0) * r
+			if free.call(p):
+				player.global_position = p
+				return
 
 func _setup_image_map(path: String, playable_top: float) -> void:
 	var texture: Texture2D = load(path)
@@ -131,6 +174,8 @@ func _populate() -> void:
 				mud.set_script(MUD_SCRIPT)
 				mud.radius = randf_range(40.0, 70.0)
 				mud.position = _random_spot(160.0)
+				# Con orden por altura, el charco va siempre bajo los pies.
+				mud.z_index = -5
 				# Hijo del mapa (después del suelo): se dibuja sobre el piso y
 				# bajo monstruos y héroe. Antes colgaba de main con z -1 y el
 				# suelo lo tapaba: frenaba sin que se viera el charco.
@@ -142,6 +187,9 @@ func _populate() -> void:
 func _random_spot(min_center_dist: float) -> Vector2:
 	var map_w := _map_rect_tiles.size.x * TILE_SIZE * MAP_SCALE
 	var map_h := _map_rect_tiles.size.y * TILE_SIZE * MAP_SCALE
+	if _tiled != null:
+		map_w = _tiled.map_size.x
+		map_h = _tiled.map_size.y
 	for i in range(30):
 		var p := Vector2(randf_range(-map_w, map_w) * 0.45, randf_range(-map_h, map_h) * 0.45)
 		if p.length() >= min_center_dist and is_spawnable_at(p):
@@ -207,6 +255,11 @@ func _find_tilemap(root: Node) -> TileMap:
 ## Consultada por main.gd para decidir si un monster puede spawnear en
 ## esta posición. Rechaza fuera del mapa y encima de agua/árboles.
 func is_spawnable_at(world_pos: Vector2) -> bool:
+	if _tiled != null:
+		var local := world_pos - _map_origin_world
+		if local.x < 36.0 or local.y < 36.0 or local.x > _tiled.map_size.x - 36.0 or local.y > _tiled.map_size.y - 36.0:
+			return false
+		return not _tiled.is_solid_at(local)
 	if _image_map_size != Vector2.ZERO:
 		var margin := 36.0
 		var local := world_pos - _map_origin_world

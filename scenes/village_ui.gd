@@ -445,6 +445,18 @@ func show_options() -> void:
 		dev.add_child(_button(tr("QA ROOM"), 15, func(): _village._go(QA_SCENE)))
 		dev.add_child(_button(tr("CATÁLOGO"), 15, func(): _village._go(CATALOG_SCENE)))
 		box.add_child(dev)
+		# Mientras se pintan en Tiled: jugar con los mapas nuevos.
+		var maps := _button("", 15, func(): pass)
+		var show_maps := func(): maps.text = "MAPAS DE TILED: " + ("SÍ" if GameState.qa_tiled_maps else "NO")
+		show_maps.call()
+		maps.pressed.connect(func():
+			GameState.qa_tiled_maps = not GameState.qa_tiled_maps
+			show_maps.call())
+		maps.custom_minimum_size.x = 310.0
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_child(maps)
+		box.add_child(row)
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 10)
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER

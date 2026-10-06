@@ -36,6 +36,10 @@ var shop_open_tab: int = 0
 var village_spawn: Vector2 = Vector2.INF
 ## La portada con el logo sale una vez por sesión, al abrir el juego.
 var title_shown: bool = false
+## QA: las partidas usan los mapas nuevos pintados en Tiled ("tiled" en
+## MAPS) en vez de los de siempre. Se prende en Opciones del pueblo
+## mientras se pintan. Transitorio.
+var qa_tiled_maps: bool = false
 
 ## true después de ver el tutorial — village.gd lo muestra solo la
 ## primera vez que se entra al pueblo (se repasa desde Opciones).
@@ -104,7 +108,9 @@ const SKILL_TREE: Dictionary = {
 	"luck":      {"branch": "utility", "tier": 5, "name": "Suerte", "desc": "Una 4ª carta en cada subida de nivel",
 		"base_cost": 6000, "growth": 1.0, "max_level": 1, "requires": "reroll", "req_level": 1, "icon": SKILL_ICON + "skill_7.png"},
 }
-## Mapas (portones del pueblo, village.gd). "mult" escala la vida y
+## Mapas (portones del pueblo, village.gd). "tiled": el mapa pintado en
+## Tiled (tools/import_tiled_map.gd), por ahora sólo con
+## qa_tiled_maps. "mult" escala la vida y
 ## el daño de los monstruos Y las monedas; "pools" son los bichos de
 ## las oleadas 1-3 / 4-6 / 7+; "bosses" los jefes de las oleadas 10, 20
 ## y 30 (desafío); "hazard" el peligro propio (ver painted_world.gd).
@@ -112,6 +118,7 @@ const MAPS: Dictionary = {
 	"pradera": {
 		"name": "Pradera", "desc": "Donde empieza todo: ratas, imps y lizardmen.",
 		"mult": 1.0, "scene": "res://scenes/Grass1.tscn", "tileset": "res://assets/tiles/overworld_tileset_grass.png",
+		"tiled": "res://scenes/maps/bosque.scn",
 		"tint": Color(1, 1, 1), "hazard": "", "bosses": ["demon1", "demon2", "demon3"],
 		"pools": [
 			["rat", "imp", "lizardman", "slime_1"],
@@ -122,6 +129,7 @@ const MAPS: Dictionary = {
 	"pantano": {
 		"name": "Pantano", "desc": "Lodo que te frena, slimes que se parten y fantasmas.",
 		"mult": 1.35, "scene": "res://scenes/Swamp1.tscn", "tileset": "res://assets/tiles/overworld_tileset_swamp.png",
+		"tiled": "res://scenes/maps/pantano.scn",
 		"tint": Color(0.84, 0.92, 0.86), "hazard": "mud", "bosses": ["demon2", "demon3", "demon3"],
 		"pools": [
 			["slime_1", "ghost_1", "rat", "imp"],
@@ -133,6 +141,7 @@ const MAPS: Dictionary = {
 		"name": "Desierto", "desc": "Una etapa hostil: tormentas de arena y enemigos que incendian el suelo.",
 		"mult": 1.7, "scene": "", "image": "res://assets/maps/desert_map.png",
 		"tileset": "res://assets/maps/desert_map.png", "preview_full": true, "playable_top": 0.20,
+		"tiled": "res://scenes/maps/desierto.scn",
 		"tint": Color(1.0, 0.97, 0.9), "hazard": "sandstorm", "bosses": ["demon3", "demon3"],
 		"pools": [
 			["lizardman", "rat", "imp", "lizardman"],
