@@ -1,9 +1,9 @@
 extends Control
 
 ## Tienda — todo se compra con la moneda banqueada de runs anteriores
-## (GameState.total_currency). Se entra a la plaza del pueblo (plaza.gd),
-## que crece con las compras, los logros y los mapas ganados; cada
-## mercader abre su sección en la ventana de siempre. Tres pestañas:
+## (GameState.total_currency). Se entra desde un puesto del pueblo
+## (village.gd), que abre su pestaña (GameState.shop_open_tab). Tres
+## pestañas:
 ##   MEJORAS       árbol de habilidades permanentes en 3 ramas
 ##                 (GameState.SKILL_TREE); player.gd aplica los bonos
 ##                 al arrancar cada run.
@@ -38,13 +38,6 @@ const POWER_ICONS: Dictionary = {
 	"rayo": "res://assets/ui/skill_icons/skill_70.png",
 }
 const CompanionScript := preload("res://scenes/companion.gd")
-const PlazaScript := preload("res://scenes/plaza.gd")
-## Puesto de la plaza -> sección y dónde va su cartel (píxeles de la plaza).
-const PLAZA_STALLS: Dictionary = {
-	"magic": {"tab": Tab.UPGRADES, "label": "MEJORAS", "at": Vector2(104, 140)},
-	"weapon": {"tab": Tab.POWERS, "label": "PODERES", "at": Vector2(464, 146)},
-	"fruit": {"tab": Tab.COMPANIONS, "label": "ACOMPAÑANTES", "at": Vector2(100, 282)},
-}
 
 @onready var _background: TextureRect = $Background
 @onready var _window: Panel = $Window
@@ -62,19 +55,6 @@ const PLAZA_STALLS: Dictionary = {
 @onready var _back_button: Button = $Window/Body/BackButton
 
 var _tab: int = Tab.UPGRADES
-var _plaza_view: Control
-var _plaza: Node2D
-var _plaza_title: Label
-var _plaza_hint: Label
-var _plaza_bar: HBoxContainer
-var _plaza_coins: Label
-var _plaza_back: Button
-var _stall_buttons: Dictionary = {}
-## Teléfono vertical: la plaza va grande y se recorre arrastrando.
-var _pan: float = 0.0
-var _pan_range: float = 0.0
-var _press_pos := Vector2.INF
-var _dragged: bool = false
 var _coin: Texture2D
 var _compact: bool = false
 var _tab_font: int = 16
@@ -89,18 +69,15 @@ func _ready() -> void:
 	RpgTheme.style_light_label(_currency_label, 22)
 	RpgTheme.style_ink_label(_hint_label, 14, false, true)
 	RpgTheme.style_button(_back_button, 18)
-	# La ventana se abre desde la plaza: su botón vuelve a la plaza.
-	_back_button.text = "PLAZA"
-	_back_button.pressed.connect(_close_section)
+	_back_button.pressed.connect(_on_back_pressed)
 	for tab in _tab_buttons:
 		var b: Button = _tab_buttons[tab]
 		b.pressed.connect(_select_tab.bind(tab, true))
 		b.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
-	_build_plaza()
+	_tab = clampi(GameState.shop_open_tab, Tab.UPGRADES, Tab.COMPANIONS)
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
-	resized.connect(_layout_plaza)
-	_stall_buttons["magic"].grab_focus()
+	_back_button.grab_focus()
 
 ## Teléfono: ventana a pantalla completa, pestañas repartidas a lo
 ## ancho, la moneda en su propia fila y tarjetas en una sola columna.
@@ -133,150 +110,11 @@ func _apply_layout(compact: bool) -> void:
 	_currency_box.size_flags_horizontal = Control.SIZE_SHRINK_END if compact else Control.SIZE_FILL
 	_grid.columns = 1 if compact else 2
 	_select_tab(_tab, false)
-	_layout_plaza()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		if _window.visible:
-			_close_section()
-		else:
-			_on_back_pressed()
+		_on_back_pressed()
 		get_viewport().set_input_as_handled()
-
-# ── Plaza del pueblo ─────────────────────────────────────────────
-
-func _build_plaza() -> void:
-	_plaza_view = Control.new()
-	_plaza_view.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(_plaza_view)
-	move_child(_plaza_view, $Dim.get_index())   # bajo el oscurecido y la ventana
-	_plaza = Node2D.new()
-	_plaza.set_script(PlazaScript)
-	_plaza_view.add_child(_plaza)
-	_plaza_view.gui_input.connect(_on_plaza_input)
-	_plaza_title = Label.new()
-	_plaza_title.text = "TIENDA DEL PUEBLO"
-	_plaza_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_plaza_view.add_child(_plaza_title)
-	_plaza_hint = Label.new()
-	_plaza_hint.text = "Elige un puesto. La plaza crece con tus compras, tus logros y los mapas que ganas."
-	_plaza_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_plaza_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_plaza_view.add_child(_plaza_hint)
-	for stall in PLAZA_STALLS:
-		var b := Button.new()
-		b.text = PLAZA_STALLS[stall]["label"]
-		b.pressed.connect(_open_section.bind(PLAZA_STALLS[stall]["tab"]))
-		b.mouse_entered.connect(func(): Audio.play_sfx("ui_hover"))
-		_plaza_view.add_child(b)
-		_stall_buttons[stall] = b
-	_plaza_bar = HBoxContainer.new()
-	_plaza_bar.add_theme_constant_override("separation", 16)
-	_plaza_view.add_child(_plaza_bar)
-	var coins := PanelContainer.new()
-	coins.add_theme_stylebox_override("panel", RpgTheme.slot_box(true, 8.0))
-	var row := HBoxContainer.new()
-	var icon := TextureRect.new()
-	icon.texture = _coin
-	icon.custom_minimum_size = Vector2(28, 28)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	row.add_child(icon)
-	_plaza_coins = Label.new()
-	row.add_child(_plaza_coins)
-	coins.add_child(row)
-	_plaza_bar.add_child(coins)
-	_plaza_back = Button.new()
-	_plaza_back.text = "VOLVER"
-	_plaza_back.custom_minimum_size = Vector2(180, 48)
-	_plaza_back.pressed.connect(_on_back_pressed)
-	_plaza_bar.add_child(_plaza_back)
-	_window.visible = false
-	$Dim.visible = false
-
-## Escala la plaza a lo que entre entre el título y la barra de abajo, y
-## pone cada cartel sobre su puesto.
-func _layout_plaza() -> void:
-	if _plaza == null:
-		return
-	var vp: Vector2 = size
-	var top: float = 90.0 if _compact else 64.0
-	var bottom: float = 70.0
-	var s: float = minf(vp.x / PlazaScript.SIZE.x, (vp.y - top - bottom) / PlazaScript.SIZE.y)
-	var portrait: bool = vp.y > vp.x * 1.2
-	if portrait:
-		# En vertical entraría chiquita: se agranda y se recorre a lo ancho.
-		s = minf((vp.y - top - bottom) / PlazaScript.SIZE.y, 2.0)
-	if s >= 1.0:
-		s = floorf(s * 4.0) / 4.0   # en cuartos: píxeles más parejos
-	_plaza.scale = Vector2(s, s)
-	_pan_range = maxf(0.0, PlazaScript.SIZE.x * s - vp.x)
-	_pan = clampf(_pan, -_pan_range / 2.0, _pan_range / 2.0)
-	_plaza.position = Vector2((vp.x - PlazaScript.SIZE.x * s) / 2.0 + _pan, top + (vp.y - top - bottom - PlazaScript.SIZE.y * s) / 2.0)
-	_plaza_hint.text = "Elige un puesto. La plaza crece con tus compras, tus logros y los mapas que ganas." + 		("
-Desliza para recorrerla." if _pan_range > 0.0 else "")
-	RpgTheme.style_light_label(_plaza_title, 22 if _compact else 30)
-	_plaza_title.position = Vector2(0, 6)
-	_plaza_title.size = Vector2(vp.x, 36)
-	RpgTheme.style_light_label(_plaza_hint, 12 if _compact else 14)
-	_plaza_hint.position = Vector2(16, 42.0 if _compact else 40.0)
-	_plaza_hint.size = Vector2(vp.x - 32, 40 if _pan_range > 0.0 else 20)
-	for stall in _stall_buttons:
-		var b: Button = _stall_buttons[stall]
-		RpgTheme.style_button(b, 12 if _compact else 15)
-		b.reset_size()
-		var at: Vector2 = _plaza.position + PLAZA_STALLS[stall]["at"] * s
-		b.position = at - Vector2(b.size.x / 2.0, 0)
-	RpgTheme.style_light_label(_plaza_coins, 20)
-	_plaza_coins.text = " %d" % GameState.total_currency
-	RpgTheme.style_button(_plaza_back, 18)
-	_plaza_bar.reset_size()
-	_plaza_bar.position = Vector2((vp.x - _plaza_bar.size.x) / 2.0, vp.y - bottom + (bottom - _plaza_bar.size.y) / 2.0)
-
-## Click o toque sobre un puesto: abre su sección (al soltar, si no fue
-## un arrastre para recorrer la plaza).
-func _on_plaza_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			_press_pos = event.position
-			_dragged = false
-		elif _press_pos != Vector2.INF:
-			_press_pos = Vector2.INF
-			if not _dragged:
-				_click_plaza(event.position)
-	elif event is InputEventMouseMotion:
-		if _press_pos != Vector2.INF and _pan_range > 0.0:
-			if (event.position - _press_pos).length() > 10.0:
-				_dragged = true
-			if _dragged:
-				_pan += event.relative.x
-				_layout_plaza()
-			return
-		var hover: String = _plaza.stall_at((event.position - _plaza.position) / _plaza.scale.x)
-		_plaza_view.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if hover != "" else Control.CURSOR_ARROW
-
-func _click_plaza(pos: Vector2) -> void:
-	var stall: String = _plaza.stall_at((pos - _plaza.position) / _plaza.scale.x)
-	if stall != "":
-		_open_section(PLAZA_STALLS[stall]["tab"])
-
-func _open_section(tab: int) -> void:
-	Audio.play_sfx("ui_click")
-	_window.visible = true
-	$Dim.visible = true
-	_select_tab(tab, false)
-	_back_button.grab_focus()
-
-## Vuelve a la plaza y la rearma: lo recién comprado ya se ve.
-func _close_section() -> void:
-	Audio.play_sfx("ui_click")
-	_window.visible = false
-	$Dim.visible = false
-	_plaza.refresh()
-	_layout_plaza()
-	for stall in PLAZA_STALLS:
-		if PLAZA_STALLS[stall]["tab"] == _tab:
-			_stall_buttons[stall].grab_focus()
 
 func _select_tab(tab: int, sound: bool = true) -> void:
 	if sound and tab != _tab:
@@ -631,6 +469,5 @@ func _on_companion_equip(id: String) -> void:
 	_rebuild()
 
 func _on_back_pressed() -> void:
-	# La tienda es accesible desde el menú principal Y desde la barra
-	# superior de selección de personaje — vuelve a la que corresponda.
+	Audio.play_sfx("ui_click")
 	get_tree().change_scene_to_file(GameState.shop_return_scene)

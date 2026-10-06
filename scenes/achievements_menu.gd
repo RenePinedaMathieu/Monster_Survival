@@ -8,7 +8,7 @@ extends Control
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const Upgrades := preload("res://scenes/upgrades.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+const MENU_SCENE := "res://scenes/village.tscn"
 const COLOR_DONE := Color("57c767")
 
 @onready var _window: Panel = $Window

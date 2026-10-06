@@ -14,7 +14,7 @@ extends CanvasLayer
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const Upgrades := preload("res://scenes/upgrades.gd")
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+const MENU_SCENE := "res://scenes/village.tscn"
 
 ## Etiquetas legibles para el historial de "Potenciadores" — se
 ## reusan los títulos ya definidos en upgrades.gd en vez de

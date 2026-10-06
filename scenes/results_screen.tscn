@@ -90,7 +90,7 @@ text = "COMPARTIR"
 custom_minimum_size = Vector2(150, 50)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "MENÚ"
+text = "PUEBLO"
 
 [node name="Toast" type="Label" parent="Center/Window/VBox"]
 visible = false

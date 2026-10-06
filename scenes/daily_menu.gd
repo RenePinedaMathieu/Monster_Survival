@@ -11,7 +11,7 @@ const SELECT_SCRIPT := preload("res://scenes/character_select.gd")
 const NamePrompt := preload("res://scenes/name_prompt.gd")
 const DailyTop := preload("res://scenes/daily_top_panel.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+const MENU_SCENE := "res://scenes/village.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
 const TOP := 10
 

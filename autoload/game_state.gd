@@ -1,6 +1,6 @@
 extends Node
 
-## Guarda la elección hecha en character_select.tscn, y el progreso
+## Guarda el héroe y el mapa elegidos (en el pueblo, village.gd), y el progreso
 ## persistente entre runs: moneda ganada matando monstruos y las
 ## mejoras permanentes compradas en shop_menu.tscn.
 ##
@@ -13,26 +13,32 @@ extends Node
 ## y export Web, que guarda esto en IndexedDB).
 
 var selected_character_id: String = "swordman"
-## Mapa y dificultad de la próxima partida (los elige la pantalla de
-## mapa, ver map_select). Transitorios: no se persisten.
+## El héroe con el que se camina por el pueblo y se sale por los
+## portones (se guarda). Los desafíos y el reto diario usan el suyo
+## sólo para esa partida (selected_character_id).
+var village_hero: String = "swordman"
+## Mapa y dificultad de la próxima partida (los elige el portón del
+## pueblo, village_ui.gd). Transitorios: no se persisten.
 var selected_map: String = "pradera"
 var selected_difficulty: String = "normal"
 
-## Dato completo (dict) del personaje recién elegido en
-## character_select.tscn — lo lee character_confirm.tscn para armar
-## la pantalla de "revisá antes de arrancar" sin tener que duplicar
-## el array CHARACTERS en dos scripts. Transitorio: no se persiste.
+## Dato completo (dict) del héroe de la próxima partida, con su color
+## (character_select.gd colored) — main.gd lee el nombre. Transitorio.
 var pending_character: Dictionary = {}
 
-## A qué pantalla volver al salir de shop_menu.tscn — la tienda es
-## accesible tanto desde el menú principal como desde la selección de
-## personaje (barra superior), y el botón VOLVER de ahí debe volver a
-## la que corresponda. Transitorio: no se persiste.
-var shop_return_scene: String = "res://scenes/main_menu.tscn"
+## A qué pantalla volver al salir de shop_menu.tscn y con qué pestaña
+## abrirla (la elige el puesto del pueblo). Transitorios.
+var shop_return_scene: String = "res://scenes/village.tscn"
+var shop_open_tab: int = 0
 
-## true la primera vez que se ve el tutorial — de ahí en más
-## main_menu.gd no lo vuelve a mostrar solo al picar "Jugar" (se
-## puede repasar a mano si en algún momento sumamos un botón para eso).
+## Dónde aparece el héroe al volver al pueblo (village.gd lo guarda al
+## salir a otra pantalla); INF = la entrada de siempre. Transitorio.
+var village_spawn: Vector2 = Vector2.INF
+## La portada con el logo sale una vez por sesión, al abrir el juego.
+var title_shown: bool = false
+
+## true después de ver el tutorial — village.gd lo muestra solo la
+## primera vez que se entra al pueblo (se repasa desde Opciones).
 var tutorial_seen: bool = false
 
 ## Récord de la mejor run: hasta qué oleada se llegó y cuánto tiempo
@@ -98,7 +104,7 @@ const SKILL_TREE: Dictionary = {
 	"luck":      {"branch": "utility", "tier": 5, "name": "Suerte", "desc": "Una 4ª carta en cada subida de nivel",
 		"base_cost": 6000, "growth": 1.0, "max_level": 1, "requires": "reroll", "req_level": 1, "icon": SKILL_ICON + "skill_7.png"},
 }
-## Mapas (pantalla de mapa, map_select.tscn). "mult" escala la vida y
+## Mapas (portones del pueblo, village.gd). "mult" escala la vida y
 ## el daño de los monstruos Y las monedas; "pools" son los bichos de
 ## las oleadas 1-3 / 4-6 / 7+; "bosses" los jefes de las oleadas 10, 20
 ## y 30 (desafío); "hazard" el peligro propio (ver painted_world.gd).
@@ -374,6 +380,11 @@ func is_color_unlocked(hero_id: String, idx: int) -> bool:
 func selected_color(hero_id: String) -> int:
 	var idx: int = int(selected_colors.get(hero_id, 0))
 	return idx if is_color_unlocked(hero_id, idx) else 0
+
+func set_village_hero(id: String) -> void:
+	if is_character_unlocked(id) and village_hero != id:
+		village_hero = id
+		_save()
 
 func set_selected_color(hero_id: String, idx: int) -> void:
 	if is_color_unlocked(hero_id, idx) and int(selected_colors.get(hero_id, -1)) != idx:
@@ -689,6 +700,9 @@ func _load() -> void:
 		unlocked_characters.erase("chicken")
 		hero_colors = cfg.get_value("progress", "hero_colors", {})
 		selected_colors = cfg.get_value("progress", "selected_colors", {})
+		village_hero = cfg.get_value("progress", "village_hero", "swordman")
+		if not is_character_unlocked(village_hero):
+			village_hero = "swordman"
 		# TOREN, BRAN y VAEL pasaron a ser colores de GAROTH (el 2, 3 y 4).
 		for old in ["toren", "bran", "vael"]:
 			if old in unlocked_characters:
@@ -729,6 +743,7 @@ func _save() -> void:
 	cfg.set_value("progress", "unlocked_characters", unlocked_characters)
 	cfg.set_value("progress", "hero_colors", hero_colors)
 	cfg.set_value("progress", "selected_colors", selected_colors)
+	cfg.set_value("progress", "village_hero", village_hero)
 	cfg.set_value("progress", "unlocked_maps", unlocked_maps)
 	cfg.set_value("progress", "player_name", player_name)
 	cfg.set_value("progress", "trials_cleared", trials_cleared)

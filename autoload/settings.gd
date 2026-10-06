@@ -57,6 +57,8 @@ func _register_actions() -> void:
 	_action("move_down",  [_key(KEY_S), _key(KEY_DOWN), _axis(JOY_AXIS_LEFT_Y, 1.0), _btn(JOY_BUTTON_DPAD_DOWN)], MOVE_DEADZONE)
 	_action("active_skill", [_key(KEY_SPACE), _btn(JOY_BUTTON_X), _btn(JOY_BUTTON_RIGHT_SHOULDER)])
 	_action("pause", [_key(KEY_ESCAPE), _btn(JOY_BUTTON_START)])
+	# Pueblo: usar lo que está al lado (puesto, portón, héroe...).
+	_action("interact", [_key(KEY_E), _key(KEY_ENTER), _key(KEY_KP_ENTER), _btn(JOY_BUTTON_A)])
 	_action("zoom_in",  [_key(KEY_E), _axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)])
 	_action("zoom_out", [_key(KEY_Q), _axis(JOY_AXIS_TRIGGER_LEFT, 1.0)])
 	# Menús con el stick izquierdo (ui_* ya trae cruceta + A/B).

@@ -1,25 +1,26 @@
 extends CanvasLayer
 
 ## Tutorial de bienvenida — un globo de texto sobre fondo oscuro con
-## varias páginas. Se muestra UNA sola vez, disparado desde
-## main_menu.gd al presionar "Jugar" mientras GameState.tutorial_seen
-## sea false — de ahí en más queda guardado y no vuelve a interrumpir.
+## varias páginas. village.gd lo muestra solo la primera vez que se
+## entra al pueblo (GameState.tutorial_seen) y se repasa desde Opciones.
 ##
 ## Interactivo: las páginas con "target" (una NodePath relativa al
-## padre de este overlay, o sea main_menu.tscn) apagan la pantalla
-## excepto un recuadro brillante alrededor del botón real señalado,
-## con una flecha — no sólo texto, de verdad marca dónde hay que
-## hacer clic. El botón real queda BLOQUEADO mientras tanto (un
-## rectángulo invisible tapa el hueco) para que un clic ahí no
-## dispare la acción real por accidente mientras el tutorial sigue
-## abierto — avanzar es siempre con el botón "SIGUIENTE" del globo.
+## padre de este overlay, o sea el pueblo) apagan la pantalla excepto
+## un recuadro brillante alrededor de lo señalado, con una flecha. Los
+## lugares del mundo son recuadros de village_ui.gd ("UI/Marks/*") que
+## siguen al lugar; page_shown avisa qué página se muestra para que el
+## pueblo lleve la cámara hasta ahí. Lo señalado queda BLOQUEADO
+## mientras tanto (un rectángulo invisible tapa el hueco): avanzar es
+## siempre con el botón "SIGUIENTE" del globo.
 ##
 ## Uso:
 ##   var t = TUTORIAL_SCENE.instantiate()
-##   add_child(t)          # como hijo de main_menu.tscn
-##   t.finished.connect(_on_tutorial_finished)
+##   t.page_shown.connect(...)   # recibe el "target" de la página
+##   t.finished.connect(...)
+##   add_child(t)                # como hijo del pueblo
 
 signal finished
+signal page_shown(target: String)
 
 const UITheme := preload("res://scenes/ui_theme.gd")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
@@ -33,9 +34,14 @@ const PAGES: Array[Dictionary] = [
 		"target": "",
 	},
 	{
-		"title": "ELIGE TU HÉROE",
-		"body": "Ese es el botón para empezar a jugar. Al presionarlo vas a poder elegir tu personaje — algunos pelean cuerpo a cuerpo, otros disparan a distancia.",
-		"target": "MenuButtons/PlayButton",
+		"title": "ESTE ES TU PUEBLO",
+		"body": "Camina con WASD, las flechas o un control, o tocando el suelo. Acércate a algo y presiona E (o tócalo) para usarlo.",
+		"target": "",
+	},
+	{
+		"title": "SAL A PELEAR",
+		"body": "Cada portón del norte lleva a un mapa: crúzalo, elige la dificultad y a luchar. Los portones tapados se abren con logros.",
+		"target": "UI/Marks/Gate",
 	},
 	{
 		"title": "SUBE DE NIVEL",
@@ -43,18 +49,23 @@ const PAGES: Array[Dictionary] = [
 		"target": "",
 	},
 	{
-		"title": "MONEDA Y MEJORAS PERMANENTES",
-		"body": "Ese es el botón de la tienda. Los enemigos sueltan moneda al morir, y esa moneda queda guardada al terminar la partida para comprar mejoras permanentes, poderes nuevos que aparecen al subir de nivel, y acompañantes que pelean contigo.",
-		"target": "MenuButtons/Grid/ShopButton",
+		"title": "MONEDA Y TIENDA",
+		"body": "Los enemigos sueltan moneda, y queda guardada al terminar la partida. En los puestos de la plaza se compran mejoras permanentes, poderes y acompañantes. La plaza crece con todo lo que logras.",
+		"target": "UI/Marks/Shop",
+	},
+	{
+		"title": "DESAFÍOS Y HÉROES",
+		"body": "En la arena, el entrenador tiene desafíos con premio: así se ganan nuevos héroes. Los héroes que ganes esperan en la plaza: háblales para jugar con ellos y elegir su color.",
+		"target": "UI/Marks/Arena",
 	},
 	{
 		"title": "OPCIONES",
 		"body": "Desde aquí se ajustan el volumen, la pantalla completa y el idioma (F11 también cambia la pantalla completa en cualquier momento).",
-		"target": "MenuButtons/Grid/OptionsButton",
+		"target": "UI/Hud/Gear",
 	},
 	{
 		"title": "¡A SOBREVIVIR!",
-		"body": "El movimiento es con WASD, las flechas o un control (en el teléfono, el dedo en la mitad izquierda) — el ataque es automático. ESPACIO, el botón redondo o X / RB usan la habilidad de tu héroe. Sobrevive 20 oleadas y vence al jefe final. Suerte, héroe.",
+		"body": "En la partida el ataque es automático: muévete para esquivar (en el teléfono, el dedo en la mitad izquierda). ESPACIO, el botón redondo o X / RB usan la habilidad de tu héroe. Sobrevive 20 oleadas y vence al jefe final. Suerte, héroe.",
 		"target": "",
 	},
 ]
@@ -160,6 +171,7 @@ func _render_page() -> void:
 	_prev_button.visible = _page > 0
 	_next_button.text = "SIGUIENTE" if _page < PAGES.size() - 1 else "¡A JUGAR!"
 
+	page_shown.emit(data.get("target", ""))
 	var target := _current_target()
 	_full_dim.visible = target == null
 	_spotlight.visible = target != null
@@ -167,6 +179,7 @@ func _render_page() -> void:
 		_update_spotlight()
 		_animate_arrow()
 	else:
+		_bubble.offset_top = BUBBLE_TOP
 		_bubble.offset_bottom = BUBBLE_MAX_BOTTOM
 		if _arrow_tween:
 			_arrow_tween.kill()
@@ -212,7 +225,13 @@ func _update_spotlight() -> void:
 	# señalado (con margen) — en pantallas más chicas quedaba pegado
 	# o superpuesto con el menú de abajo. Nunca por debajo de
 	# BUBBLE_MIN_BOTTOM para no recortar el contenido del globo.
+	_bubble.offset_top = BUBBLE_TOP
 	_bubble.offset_bottom = max(BUBBLE_MIN_BOTTOM, min(BUBBLE_MAX_BOTTOM, r.position.y - BUBBLE_TARGET_MARGIN))
+	# Lo señalado está arriba (un portón, el engranaje): el globo va abajo.
+	if r.get_center().y < vp.y * 0.45:
+		var h: float = BUBBLE_MIN_BOTTOM - BUBBLE_TOP
+		_bubble.offset_bottom = vp.y - 16.0
+		_bubble.offset_top = _bubble.offset_bottom - h
 
 func _animate_arrow() -> void:
 	if _arrow_tween:

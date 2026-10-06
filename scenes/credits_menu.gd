@@ -14,7 +14,7 @@ extends Control
 ## nuevo de terceros, anotarlo acá Y en el CREDITS.md de su carpeta.
 
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+const MENU_SCENE := "res://scenes/village.tscn"
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 
 ## Nombres del equipo — completar antes de publicar (si queda vacío, la

@@ -59,7 +59,7 @@ var _map: Dictionary = {}
 var _image_map_size: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
-	# Mapa elegido en map_select: Pantano/Desierto son el mismo mapa
+	# Mapa elegido en el pueblo: Pantano/Desierto son el mismo mapa
 	# pintado con el tileset recoloreado (mismas colisiones).
 	_map = GameState.map_data()
 	if _map.get("image", "") != "":

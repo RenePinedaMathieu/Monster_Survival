@@ -324,7 +324,7 @@ func _kill_all() -> void:
 			m.take_damage(9999.0, "qa")
 
 func _back_to_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	get_tree().change_scene_to_file("res://scenes/village.tscn")
 
 func _spawn_monster(kind_id: String, is_boss: bool) -> void:
 	var m = MONSTER_SCENE.instantiate()

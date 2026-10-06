@@ -9,7 +9,7 @@ extends Control
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const SELECT_SCRIPT := preload("res://scenes/character_select.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+const MENU_SCENE := "res://scenes/village.tscn"
 const GAME_SCENE := "res://scenes/main.tscn"
 const COLOR_RULE := Color("b8551e")
 

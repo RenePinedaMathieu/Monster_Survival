@@ -18,16 +18,14 @@ const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const BACKGROUND_TEXTURE := "res://assets/layouts/background_home.png"
 const COLOR_GLOW := Color("6ae356")
 
-const CONFIRM_SCENE := "res://scenes/character_confirm.tscn"
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+const MENU_SCENE := "res://scenes/village.tscn"
 const SHOP_SCENE := "res://scenes/shop_menu.tscn"
 
 const DEFAULT_IDLE_FRAME_COUNT := 8   # fallback si el char no override
 const IDLE_FPS := 7.0
 
-## "role"/"blurb"/"stats" alimentan character_confirm.tscn (pantalla
-## "holográfica" previa a arrancar la run) — no se usan en esta
-## pantalla. "stats" es un rating manual del 1 al 5, no un valor
+## "role"/"blurb" los muestra la ficha del héroe en el pueblo
+## (village_ui.gd) — no se usan en esta pantalla. "stats" es un rating manual del 1 al 5, no un valor
 ## calculado de player.gd — es sólo orientativo para el jugador.
 const CHARACTERS: Array[Dictionary] = [
 	{
@@ -460,11 +458,11 @@ func _on_card_selected(i: int) -> void:
 		else:
 			create_tween().tween_property(_card_roots[j], "modulate:a", 0.25, 0.2)
 
-	# No arranca la partida directo — pasa por una pantalla de
-	# confirmación con el retrato grande y las stats antes de meterse
-	# de lleno a la horda (se sentía muy brusco elegir y arrancar).
+	# Ya no está en el camino del juego (el héroe se cambia hablándole
+	# en el pueblo): si se abre a mano, elegir deja al héroe en el pueblo.
+	GameState.set_village_hero(CHARACTERS[i]["id"])
 	get_tree().create_timer(0.45).timeout.connect(
-		func(): get_tree().change_scene_to_file(CONFIRM_SCENE)
+		func(): get_tree().change_scene_to_file(MENU_SCENE)
 	)
 
 func _on_back_pressed() -> void:

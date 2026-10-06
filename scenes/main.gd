@@ -337,7 +337,7 @@ const CHALLENGE_POWER_STEP := 0.08  # oleada 30 ≈ x2.6 de daño
 ## que aguantar lo suficiente como para ser una pelea, no un trámite.
 const BOSS_BASE_HP := 900.0
 
-## Mapa y dificultad elegidos (map_select): el mapa trae sus propios
+## Mapa y dificultad elegidos (portón del pueblo): el mapa trae sus propios
 ## bichos y jefes, y ambos multiplican vida/daño y monedas.
 var _map: Dictionary = GameState.map_data()
 var _difficulty: Dictionary = GameState.difficulty_data()

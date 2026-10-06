@@ -15,7 +15,7 @@ signal continue_pressed
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const Weapons := preload("res://scenes/weapons.gd")
 const DailyTop := preload("res://scenes/daily_top_panel.gd")
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+const MENU_SCENE := "res://scenes/village.tscn"
 const GAME_NAME := "One Last Hero"
 const MAX_DAMAGE_ROWS := 6
 const BAR_COLOR := Color("d74427")
