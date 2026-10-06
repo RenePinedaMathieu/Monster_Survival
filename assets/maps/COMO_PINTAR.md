@@ -20,7 +20,29 @@ Al centro está el mapa de ejemplo del pack, ya armado con todas sus capas. Úsa
 
 Si se pega una sola capa, copia y pega capa por capa.
 
-El resto del mapa ya tiene el suelo de base (pasto o arena) para pintar encima.
+El resto del mapa ya tiene el suelo de base (pasto o arena) para pintar encima, y agua debajo de todo.
+
+## Agua (lagos, ríos, charcos)
+
+Debajo de todo el mapa hay agua (la capa `water`). El suelo se pinta encima, y donde se abre un hueco en el suelo se ve el agua. Las orillas salen solas con el **pincel de terreno**:
+
+1. **Abre los terrenos:** Ver > Vistas y barras de herramientas > **Conjuntos de terrenos**.
+2. **Elige la capa** del suelo en el panel Capas:
+   - Bosque y pantano: `main_space` (el pasto).
+   - Desierto: `sand` (la primera, la de arena).
+3. **Elige el terreno:** en Conjuntos de terrenos, toca la pestaña del tileset **Water_coasts**. Elige **Pasto y agua** (en el desierto, **Arena y agua**) y haz clic en el color **Sin pasto** (o **Sin arena**).
+4. **Pinta:** con el pincel de terreno (tecla **T**) pinta donde quieras el agua. Se abre el hueco con su orilla.
+5. **Corrige:** para rellenar, elige el color **Pasto** (o **Arena**) y pinta encima.
+
+**Orilla de tierra** (bosque y pantano, como en el ejemplo), entre el pasto y el agua:
+1. En la capa `ground`, con **Tierra y agua > Tierra**, pinta un poco más grande que el lago.
+2. Con **Sin tierra**, pinta el agua un poco más chica que el hueco del pasto.
+
+**Caminos de tierra:**
+1. Capa `ground`, **Tierra**, por donde va el camino.
+2. Capa `main_space`, **Sin pasto**, encima del mismo camino.
+
+El agua choca sola; la orilla de tierra se camina.
 
 ## Capas: piso y objetos
 

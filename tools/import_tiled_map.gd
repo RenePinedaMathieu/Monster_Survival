@@ -1,7 +1,8 @@
 extends SceneTree
 
 ## Lleva al juego un mapa pintado en Tiled. Uso:
-##   godot --headless --path . --script tools/import_tiled_map.gd -- <id>
+##   godot --headless --path . --script tools/import_tiled_map.gd -- <id> [otro.tmx]
+## (con otro.tmx: un archivo de la misma carpeta, sale como scenes/maps/otro.scn)
 ## Lee assets/maps/<id>/<id>.tmx (plantilla de tools/build_tiled_templates.py)
 ## y escribe scenes/maps/<id>.scn con el script scenes/tiled_map.gd:
 ##   - Capas planas (todas las de antes de la primera "objects" u
@@ -49,7 +50,11 @@ func _initialize() -> void:
 	var id: String = args[0]
 	_dir = "res://assets/maps/%s" % id
 	var t0 := Time.get_ticks_msec()
-	_parse_tmx("%s/%s.tmx" % [_dir, id])
+	# Otro .tmx de la misma carpeta (una copia de prueba): -- bosque otro.tmx
+	var tmx: String = "%s/%s" % [_dir, args[1]] if args.size() > 1 else "%s/%s.tmx" % [_dir, id]
+	if args.size() > 1:
+		id = args[1].get_basename()
+	_parse_tmx(tmx)
 	var root := _build()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/maps"))
 	var packed := PackedScene.new()
@@ -391,11 +396,15 @@ func _water(obj_start: int, solid: PackedByteArray, gw: int) -> void:
 		return
 	var k := TILE / CELL
 	for i in range(_w * _h):
+		# De arriba hacia abajo: un suelo opaco tapa todo lo de abajo.
 		var watery := false
-		for li in range(obj_start):
+		for li in range(obj_start - 1, -1, -1):
 			var gid: int = _layers[li]["data"][i]
-			if gid != 0 and _layers[li]["visible"] and String(_tileset_of(gid).get("name", "")).to_lower().contains("water"):
+			if gid == 0 or not _layers[li]["visible"]:
+				continue
+			if String(_tileset_of(gid).get("name", "")).to_lower().contains("water"):
 				watery = true
+			if _is_opaque(gid):
 				break
 		if not watery:
 			continue
@@ -418,6 +427,24 @@ func _water(obj_start: int, solid: PackedByteArray, gw: int) -> void:
 					solid[((i / _w) * k + sy) * gw + (i % _w) * k + sx] = 1
 
 var _tile_cache := {}
+var _opaque_cache := {}
+
+## La baldosa tapa todo su cuadro (nada de lo de abajo se ve).
+func _is_opaque(gid: int) -> bool:
+	if _opaque_cache.has(gid):
+		return _opaque_cache[gid]
+	var img := _tile_image(gid)
+	var full := img != null
+	if full:
+		for y in range(TILE):
+			for x in range(TILE):
+				if img.get_pixel(x, y).a < OPAQUE:
+					full = false
+					break
+			if not full:
+				break
+	_opaque_cache[gid] = full
+	return full
 
 ## Imagen de una baldosa (con su espejado), o null si es de "choque".
 func _tile_image(gid: int) -> Image:
