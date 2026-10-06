@@ -1,8 +1,10 @@
 extends Node2D
 
 ## El pueblo: la pantalla de inicio (reemplazó al menú). Se camina con
-## el héroe elegido (WASD / flechas / control, o tocando el suelo) y
-## cada cosa es un lugar; E / Enter / A (o tocarlo) lo usa:
+## el héroe elegido con los mismos controles que la partida (WASD /
+## flechas / control, o el joystick táctil de la mitad izquierda) y
+## cada cosa es un lugar: al lado aparece su cartel, y E / Enter / A (o
+## tocar el cartel) lo usa:
 ##   Portones del norte  los mapas (Desierto, Pradera, Pantano): al
 ##                       cruzarlo se elige dificultad y se juega. Un mapa
 ##                       bloqueado tiene el portón tapado.
@@ -26,6 +28,7 @@ const HeroScript := preload("res://scenes/village_hero.gd")
 const UIScript := preload("res://scenes/village_ui.gd")
 const SelectScript := preload("res://scenes/character_select.gd")
 const TUTORIAL_SCENE := preload("res://scenes/tutorial_overlay.tscn")
+const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 
 const BASE := "res://assets/ui/village/base.png"
 const VPROPS := "res://assets/ui/village/props/%s.png"
@@ -106,7 +109,6 @@ var _camera: Camera2D
 var _cam_focus := Vector2.INF        # el tutorial mueve la cámara a un lugar
 var _spots: Array = []               # lugares que se usan (ver _add_spot)
 var _near: Dictionary = {}           # el lugar al lado del héroe
-var _pending: Dictionary = {}        # lugar tocado: se usa al llegar
 var _gate_armed: Array = []          # el portón se abre una vez por entrada
 var _south_armed: bool = true
 var _anims: Array = []               # [Sprite2D, cuadros, fps, desfase, fila]
@@ -150,8 +152,11 @@ func _ready() -> void:
 	_sorted.add_child(hero)
 	hero.global_position = SPAWN if GameState.village_spawn == Vector2.INF else GameState.village_spawn
 	GameState.village_spawn = Vector2.INF
-	hero.arrived.connect(_on_arrived)
 	_place_hero_npcs()
+	# El mismo joystick táctil que la partida (main.gd).
+	var tc = TOUCH_CONTROLS_SCENE.instantiate()
+	add_child(tc)
+	tc.move_input.connect(hero.set_touch_input)
 
 	_camera = Camera2D.new()
 	_world.add_child(_camera)
@@ -242,8 +247,9 @@ func _npc(path: String, frames: int, w: int, h: int, feet: Vector2, row: int = 0
 		_add_solid(Rect2(feet.x - 7, feet.y - 6, 14, 7))
 	return s
 
-## Lugar que se usa: `rect` es lo que se toca, `use` donde se para el
-## héroe, `face` hacia dónde mira y `action` lo que hace.
+## Lugar que se usa: `rect` es su zona (la marca el tutorial), `use`
+## el punto al que hay que acercarse, `face` hacia dónde mira el héroe
+## al usarlo y `action` lo que hace.
 func _add_spot(id: String, label: String, rect: Rect2, use: Vector2, face: String, action: Callable) -> Dictionary:
 	var spot := {"id": id, "label": label, "rect": rect, "use": use, "face": face, "action": action}
 	_spots.append(spot)
@@ -442,10 +448,12 @@ func _companions_owned() -> int:
 
 # ── Cámara ────────────────────────────────────────────────────────
 
-## Zoom en medios pasos para que el alto del pueblo llene la pantalla.
+## El mismo zoom que la partida (player.gd: unidades de mundo en el lado
+## corto de la pantalla), sin mostrar más alto que el pueblo.
 func _fit_camera() -> void:
 	var vp := get_viewport().get_visible_rect().size
-	var z: float = maxf(1.0, floorf(vp.y / Layout.SIZE.y * 2.0) / 2.0)
+	var units: float = HeroScript.PLAYER_SCRIPT.VIEW_SHORT_UNITS_PHONE if Screen.is_phone else HeroScript.PLAYER_SCRIPT.VIEW_SHORT_UNITS_DESKTOP
+	var z: float = maxf(minf(vp.x, vp.y) / units, vp.y / Layout.SIZE.y)
 	_camera.zoom = Vector2(z, z)
 
 func _camera_target() -> Vector2:
@@ -479,7 +487,12 @@ func spot_position(id: String) -> Vector2:
 
 func _process(delta: float) -> void:
 	_t += delta
-	_camera.position = _camera.position.lerp(_camera_target(), minf(1.0, delta * 8.0))
+	# Pegada al héroe como en la partida; sólo se desliza cuando el
+	# tutorial la lleva a un lugar (o la devuelve).
+	if _busy:
+		_camera.position = _camera.position.lerp(_camera_target(), minf(1.0, delta * 6.0))
+	else:
+		_camera.position = _camera_target()
 	for a in _anims:
 		var s: Sprite2D = a[0]
 		if is_instance_valid(s):
@@ -597,37 +610,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
 		ui.show_options()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_walk_to(get_global_mouse_position())
-		get_viewport().set_input_as_handled()
-
-## Tocar el suelo: camina hasta ahí. Tocar un lugar: camina hasta su
-## frente y lo usa al llegar.
-func _walk_to(world_pos: Vector2) -> void:
-	_pending = {}
-	var target := world_pos
-	for s in _spots:
-		if s["rect"].has_point(world_pos):
-			_pending = s
-			target = s["use"]
-			break
-	if not _pending.is_empty() and hero.global_position.distance_to(target) < USE_RADIUS:
-		_use(_pending)
-		return
-	var path := _path_between(hero.global_position, target)
-	if path.is_empty():
-		_pending = {}
-		return
-	hero.walk_path(path)
-
-func _on_arrived() -> void:
-	if not _pending.is_empty() and hero.global_position.distance_to(_pending["use"]) < USE_RADIUS:
-		var s := _pending
-		_pending = {}
-		_use(s)
 
 func _use(spot: Dictionary) -> void:
-	_pending = {}
 	hero.stop()
 	hero.face(spot["face"])
 	Audio.play_sfx("ui_click")
@@ -672,12 +656,10 @@ func set_hero(id: String) -> void:
 	hero.set_hero(id)
 	_place_hero_npcs()
 
-## Se cerró una ventana: el héroe vuelve a moverse. Si estaba en un
-## portón, da un paso atrás para no volver a abrirlo.
+## Se cerró una ventana: el héroe vuelve a moverse (el portón no se
+## vuelve a abrir hasta salir de él y entrar de nuevo).
 func panel_closed() -> void:
 	hero.controllable = true
-	if hero.global_position.y < 52.0:
-		hero.walk_path(PackedVector2Array([Vector2(hero.global_position.x, 64.0)]))
 
 ## La primera vez, el tutorial (después de la portada).
 func _maybe_tutorial() -> void:

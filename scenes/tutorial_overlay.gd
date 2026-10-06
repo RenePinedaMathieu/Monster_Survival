@@ -35,7 +35,7 @@ const PAGES: Array[Dictionary] = [
 	},
 	{
 		"title": "ESTE ES TU PUEBLO",
-		"body": "Camina con WASD, las flechas o un control, o tocando el suelo. Acércate a algo y presiona E (o tócalo) para usarlo.",
+		"body": "Te mueves igual que en la partida: WASD, las flechas o un control (en el teléfono, el dedo en la mitad izquierda). Acércate a algo y presiona E, o toca su cartel, para usarlo.",
 		"target": "",
 	},
 	{
