@@ -257,6 +257,10 @@ func _build_powers() -> void:
 		var card := _make_card(_texture_icon(load(POWER_ICONS[id]), true), power["name"], power["desc"])
 		var owned: bool = GameState.is_power_unlocked(id)
 		card["status"].add_child(_status_label("DESBLOQUEADO" if owned else "BLOQUEADO", owned))
+		# Cada arma es de una clase (upgrades.gd CLASS_WEAPONS): para quién sirve.
+		var hero := _power_hero(id)
+		if hero != "":
+			card["status"].add_child(_status_label(tr("Para %s") % hero, true))
 		var button: Button = card["button"]
 		if owned:
 			_set_plain(button, "COMPRADO", false)
@@ -405,6 +409,17 @@ func _texture_icon(tex: Texture2D, smooth: bool) -> TextureRect:
 	rect.custom_minimum_size = Vector2(62, 62)
 	rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if smooth else CanvasItem.TEXTURE_FILTER_NEAREST
 	return rect
+
+## Nombre del héroe cuya clase usa el arma que habilita este poder.
+func _power_hero(power_id: String) -> String:
+	var upgrades: Script = load("res://scenes/upgrades.gd")
+	for w in upgrades.WEAPONS:
+		if upgrades.WEAPONS[w]["shop"] != power_id:
+			continue
+		for hero_id in upgrades.CLASS_WEAPONS:
+			if w in upgrades.CLASS_WEAPONS[hero_id]:
+				return GameState.CHARACTER_NAMES.get(hero_id, hero_id)
+	return ""
 
 func _status_label(text: String, good: bool) -> Label:
 	var label := Label.new()

@@ -159,11 +159,42 @@ static func weapon_of_card(card_id: String) -> String:
 	return ""
 
 ## ¿Esta carta puede salir ahora para este player?
+## Armas de cada clase (decisión del 06-10): cada héroe sólo ve las
+## suyas, sin compartir; las pasivas son de todos. Un héroe sin clase
+## (los que están fuera del juego) ve todas.
+const CLASS_WEAPONS: Dictionary = {
+	"swordman": ["espadas", "hacha", "sierras", "escudo_fuerza", "aura", "pulso"],
+	"elara": ["rayo", "laser_cadena", "meteoros", "aura_lenta", "disparo_fuego", "disparo_electrico"],
+	"doren": ["disparo", "disparo_congelante", "centinela"],
+}
+
+static func class_pool() -> Array:
+	return CLASS_WEAPONS.get(GameState.selected_character_id, [])
+
+static func weapon_allowed(weapon: String) -> bool:
+	var pool := class_pool()
+	return pool.is_empty() or weapon in pool
+
+## Ya tiene todas las armas que puede tomar: las de su clase que estén
+## disponibles (las de la tienda cuentan sólo si están compradas), u 8
+## si no tiene clase. Desde ahí salen las cartas de escalado.
+static func weapons_complete(player) -> bool:
+	var pool := class_pool()
+	if pool.is_empty():
+		return player.weapons_owned() >= MAX_WEAPONS
+	for w in pool:
+		if player.weapon_level(w) > 0:
+			continue
+		var shop: String = WEAPONS[w]["shop"]
+		if shop == "" or GameState.is_power_unlocked(shop):
+			return false
+	return true
+
 static func is_eligible(player, id: String) -> bool:
 	if id == "coins" or id == "heal":
 		return false
 	if id in ["overflow_attack", "overflow_defense", "overflow_hp"]:
-		return player.weapons_owned() >= MAX_WEAPONS
+		return weapons_complete(player)
 	if id in LOCKED_CARDS and not GameState.is_card_unlocked(id):
 		return false
 	if PASSIVES.has(id):
@@ -173,6 +204,10 @@ static func is_eligible(player, id: String) -> bool:
 		if lvl >= PASSIVES[id]:
 			return false
 		return lvl > 0 or player.passives_owned() < MAX_PASSIVES
+	# Armas de otra clase: no salen.
+	var owner_weapon := weapon_of_card(id)
+	if owner_weapon != "" and not weapon_allowed(owner_weapon):
+		return false
 	# Los personajes que ya disparan de base pueden sumar proyectiles
 	# aunque no hayan tomado la carta de disparo.
 	if id == "multishot":

@@ -460,6 +460,11 @@ const ELARA_FIRE_DAMAGE := 6.0
 const ELARA_FIRE_RADIUS := 30.0
 ## Flecha de DOREN: atraviesa a 1 + forma enemigos.
 const DOREN_ARROW_DAMAGE := 4.5
+## Flechas extra de DOREN (carta "disparo a distancia"): el daño del
+## disparo de siempre (shot_projectile.gd), sin el recorte de los héroes
+## de cuerpo a cuerpo (es su arma); la primera tras subir de nivel x2,5.
+const SHOT_DAMAGE := 2.0
+const SHOT_CHARGED_MULT := 2.5
 var _is_swordman: bool = false   # héroe de HERO_CLASSES
 var _hero_class: Dictionary = {}
 var _hero_color: Dictionary = {}
@@ -970,6 +975,13 @@ func _fire_shot(to_target: Vector2, count: int) -> void:
 	for i in range(count):
 		var offset := (i - (count - 1) / 2.0) * AUTO_FIRE_SPREAD
 		var dir := to_target.rotated(offset)
+		# DOREN: las flechas extra son sus flechas del pack.
+		if _hero_class.get("attack", "") == "arrow":
+			var dmg: float = SHOT_DAMAGE * damage_mult * (1.0 + ranged_power_level * 0.3) * (SHOT_CHARGED_MULT if charged and i == 0 else 1.0)
+			var arrow := _launch_hero_projectile("arrow", dir, dmg)
+			arrow.pierce = 1 + _arrow_pierce
+			arrow.source = "lluvia_flechas" if _arrow_pierce > 0 else "disparo"
+			continue
 		var shot = SHOT_SCENE.instantiate()
 		get_tree().current_scene.add_child(shot)
 		shot.global_position = global_position + dir * 24.0
@@ -1091,7 +1103,7 @@ func _aim_dir() -> Vector2:
 		return (target.global_position - global_position).normalized()
 	return _attack_dir
 
-func _launch_hero_projectile(kind: String, dir: Vector2, dmg: float) -> void:
+func _launch_hero_projectile(kind: String, dir: Vector2, dmg: float) -> Area2D:
 	var p := Area2D.new()
 	p.set_script(HERO_PROJECTILE_SCRIPT)
 	p.setup(kind, dir, dmg, _swordman_tier)
@@ -1106,6 +1118,7 @@ func _launch_hero_projectile(kind: String, dir: Vector2, dmg: float) -> void:
 	get_tree().current_scene.add_child(p)
 	# Sale de la mano / del bastón, no de los pies.
 	p.global_position = global_position + dir * 14.0 + Vector2(0, -6)
+	return p
 
 # ── EDRIC / SIRA: ataque en 8 direcciones ───────────────────────
 

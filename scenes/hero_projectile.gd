@@ -24,6 +24,9 @@ var max_dist: float = 260.0
 var speed: float = 260.0
 var dir: Vector2 = Vector2.RIGHT
 var tier: int = 1
+## "ataque" para el golpe del héroe; las flechas de la carta "disparo a
+## distancia" de DOREN usan "disparo" (con el tope de monster.gd).
+var source: String = "ataque"
 
 var _sprite: Sprite2D
 var _frames: Array[Texture2D] = []
@@ -103,7 +106,7 @@ func _on_body_entered(body: Node) -> void:
 		_explode()
 		return
 	_hit.append(body)
-	body.take_damage(damage, "ataque")
+	body.take_damage(damage, source)
 	pierce -= 1
 	if pierce <= 0:
 		queue_free()
@@ -117,7 +120,7 @@ func _explode() -> void:
 	set_deferred("monitoring", false)
 	for m in get_tree().get_nodes_in_group("monster"):
 		if is_instance_valid(m) and not m._dead and global_position.distance_to(m.global_position) <= radius:
-			m.take_damage(damage, "ataque")
+			m.take_damage(damage, source)
 	var data: Array = FIRE_EXPLOSION[4 if tier >= 4 else 1]
 	_frames = _slice(load(data[0]), ROWS[_dir_key()], int(data[1]), 8)
 	_fps = EXPLOSION_FPS
