@@ -8,6 +8,7 @@ extends Node2D
 ##   WASD          — moverte (o joystick táctil izquierda en móvil)
 ##   Q / E         — zoom out / in
 ##   L             — trigger level-up modal (Espacio = habilidad activa)
+##   H / J / T     — cambiar héroe (GAROTH, ELARA, DOREN) / color / forma
 ##   1..6          — spawn 1 monster: rat, imp, lizardman, slime, ghost, beholder
 ##   Shift+1..3    — spawn boss: demon1 / demon2 / demon3
 ##   F / R / M     — unlock flying swords / ranged / meteoros
@@ -27,6 +28,8 @@ const TOUCH_CONTROLS_SCENE := preload("res://scenes/touch_controls.tscn")
 const RpgTheme := preload("res://scenes/rpg_theme.gd")
 const Upgrades := preload("res://scenes/upgrades.gd")
 const CHEST_SCRIPT := preload("res://scenes/chest.gd")
+const CharSelect := preload("res://scenes/character_select.gd")
+const PlayerScript := preload("res://scenes/player.gd")
 
 const SPAWN_KEYS: Dictionary = {
 	KEY_1: "rat",
@@ -47,8 +50,12 @@ const BOSS_KEYS: Dictionary = {
 @onready var _help_label: Label = $UI/HelpLabel
 @onready var _touch_panel: Control = $UI/TouchPanel
 
+var _hero_label: Label
+var _color_i: int = 0
+
 func _ready() -> void:
 	_help_label.text = _help_text()
+	_build_hero_controls()
 
 	# Joystick táctil izquierdo — mismo que se usa en el gameplay real
 	var tc = TOUCH_CONTROLS_SCENE.instantiate()
@@ -57,6 +64,7 @@ func _ready() -> void:
 		tc.move_input.connect(_player.set_touch_input)
 
 	_wire_touch_buttons()
+	_make_panel_scroll()
 	_style_panels()
 
 	Screen.layout_changed.connect(_apply_layout)
@@ -69,12 +77,34 @@ func _apply_layout(compact: bool) -> void:
 	$UI/HelpBg.visible = not compact
 	_help_label.visible = not compact
 
+## Con la fila de héroes el panel no entra en 720 de alto: va dentro de
+## un ScrollContainer (rueda del mouse o arrastrar con el dedo).
+func _make_panel_scroll() -> void:
+	var content: Control = _touch_panel.get_node("Content")
+	var scroll := ScrollContainer.new()
+	scroll.name = "Scroll"
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_left = 8.0
+	scroll.offset_top = 8.0
+	scroll.offset_right = -8.0
+	scroll.offset_bottom = -8.0
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_touch_panel.add_child(scroll)
+	content.reparent(scroll, false)
+	content.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	content.offset_left = 0.0
+	content.offset_top = 0.0
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# La ayuda de teclado tiene una línea más (héroe / color / forma).
+	$UI/HelpBg.offset_bottom = 262.0
+	_help_label.offset_bottom = 258.0
+
 ## Mismo estilo que el resto de la UI (rpg_theme.gd): madera + verdes.
 func _style_panels() -> void:
 	_touch_panel.add_theme_stylebox_override("panel", RpgTheme.wood_box(9.0, 9.0))
 	$UI/HelpBg.color = Color(0.227, 0.157, 0.114, 0.85)
 	RpgTheme.style_light_label(_help_label, 12)
-	$UI/TouchPanel/Content.add_theme_constant_override("separation", 4)
+	_touch_panel.find_child("Content", true, false).add_theme_constant_override("separation", 4)
 	for node in _touch_panel.find_children("*", "", true, false):
 		if node is Button:
 			RpgTheme.style_button(node, 13)
@@ -133,6 +163,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key == KEY_L:
 		_trigger_level_up()
 		return
+	if key == KEY_H:
+		_next_hero()
+		return
+	if key == KEY_J:
+		_next_color()
+		return
+	if key == KEY_T:
+		_next_form()
+		return
 	if event.shift_pressed and BOSS_KEYS.has(key):
 		_spawn_monster(BOSS_KEYS[key], true)
 		return
@@ -161,6 +200,81 @@ func _unhandled_input(event: InputEvent) -> void:
 		_player.heal(10.0)
 	elif key == KEY_MINUS:
 		_player.take_damage(10.0)
+
+# ── Héroe: clase, color y forma (sin candados: es para probar) ────
+
+## Fila HÉROE arriba del panel: un botón por héroe, color y forma, y
+## qué se está viendo.
+func _build_hero_controls() -> void:
+	var content: Node = _touch_panel.get_node("Content")
+	var title := Label.new()
+	title.text = "Héroe"
+	content.add_child(title)
+	content.move_child(title, 1)
+	var grid := GridContainer.new()
+	grid.columns = 3
+	content.add_child(grid)
+	content.move_child(grid, 2)
+	for c in CharSelect.CHARACTERS:
+		var b := Button.new()
+		b.text = c["name"]
+		b.pressed.connect(_switch_hero.bind(c["id"]))
+		grid.add_child(b)
+	for pair in [["Color >", _next_color], ["Forma >", _next_form]]:
+		var b := Button.new()
+		b.text = pair[0]
+		b.pressed.connect(pair[1])
+		grid.add_child(b)
+	_hero_label = Label.new()
+	content.add_child(_hero_label)
+	content.move_child(_hero_label, 3)
+	_color_i = GameState.selected_color(GameState.selected_character_id)
+	_update_hero_label()
+
+func _hero_class() -> Dictionary:
+	return PlayerScript.HERO_CLASSES.get(GameState.selected_character_id, {})
+
+func _update_hero_label() -> void:
+	var hc := _hero_class()
+	if hc.is_empty():
+		_hero_label.text = GameState.CHARACTER_NAMES.get(GameState.selected_character_id, "?")
+		return
+	var entry: Dictionary = CharSelect.find_character(GameState.selected_character_id)
+	var colors: Array = entry.get("colors", [])
+	var cname: String = colors[_color_i]["color"] if _color_i < colors.size() else ""
+	_hero_label.text = "%s · %s · forma %d/%d" % [entry.get("name", ""), cname, _player._swordman_tier, hc["max_tier"]]
+
+## Otro héroe: se recarga la sala (el héroe se arma en su _ready).
+func _switch_hero(id: String) -> void:
+	GameState.selected_character_id = id
+	get_tree().reload_current_scene()
+
+func _next_hero() -> void:
+	var ids: Array = CharSelect.CHARACTERS.map(func(c): return c["id"])
+	var i: int = ids.find(GameState.selected_character_id)
+	_switch_hero(ids[(i + 1) % ids.size()])
+
+## Siguiente color en el mismo héroe, sin recargar (no se guarda).
+func _next_color() -> void:
+	var hc := _hero_class()
+	if hc.is_empty():
+		return
+	_color_i = (_color_i + 1) % hc["colors"].size()
+	_player._hero_color = hc["colors"][_color_i]
+	_player._load_swordman_textures()
+	_player._apply_idle()
+	_update_hero_label()
+
+## Siguiente forma: el nivel justo de esa forma (vuelve a la 1 al final).
+func _next_form() -> void:
+	var hc := _hero_class()
+	if hc.is_empty():
+		return
+	var next_tier: int = _player._swordman_tier % int(hc["max_tier"]) + 1
+	_player.level = 1 + (next_tier - 1) * int(hc["tier_every"])
+	_player._load_swordman_textures()
+	_player._apply_idle()
+	_update_hero_label()
 
 # ── Acciones (compartidas entre keyboard y botones táctiles) ─────
 
@@ -229,6 +343,7 @@ func _help_text() -> String:
 	return """[QA ROOM]
 Teclado:
   WASD  mover · L  level up · Espacio  habilidad
+  H  héroe · J  color · T  forma
   1..6  spawn · Shift+1..3  boss
   F/R/M  unlock skills · K  matar todos
   C  pollo · G  +500 monedas
@@ -244,6 +359,6 @@ func _next_companion() -> void:
 	var ids: Array = GameState.COMPANIONS.keys()
 	_companion_i = (_companion_i + 1) % ids.size()
 	_player.spawn_companion(ids[_companion_i], GameState.COMPANION_MAX_LEVEL)
-	var btn: Button = get_node_or_null("UI/TouchPanel/Content/Unlocks/ChickenBtn")
+	var btn: Button = _touch_panel.find_child("ChickenBtn", true, false)
 	if btn:
 		btn.text = GameState.companion_stage(ids[_companion_i], GameState.COMPANION_MAX_LEVEL)[2]

@@ -42,6 +42,9 @@ const EFFECTS := [
 	["Sierras orbitales", "DIBUJADO", "sierras", "saw_weapon.gd"],
 	["Aura helada", "DIBUJADO", "aura_lenta", "slow_aura_weapon.gd"],
 	["Cero absoluto (congelante evo.)", "ÍCONO + DIBUJADO", "congelante_evo", "elemental_shot_weapon.gd"],
+	["Bola de fuego de ELARA (formas 1-3)", "SPRITE DEL PACK", "elara_fuego", "hero_projectile.gd + sprites/elara/fx/fire_*_1.png"],
+	["Bola de fuego de ELARA (formas 4-6)", "SPRITE DEL PACK", "elara_fuego4", "hero_projectile.gd + sprites/elara/fx/fire_*_4.png"],
+	["Flecha de DOREN (atraviesa)", "SPRITE DEL PACK", "doren_flecha", "hero_projectile.gd + sprites/doren/fx/arrow.png"],
 	["Lobo de SIRA (fuera del juego)", "SPRITE", "lobo", "wolf_ally.gd + sprites/wolf/"],
 	["Huevos (gallina)", "DIBUJADO", "huevos", "egg_projectile.gd"],
 	["Disparo enemigo (imp)", "DIBUJADO", "enemigo", "enemy_projectile.gd"],
@@ -218,6 +221,24 @@ func _play_effect(id: String) -> void:
 			_weapon(preload("res://scenes/saw_weapon.gd"), true, 3)
 		"aura_lenta":
 			_weapon(preload("res://scenes/slow_aura_weapon.gd"), true, 5)
+		"elara_fuego", "elara_fuego4", "doren_flecha":
+			var kind: String = "arrow" if id == "doren_flecha" else "fireball"
+			var tier: int = 4 if id == "elara_fuego4" else 1
+			_repeat_cb = func():
+				for t in _targets():
+					var dir: Vector2 = (t.global_position - p.global_position).normalized()
+					var pr := Area2D.new()
+					pr.set_script(preload("res://scenes/hero_projectile.gd"))
+					pr.setup(kind, dir, 6.0 if kind == "fireball" else 4.5, tier)
+					if kind == "fireball":
+						pr.speed = 240.0
+						pr.max_dist = p.global_position.distance_to(t.global_position) + 20.0
+					else:
+						pr.speed = 520.0
+						pr.pierce = 3
+						pr.max_dist = 360.0
+					add_child(pr)
+					pr.global_position = p.global_position + dir * 14.0 + Vector2(0, -6)
 		"lobo":
 			var wolf := Node2D.new()
 			wolf.set_script(preload("res://scenes/wolf_ally.gd"))
