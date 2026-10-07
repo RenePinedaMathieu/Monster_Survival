@@ -100,7 +100,12 @@ func _process(delta: float) -> void:
 			return
 		var to_target: Vector2 = _dash_target_node.global_position - global_position
 		if to_target.length() < 12.0:
-			_finish()
+			# Llegó: el golpe va acá. Si ya lo tocaba al salir (con el
+			# héroe rodeado) o lo cruzó en un solo cuadro, body_entered
+			# no llegaba a dispararse y la espada se iba sin pegar.
+			_on_body_entered(_dash_target_node)
+			if not is_queued_for_deletion():
+				_finish()
 			return
 		_dash_last_dir = to_target.normalized()
 		rotation = _dash_last_dir.angle()

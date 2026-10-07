@@ -103,7 +103,7 @@ func _on_body_entered(body: Node) -> void:
 	if "_dead" in body and body._dead:
 		return
 	if kind == "fireball":
-		_explode()
+		_explode(body)
 		return
 	_hit.append(body)
 	body.take_damage(damage, source)
@@ -112,14 +112,17 @@ func _on_body_entered(body: Node) -> void:
 		queue_free()
 
 ## La bola revienta: daño a todo lo que esté en el radio y la animación
-## de la explosión del pack (fila según hacia dónde iba).
-func _explode() -> void:
+## de la explosión del pack (fila según hacia dónde iba). `struck`: el
+## que tocó, que siempre recibe el golpe: revienta en su borde y a uno
+## grande (los jefes miden 25 a 36 de radio) el centro le quedaba fuera
+## del radio de 30 y no le pasaba nada.
+func _explode(struck: Node = null) -> void:
 	if _exploding:
 		return
 	_exploding = true
 	set_deferred("monitoring", false)
 	for m in get_tree().get_nodes_in_group("monster"):
-		if is_instance_valid(m) and not m._dead and global_position.distance_to(m.global_position) <= radius:
+		if is_instance_valid(m) and not m._dead and (m == struck or global_position.distance_to(m.global_position) <= radius):
 			m.take_damage(damage, source)
 	var data: Array = FIRE_EXPLOSION[4 if tier >= 4 else 1]
 	_frames = _slice(load(data[0]), ROWS[_dir_key()], int(data[1]), 8)
