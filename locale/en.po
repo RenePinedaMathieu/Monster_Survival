@@ -1718,8 +1718,8 @@ msgid "Torbellino"
 msgstr "Cyclone"
 
 #: scenes/upgrades.gd:121
-msgid "4 hachas giran sin parar a tu alrededor"
-msgstr "4 axes spin around you nonstop"
+msgid "4 hachas giran sin parar a tu alrededor y sigues lanzando"
+msgstr "4 axes spin around you nonstop and you keep throwing"
 
 #: scenes/upgrades.gd:122 scenes/weapons.gd:46
 msgid "Tormenta eléctrica"

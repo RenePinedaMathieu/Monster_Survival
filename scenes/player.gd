@@ -450,15 +450,21 @@ const SWORDMAN_TIER_DAMAGE := 0.15
 ##             (revisado en las hojas: la llama sale en el 4, la flecha en el 5)
 ##   "attack_time": duración del ataque respecto de AUTO_FIRE_INTERVAL
 ##   "range": a qué distancia empieza a atacar
+##   "hp" / "speed": vida y velocidad respecto de las de base;
+##   "damage_taken": daño que recibe (GAROTH, el que aguanta: 0,9)
+## Estilos (balance del 07-10, banco de DPS): GAROTH aguanta y pega en
+## área de cerca; ELARA, área y alcance pero frágil y lenta; DOREN,
+## movilidad y el mejor daño a un solo blanco.
 ##   "colors": los 4 colores (sólo cambian el look; tools/recolor_hero.py).
 ##             {} = el formato de nombres de GAROTH original.
 const HERO_CLASSES := {
 	"swordman": {"max_tier": 9, "tier_every": 3, "tier_damage": 0.15, "attack": "melee",
-		"attack_frames": 7, "hit_frame": 3, "attack_time": 1.0, "range": 70.0, "hp": 1.0, "speed": 1.0,
+		"attack_frames": 7, "hit_frame": 3, "attack_time": 1.0, "range": 70.0, "hp": 1.25, "speed": 1.0,
+		"damage_taken": 0.9,
 		"colors": [{}, {"dir": "res://assets/sprites/toren/", "name": "Toren"},
 			{"dir": "res://assets/sprites/bran/", "name": "Bran"}, {"dir": "res://assets/sprites/vael/", "name": "Vael"}]},
 	"elara": {"max_tier": 6, "tier_every": 4, "tier_damage": 0.24, "attack": "fireball",
-		"attack_frames": 7, "hit_frame": 4, "attack_time": 1.25, "range": 190.0, "hp": 0.85, "speed": 1.0,
+		"attack_frames": 7, "hit_frame": 4, "attack_time": 1.25, "range": 190.0, "hp": 0.85, "speed": 0.95,
 		"colors": [{"dir": "res://assets/sprites/elara/", "name": "Elara"}, {"dir": "res://assets/sprites/elara_2/", "name": "Elara"},
 			{"dir": "res://assets/sprites/elara_3/", "name": "Elara"}, {"dir": "res://assets/sprites/elara_4/", "name": "Elara"}]},
 	"doren": {"max_tier": 3, "tier_every": 8, "tier_damage": 0.6, "attack": "arrow",
@@ -469,8 +475,12 @@ const HERO_CLASSES := {
 ## Bola de fuego de ELARA: daño a todos en el radio de la explosión.
 const ELARA_FIRE_DAMAGE := 6.0
 const ELARA_FIRE_RADIUS := 30.0
-## Flecha de DOREN: atraviesa a 1 + forma enemigos.
-const DOREN_ARROW_DAMAGE := 4.5
+## Flecha de DOREN: atraviesa a 1 + forma enemigos. Antes 4,5: era el
+## que menos pegaba a un solo blanco y tardaba el doble en limpiar.
+const DOREN_ARROW_DAMAGE := 7.0
+## Carta "+1 proyectil" en DOREN: más flechas por tiro, casi juntas
+## (siguen yendo al mismo blanco: es daño a uno, no área).
+const ARROW_SPREAD := 0.05
 ## Flechas extra de DOREN (carta "disparo a distancia"): el daño del
 ## disparo de siempre (shot_projectile.gd), sin el recorte de los héroes
 ## de cuerpo a cuerpo (es su arma); la primera tras subir de nivel x2,5.
@@ -566,6 +576,7 @@ func _ready() -> void:
 		max_hp *= float(_hero_class["hp"])
 		hp = max_hp
 		move_speed *= float(_hero_class["speed"])
+		damage_taken_mult *= float(_hero_class.get("damage_taken", 1.0))
 	elif _is_axel:
 		_sprite.scale = Vector2.ONE * AXEL_SCALE
 		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -1098,7 +1109,11 @@ func _hero_attack_release() -> void:
 		"fireball":
 			_launch_hero_projectile("fireball", _aim_dir(), ELARA_FIRE_DAMAGE * damage_mult * tier_mult)
 		"arrow":
-			_launch_hero_projectile("arrow", _aim_dir(), DOREN_ARROW_DAMAGE * damage_mult * tier_mult)
+			var aim := _aim_dir()
+			var n: int = projectiles_per_shot
+			for i in range(n):
+				var off: float = (i - (n - 1) / 2.0) * ARROW_SPREAD
+				_launch_hero_projectile("arrow", aim.rotated(off), DOREN_ARROW_DAMAGE * damage_mult * tier_mult)
 		_:
 			var dmg: float = SWORDMAN_MELEE_DAMAGE * damage_mult * tier_mult
 			for body in _attack_area.get_overlapping_bodies():
@@ -1484,6 +1499,11 @@ func has_ranged_attack() -> bool:
 	if _is_axel or _is_swordman or _is_pixel_skin:
 		return ranged_power_level > 0
 	return true
+
+## DOREN: su ataque es la flecha, así que la carta "+1 proyectil" le
+## sirve desde el principio (suma flechas al tiro, _hero_attack_release).
+func shoots_arrows() -> bool:
+	return _hero_class.get("attack", "") == "arrow"
 
 func has_flying_swords() -> bool:
 	return _swords_rig != null

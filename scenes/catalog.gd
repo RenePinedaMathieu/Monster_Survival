@@ -386,6 +386,8 @@ func _build_heroes() -> void:
 		detail += "\nHabilidad: %s (cada %.1f s) — %s" % [skill["name"], skill["cooldown"], skill.get("desc", "")]
 		detail += "\nVida x%.2f · velocidad x%.2f · %d formas (una cada %d niveles, +%d%% de daño cada una)" % [
 			hc["hp"], hc["speed"], hc["max_tier"], hc["tier_every"], int(hc["tier_damage"] * 100.0)]
+		if hc.has("damage_taken"):
+			detail += " · recibe %d%% menos daño" % roundi((1.0 - float(hc["damage_taken"])) * 100.0)
 		_section("%s · %s" % [entry["name"], entry.get("role", "")], detail, 22)
 		# Colores: el sprite en la forma elegida y su retrato.
 		var tier: int = mini(_tier, int(hc["max_tier"]))

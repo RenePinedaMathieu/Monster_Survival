@@ -982,7 +982,10 @@ func _on_body_exited(_body: Node) -> void:
 func apply_burn(dps_frac: float, duration: float, source: String = "quemadura") -> void:
 	if _dead:
 		return
-	_burn_dps_frac = maxf(_burn_dps_frac, dps_frac)
+	# Los jefes, a un cuarto (como ya resisten aturdir y congelar): la
+	# quemadura es un % de la vida máxima y en el jefe final la Flecha
+	# de fuego sola sacaba ~200 por segundo.
+	_burn_dps_frac = maxf(_burn_dps_frac, dps_frac * (0.25 if is_boss() else 1.0))
 	_burn_t = maxf(_burn_t, duration)
 	_burn_source = source
 

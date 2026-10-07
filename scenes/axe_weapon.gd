@@ -3,8 +3,8 @@ extends Node2D
 ## Arma "Hacha giratoria": cada tanto lanza hachas hacia los enemigos
 ## más cercanos; salen, frenan y vuelven al player atravesando todo lo
 ## que tocan (ver axe_projectile.gd). Evolución "Torbellino" (hacha +
-## daño): deja de lanzar y pasa a tener 4 hachas girando sin parar
-## alrededor del player.
+## daño): además de lanzar, 4 hachas giran sin parar alrededor del
+## player (antes dejaba de lanzar y pegaba menos que sin evolucionar).
 
 const AXE_SCRIPT := preload("res://scenes/axe_projectile.gd")
 
@@ -12,9 +12,11 @@ const AXE_SCRIPT := preload("res://scenes/axe_projectile.gd")
 const LEVELS: Array = [
 	{"cooldown": 2.2, "count": 1, "damage": 5.0},
 	{"cooldown": 2.0, "count": 1, "damage": 6.0},
-	{"cooldown": 1.8, "count": 2, "damage": 7.0},
-	{"cooldown": 1.6, "count": 2, "damage": 8.5},
-	{"cooldown": 1.4, "count": 3, "damage": 10.0},
+	{"cooldown": 1.8, "count": 2, "damage": 6.0},
+	{"cooldown": 1.6, "count": 2, "damage": 7.0},
+	# Antes 3 de 10: con 43 de daño por segundo a un blanco era lo que
+	# más pegaba del juego.
+	{"cooldown": 1.4, "count": 2, "damage": 8.0},
 ]
 const THROW_RANGE := 260.0
 const ORBIT_COUNT := 4
@@ -40,7 +42,7 @@ func evolve() -> void:
 		_orbiters.append(axe)
 
 func _process(delta: float) -> void:
-	if evolved or player == null or not is_instance_valid(player) or player.hp <= 0.0:
+	if player == null or not is_instance_valid(player) or player.hp <= 0.0:
 		return
 	_cd -= delta
 	if _cd > 0.0:

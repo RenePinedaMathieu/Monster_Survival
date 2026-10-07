@@ -121,7 +121,7 @@ const EVOLUTIONS: Dictionary = {
 	"santuario": {"weapon": "aura", "passive": "max_hp", "name": "Santuario",
 		"desc": "El aura crece y te cura mientras quema enemigos", "icon": ICON + "skill_21.png"},
 	"torbellino": {"weapon": "hacha", "passive": "damage", "name": "Torbellino",
-		"desc": "4 hachas giran sin parar a tu alrededor", "icon": ICON + "skill_36.png"},
+		"desc": "4 hachas giran sin parar a tu alrededor y sigues lanzando", "icon": ICON + "skill_36.png"},
 	"tormenta_electrica": {"weapon": "rayo", "passive": "move_speed", "name": "Tormenta eléctrica",
 		"desc": "El rayo salta a 8 enemigos y cae dos veces", "icon": ICON + "skill_19.png"},
 	"gallina_dorada": {"weapon": "pollo", "passive": "hp_regen", "name": "Gallina dorada",
@@ -216,7 +216,7 @@ static func is_eligible(player, id: String) -> bool:
 	# Los personajes que ya disparan de base pueden sumar proyectiles
 	# aunque no hayan tomado la carta de disparo.
 	if id == "multishot":
-		return player.has_ranged_attack() and player.projectiles_per_shot < 4
+		return (player.has_ranged_attack() or player.shoots_arrows()) and player.projectiles_per_shot < 4
 	var w := weapon_of_card(id)
 	if w == "":
 		return false
