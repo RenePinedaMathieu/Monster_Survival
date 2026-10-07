@@ -46,24 +46,30 @@ El agua choca sola; la orilla de tierra se camina.
 
 ## Capas: piso y objetos
 
-- **Piso:** todas las capas de abajo (agua, suelo, manchas, pasto, enredaderas…). El héroe camina encima.
-- **Objetos:** desde la primera capa llamada `objects` (o `objects1`, `Objects4`…) hacia arriba. Cada objeto tiene altura: el héroe pasa por detrás de la copa de un árbol y por delante del tronco.
+- **Piso:** todas las capas de abajo (agua, suelo, manchas, pasto, enredaderas…). El héroe camina encima. Las capas de agua se llaman `water…` o `Agua…`.
+- **Objetos:** desde la primera capa llamada `objects`, `objects1`, `Objects4`, `Objetos` o `Arboles` hacia arriba. Cada objeto tiene altura: el héroe pasa por detrás de la copa de un árbol y por delante del tronco.
 - **Un objeto por grupo:** el juego toma como un solo objeto las baldosas que se tocan en una misma capa. Si dos árboles se tocan, ponlos en capas de objetos distintas, como hace el ejemplo.
 
 ## Qué choca
 
 Solo, sin pintar nada:
 - **El agua**, también la de las orillas pintadas con baldosas de costa.
-- **La base de los objetos de 32 px de alto o más:** troncos, rocas, ruinas. Los chicos (hongos, matas, flores) se atraviesan.
+- **La base de los dibujos grandes:** troncos, rocas, ruinas. Los chicos (hongos, juncos, matas, flores) se atraviesan, aunque estén pegados entre sí.
 
 Con la capa **`choque`** (arriba de todo, medio transparente):
 - **Cuadro rojo:** no se pasa. Úsalo para acantilados, paredes de mesetas o lo que se escape.
 - **Cuadro verde:** sí se pasa, aunque algo choque ahí. El verde gana a todo.
 
+## Archivos y carpetas
+
+- **Un mapa por carpeta:** cada uno con su nombre (`bosque/bosque.tmx`, `desierto/desierto.tmx`, `pantano/pantano.tmx`). Para empezar uno desde otro, avísame y lo copio con las rutas bien.
+- **No uses "Guardar como" hacia otra carpeta:** el mapa sigue apuntando a las baldosas de la carpeta vieja y se rompe.
+- **No renombres ni muevas las carpetas `tiles`:** el juego busca ahí las imágenes.
+
 ## No cambiar
 
-- El nombre de la capa `choque`.
-- El mapa no infinito y las capas en formato CSV (vienen así).
+- El nombre de la capa `choque`. Si tu mapa no la tiene, agrégala: una capa de patrones llamada `choque`, con el tileset `tiles/choque.tsx` (Mapa > Agregar conjunto de patrones externo).
+- El mapa no infinito.
 - Las capas que ocultes en Tiled no van al juego.
 
 ## El héroe

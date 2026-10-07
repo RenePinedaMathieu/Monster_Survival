@@ -27,3 +27,6 @@ dist/
 
 # Python
 __pycache__/
+
+# Tiled: estado de la ventana de cada uno
+*.tiled-session

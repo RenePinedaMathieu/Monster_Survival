@@ -5,8 +5,8 @@ extends SceneTree
 ## (con otro.tmx: un archivo de la misma carpeta, sale como scenes/maps/otro.scn)
 ## Lee assets/maps/<id>/<id>.tmx (plantilla de tools/build_tiled_templates.py)
 ## y escribe scenes/maps/<id>.scn con el script scenes/tiled_map.gd:
-##   - Capas planas (todas las de antes de la primera "objects" u
-##     "objectsN"):
+##   - Capas planas (todas las de antes de la primera "objects",
+##     "objectsN", "Objetos" o "Arboles"):
 ##     TileMapLayer debajo de todo, en el orden de Tiled.
 ##   - Capas de objetos (desde esa y todas las de más arriba): un
 ##     TileMapLayer ordenado por altura cada una. Cada grupo de baldosas
@@ -14,9 +14,10 @@ extends SceneTree
 ##     base del objeto (y_sort_origin), así el héroe pasa por detrás de la
 ##     copa y por delante del tronco.
 ##   - Choque (celdas de 8 px): el agua (por color, también la de las
-##     orillas), la base opaca de los objetos de 32 px de alto o más
+##     orillas), la base opaca de los objetos grandes (troncos, rocas)
 ##     y lo pintado en "choque" (rojo: choca; verde: no choca, gana a todo).
-## Las capas ocultas en Tiled no se importan. Ver assets/maps/COMO_PINTAR.md.
+## Las capas ocultas en Tiled no se importan. Lee capas en CSV o base64
+## (como las guarda Tiled). Ver assets/maps/COMO_PINTAR.md.
 
 const TILE := 16
 const CELL := 8
@@ -27,8 +28,12 @@ const GID_MASK := 0x1FFFFFFF
 const CHOQUE_LAYER := "choque"
 ## Lo que flota sobre el agua cuenta como agua.
 const WATER_EXTRA := ["duskweed", "duckweed", "water_lilies", "water_lilis"]
-## Objetos más bajos que esto (flores, pasto, hongos, matas) no chocan.
-const MIN_SOLID_HEIGHT := 32
+## Objetos más bajos que esto (flores, pasto) no chocan...
+const MIN_SOLID_HEIGHT := 24
+## ...ni los de base angosta (juncos, flores altas), ni los livianos
+## (menos píxeles opacos que esto: hongos, juncos con pasto).
+const MIN_BASE_WIDTH := 10
+const MIN_SOLID_PIXELS := 450
 ## El héroe y los monstruos se ordenan por el centro del cuerpo y los
 ## pies están unos 12 px más abajo: los objetos se ordenan 12 px más
 ## arriba de su base para comparar pies con base.
@@ -52,6 +57,11 @@ func _initialize() -> void:
 	var t0 := Time.get_ticks_msec()
 	# Otro .tmx de la misma carpeta (una copia de prueba): -- bosque otro.tmx
 	var tmx: String = "%s/%s" % [_dir, args[1]] if args.size() > 1 else "%s/%s.tmx" % [_dir, id]
+	# Tiled puede haberlo guardado como "Bosque.tmx": se busca sin
+	# importar mayúsculas.
+	for f in DirAccess.get_files_at(_dir):
+		if f.to_lower() == tmx.get_file().to_lower():
+			tmx = "%s/%s" % [_dir, f]
 	if args.size() > 1:
 		id = args[1].get_basename()
 	_parse_tmx(tmx)
@@ -74,6 +84,8 @@ func _parse_tmx(path: String) -> void:
 		return
 	var layer: Dictionary = {}
 	var in_data := false
+	var encoding := ""
+	var compression := ""
 	while p.read() == OK:
 		match p.get_node_type():
 			XMLParser.NODE_ELEMENT:
@@ -90,12 +102,15 @@ func _parse_tmx(path: String) -> void:
 							"visible": p.get_named_attribute_value_safe("visible") != "0",
 							"data": PackedInt32Array()}
 					"data":
-						if p.get_named_attribute_value_safe("encoding") != "csv":
-							push_error("La capa %s no está en CSV: en Tiled, Mapa > Propiedades > Formato de capa: CSV" % layer.get("name", "?"))
+						encoding = p.get_named_attribute_value_safe("encoding")
+						compression = p.get_named_attribute_value_safe("compression")
 						in_data = true
 			XMLParser.NODE_TEXT:
-				if in_data and not layer.is_empty():
-					layer["data"].append_array(_csv(p.get_node_data()))
+				if in_data and not layer.is_empty() and p.get_node_data().strip_edges() != "":
+					if encoding == "csv":
+						layer["data"].append_array(_csv(p.get_node_data()))
+					else:
+						layer["data"].append_array(_base64(p.get_node_data(), compression))
 			XMLParser.NODE_ELEMENT_END:
 				match p.get_node_name():
 					"data":
@@ -118,7 +133,24 @@ func _csv(text: String) -> PackedInt32Array:
 			out.append(int(s))
 	return out
 
+## Capa en base64 (como la guarda Tiled por defecto): enteros de 32 bits.
+func _base64(text: String, compression: String) -> PackedInt32Array:
+	var raw := Marshalls.base64_to_raw(text.strip_edges())
+	match compression:
+		"zlib":
+			raw = raw.decompress_dynamic(-1, FileAccess.COMPRESSION_DEFLATE)
+		"gzip":
+			raw = raw.decompress_dynamic(-1, FileAccess.COMPRESSION_GZIP)
+		"zstd":
+			raw = raw.decompress_dynamic(-1, FileAccess.COMPRESSION_ZSTD)
+	return raw.to_int32_array()
+
 func _load_tsx(path: String, firstgid: int) -> void:
+	path = path.simplify_path()
+	if not FileAccess.file_exists(path):
+		# Un tileset que ya no está (p. ej. el de Grass1): se ignora.
+		print("Falta el tileset %s: se ignora" % path)
+		return
 	var p := XMLParser.new()
 	p.open(path)
 	var ts := {"firstgid": firstgid}
@@ -157,9 +189,10 @@ func _build() -> Node2D:
 		ts["sid"] = tile_set.add_source(src)
 		ts["img"] = Image.load_from_file(ProjectSettings.globalize_path(ts["image"]))
 		ts["img"].convert(Image.FORMAT_RGBA8)
-	# Objetos desde la primera capa "objects", "objects1", "Objects4"...
-	# ("objects_under_elevated_space" es plana: va bajo la meseta).
-	var obj_re := RegEx.create_from_string("^objects[0-9]*$")
+	# Objetos desde la primera capa "objects", "objects1", "Objects4",
+	# "Objetos", "Arboles"... ("objects_under_elevated_space" es plana:
+	# va bajo la meseta).
+	var obj_re := RegEx.create_from_string("^(objects|objetos|arboles|árboles|trees)[0-9 ]*$")
 	var obj_start := _layers.size()
 	for i in range(_layers.size()):
 		if obj_re.search(String(_layers[i]["name"]).to_lower()) != null:
@@ -314,8 +347,8 @@ func _components(data: PackedInt32Array) -> Array:
 		out.append(comp)
 	return out
 
-## Un objeto: anota el origen de orden de sus baldosas y, si es alto,
-## marca sólida su base opaca.
+## Un objeto: anota el origen de orden de sus baldosas y marca sólida
+## la base de sus dibujos grandes (_solid_blobs).
 func _object(data: PackedInt32Array, comp: PackedInt32Array, origins: Dictionary, solid: PackedByteArray, gw: int) -> void:
 	var x0 := _w
 	var y0 := _h
@@ -341,30 +374,64 @@ func _object(data: PackedInt32Array, comp: PackedInt32Array, origins: Dictionary
 			origins[key] = {}
 		origins[key][origin] = int(origins[key].get(origin, 0)) + 1
 		img.blit_rect(_tile_image(gid), Rect2i(0, 0, TILE, TILE), Vector2i((c % _w - x0) * TILE, (c / _w - y0) * TILE))
-	var used := img.get_used_rect()
-	if used.size.y < MIN_SOLID_HEIGHT:
-		return
-	# Base: la franja opaca de abajo (sin la sombra, que es transparente).
-	var bottom := -1
-	for y in range(used.end.y - 1, used.position.y - 1, -1):
-		for x in range(used.position.x, used.end.x):
-			if img.get_pixel(x, y).a >= OPAQUE:
-				bottom = y
-				break
-		if bottom >= 0:
-			break
-	if bottom < 0:
-		return
-	var band := clampi(used.size.y / 4, 4, 12)
-	var counts := {}
-	for y in range(maxi(0, bottom - band + 1), bottom + 1):
-		for x in range(used.position.x, used.end.x):
-			if img.get_pixel(x, y).a >= OPAQUE:
-				var cell := Vector2i((x0 * TILE + x) / CELL, (y0 * TILE + y) / CELL)
-				counts[cell] = int(counts.get(cell, 0)) + 1
-	for cell in counts:
-		if counts[cell] >= CELL * 2:
-			solid[cell.y * gw + cell.x] = 1
+	_solid_blobs(img, x0, y0, solid, gw)
+
+## Cada dibujo por separado (grupo de píxeles opacos que se tocan): un
+## hongo pegado a un junco en la misma capa no suma un objeto alto. Choca
+## la base de los dibujos altos, pesados y de base ancha (troncos, rocas,
+## ruinas); la sombra (semitransparente) no cuenta.
+func _solid_blobs(img: Image, x0: int, y0: int, solid: PackedByteArray, gw: int) -> void:
+	var w := img.get_width()
+	var h := img.get_height()
+	var data := img.get_data()
+	var min_a := int(OPAQUE * 255.0)
+	var seen := PackedByteArray()
+	seen.resize(w * h)
+	for start in range(w * h):
+		if seen[start] or data[start * 4 + 3] < min_a:
+			continue
+		var pixels := PackedInt32Array()
+		var stack := PackedInt32Array([start])
+		seen[start] = 1
+		var top := h
+		var low := 0
+		while not stack.is_empty():
+			var i: int = stack[stack.size() - 1]
+			stack.remove_at(stack.size() - 1)
+			pixels.append(i)
+			var px := i % w
+			var py := i / w
+			top = mini(top, py)
+			low = maxi(low, py)
+			for n in [i - 1, i + 1, i - w, i + w]:
+				if n < 0 or n >= w * h or seen[n]:
+					continue
+				if (n == i - 1 and px == 0) or (n == i + 1 and px == w - 1):
+					continue
+				if data[n * 4 + 3] >= min_a:
+					seen[n] = 1
+					stack.append(n)
+		if low - top + 1 < MIN_SOLID_HEIGHT or pixels.size() < MIN_SOLID_PIXELS:
+			continue
+		# Base: la franja de abajo del dibujo.
+		var band := clampi((low - top + 1) / 4, 4, 12)
+		var bx0 := w
+		var bx1 := -1
+		var counts := {}
+		for i in pixels:
+			var py := i / w
+			if py < low - band + 1:
+				continue
+			var px := i % w
+			bx0 = mini(bx0, px)
+			bx1 = maxi(bx1, px)
+			var cell := Vector2i((x0 * TILE + px) / CELL, (y0 * TILE + py) / CELL)
+			counts[cell] = int(counts.get(cell, 0)) + 1
+		if bx1 - bx0 + 1 < MIN_BASE_WIDTH:
+			continue
+		for cell in counts:
+			if counts[cell] >= CELL * 2:
+				solid[cell.y * gw + cell.x] = 1
 
 ## Agua por color: la paleta son los colores de las baldosas de las
 ## capas de agua; donde se usa un tileset de agua (agua, orillas), se
@@ -377,7 +444,7 @@ func _water(obj_start: int, solid: PackedByteArray, gw: int) -> void:
 		var layer: Dictionary = _layers[li]
 		var n := String(layer["name"]).to_lower()
 		# Sin los nenúfares ni la lenteja: su verde se parece al pasto.
-		if not layer["visible"] or not n.begins_with("water") or n.contains("lil"):
+		if not layer["visible"] or not _is_water_name(n) or n.contains("lil"):
 			continue
 		var seen := {}
 		for gid in layer["data"]:
@@ -428,6 +495,10 @@ func _water(obj_start: int, solid: PackedByteArray, gw: int) -> void:
 
 var _tile_cache := {}
 var _opaque_cache := {}
+
+## Capa de agua: "water...", "agua..." (y lo que flota encima).
+func _is_water_name(n: String) -> bool:
+	return n.begins_with("water") or n.begins_with("agua") or n in WATER_EXTRA
 
 ## La baldosa tapa todo su cuadro (nada de lo de abajo se ve).
 func _is_opaque(gid: int) -> bool:
