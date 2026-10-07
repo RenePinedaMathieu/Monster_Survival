@@ -15,6 +15,9 @@ extends Node2D
 ##   C             — spawnear el pollo acompañante (sin comprarlo)
 ##   G             — +500 monedas para probar la tienda
 ##   K             — kill all monsters
+##   X / Shift+X   — poner un blanco de práctica / quitar los blancos
+##                   (training_dummy.gd: no se mueve ni muere y muestra
+##                   el daño por segundo de cada arma)
 ##   +/-           — ±10 hp al player
 ##   Esc           — volver al menú
 ##
@@ -30,6 +33,8 @@ const Upgrades := preload("res://scenes/upgrades.gd")
 const CHEST_SCRIPT := preload("res://scenes/chest.gd")
 const CharSelect := preload("res://scenes/character_select.gd")
 const PlayerScript := preload("res://scenes/player.gd")
+const DummyScript := preload("res://scenes/training_dummy.gd")
+const Weapons := preload("res://scenes/weapons.gd")
 
 const SPAWN_KEYS: Dictionary = {
 	KEY_1: "rat",
@@ -51,10 +56,15 @@ const BOSS_KEYS: Dictionary = {
 @onready var _touch_panel: Control = $UI/TouchPanel
 
 var _hero_label: Label
+## Daño por segundo de cada arma, sumado entre los blancos.
+var _dummy_stats: Label
+var _stats_t: float = 0.0
 var _color_i: int = 0
 
 func _ready() -> void:
-	_help_label.text = _help_text()
+	# Sin los \r del archivo (fin de línea de Windows): cada uno se veía
+	# como un salto de línea más.
+	_help_label.text = _help_text().replace("\r", "")
 	_build_hero_controls()
 
 	# Joystick táctil izquierdo — mismo que se usa en el gameplay real
@@ -67,6 +77,17 @@ func _ready() -> void:
 	_make_panel_scroll()
 	_style_panels()
 
+	_dummy_stats = Label.new()
+	RpgTheme.style_light_label(_dummy_stats, 14)
+	_dummy_stats.anchor_top = 1.0
+	_dummy_stats.anchor_bottom = 1.0
+	_dummy_stats.offset_left = 16.0
+	_dummy_stats.offset_top = -40.0
+	_dummy_stats.offset_bottom = -12.0
+	_dummy_stats.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_dummy_stats.visible = false
+	$UI.add_child(_dummy_stats)
+
 	Screen.layout_changed.connect(_apply_layout)
 	_apply_layout(Screen.compact)
 
@@ -76,6 +97,35 @@ func _apply_layout(compact: bool) -> void:
 	_touch_panel.offset_left = -208.0 if compact else -260.0
 	$UI/HelpBg.visible = not compact
 	_help_label.visible = not compact
+	_fit_help_bg.call_deferred()
+
+## El fondo de la ayuda, del alto de su texto.
+func _fit_help_bg() -> void:
+	$UI/HelpBg.offset_bottom = _help_label.position.y + _help_label.get_combined_minimum_size().y + 8.0
+
+func _process(delta: float) -> void:
+	_stats_t -= delta
+	if _stats_t > 0.0:
+		return
+	_stats_t = 0.25
+	var dummies := get_tree().get_nodes_in_group("qa_dummy")
+	_dummy_stats.visible = not dummies.is_empty()
+	if dummies.is_empty():
+		return
+	var by := {}
+	for d in dummies:
+		var r: Dictionary = d.recent_damage()
+		for id in r:
+			by[id] = float(by.get(id, 0.0)) + r[id]
+	var total := 0.0
+	for v in by.values():
+		total += v
+	var ids: Array = by.keys()
+	ids.sort_custom(func(a, b): return by[a] > by[b])
+	var lines: Array = ["BLANCOS · daño por segundo (últimos %d s): %d" % [int(DummyScript.WINDOW), roundi(total / DummyScript.WINDOW)]]
+	for id in ids:
+		lines.append("  %s  %d" % [Weapons.display_name(id), roundi(by[id] / DummyScript.WINDOW)])
+	_dummy_stats.text = "\n".join(lines)
 
 ## Con la fila de héroes el panel no entra en 720 de alto: va dentro de
 ## un ScrollContainer (rueda del mouse o arrastrar con el dedo).
@@ -95,8 +145,6 @@ func _make_panel_scroll() -> void:
 	content.offset_left = 0.0
 	content.offset_top = 0.0
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# La ayuda de teclado tiene una línea más (héroe / color / forma).
-	$UI/HelpBg.offset_bottom = 262.0
 	_help_label.offset_bottom = 258.0
 
 ## Mismo estilo que el resto de la UI (rpg_theme.gd): madera + verdes.
@@ -123,6 +171,14 @@ func _wire_touch_buttons() -> void:
 	root.get_node("Actions/LevelUpBtn").pressed.connect(_trigger_level_up)
 	root.get_node("Actions/KillAllBtn").pressed.connect(_kill_all)
 	root.get_node("Actions/BackBtn").pressed.connect(_back_to_menu)
+	# Blancos de práctica: para ver las armas sin monstruos encima.
+	var actions: Node = root.get_node("Actions")
+	for pair in [["Poner blanco", _spawn_dummy], ["Quitar blancos", _clear_dummies]]:
+		var b := Button.new()
+		b.text = pair[0]
+		b.pressed.connect(pair[1])
+		actions.add_child(b)
+		actions.move_child(b, 2 if pair[0] == "Poner blanco" else 3)
 	# Catálogo del universo: sprites, animaciones, íconos y efectos.
 	root.get_node("Actions/CatalogBtn").pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/catalog.tscn"))
 
@@ -196,6 +252,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		GameState.grant_currency(500)
 	elif key == KEY_K:
 		_kill_all()
+	elif key == KEY_X:
+		if event.shift_pressed:
+			_clear_dummies()
+		else:
+			_spawn_dummy()
 	elif key == KEY_EQUAL or key == KEY_PLUS:
 		_player.heal(10.0)
 	elif key == KEY_MINUS:
@@ -318,9 +379,22 @@ func _max_weapons() -> void:
 		if owned and _player.passive_level(e["passive"]) == 0:
 			_player.apply_upgrade(e["passive"])
 
+## Un blanco al frente del héroe (cada uno más, en abanico).
+func _spawn_dummy() -> void:
+	var n := get_tree().get_nodes_in_group("qa_dummy").size()
+	var d := CharacterBody2D.new()
+	d.set_script(DummyScript)
+	d.add_to_group("qa_dummy")
+	d.position = _player.position + Vector2(110, 0).rotated(-0.5 + n * 0.5)
+	_monsters_container.add_child(d)
+
+func _clear_dummies() -> void:
+	for d in get_tree().get_nodes_in_group("qa_dummy"):
+		d.queue_free()
+
 func _kill_all() -> void:
 	for m in get_tree().get_nodes_in_group("monster"):
-		if m.has_method("take_damage"):
+		if m.has_method("take_damage") and not m.is_in_group("qa_dummy"):
 			m.take_damage(9999.0, "qa")
 
 func _back_to_menu() -> void:
@@ -346,6 +420,7 @@ Teclado:
   H  héroe · J  color · T  forma
   1..6  spawn · Shift+1..3  boss
   F/R/M  unlock skills · K  matar todos
+  X  blanco · Shift+X  quitar blancos
   C  pollo · G  +500 monedas
   V  cofre · B  élite · N  armas al máximo
   +/-  ±10 hp · Esc  volver
