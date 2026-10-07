@@ -34,3 +34,4 @@ __pycache__/
 # Tiled: proyecto de cada uno y la vista de choque (la arma el importador)
 *.tiled-project
 assets/maps/*/vista/
+tools/godot/
