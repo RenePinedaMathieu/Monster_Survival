@@ -17,7 +17,46 @@ const BACKGROUNDS := [Color("1c1b22"), Color("5b7a3a"), Color("d9b36b"), Color("
 const BG_NAMES := ["OSCURO", "PASTO", "ARENA", "PERGAMINO"]
 const COLOR_CODE := Color("ff9a3c")
 
-## [nombre, tipo, id, archivo/script que lo dibuja]
+## [nombre, tipo, id, archivo/script que lo dibuja]. Por héroe, con
+## sus 4 armas y sus evoluciones (upgrades.gd CLASS_WEAPONS); al final lo
+## de los enemigos y lo que quedó fuera del juego.
+const EFFECTS := [
+	["GAROTH · Espadas voladoras", "ÍCONO + DIBUJADO", "espadas", "weapon_icons/icon_15.png + flying_sword.gd"],
+	["GAROTH · Hacha giratoria", "ÍCONO", "hacha", "weapon_icons/icon_86.png"],
+	["GAROTH · Pulso", "DIBUJADO", "pulso", "pulse_weapon.gd"],
+	["GAROTH · Terremoto (pulso evo.)", "DIBUJADO", "pulso_evo", "pulse_weapon.gd"],
+	["GAROTH · Escudo de fuerza (bloquea)", "DIBUJADO", "escudo", "force_shield_weapon.gd"],
+	["GAROTH · Bastión (escudo evo., 3 cargas)", "DIBUJADO", "escudo_evo", "force_shield_weapon.gd"],
+	["ELARA · Bola de fuego (formas 1-3)", "SPRITE DEL PACK", "elara_fuego", "hero_projectile.gd + sprites/elara/fx/fire_*_1.png"],
+	["ELARA · Bola de fuego (formas 4-6)", "SPRITE DEL PACK", "elara_fuego4", "hero_projectile.gd + sprites/elara/fx/fire_*_4.png"],
+	["ELARA · Meteoro", "DIBUJADO", "meteor", "meteor.gd"],
+	["ELARA · Rayo en cadena", "DIBUJADO", "rayo", "lightning_weapon.gd + bolt_effect.gd"],
+	["ELARA · Tormenta eléctrica (rayo evo.)", "DIBUJADO", "rayo_evo", "bolt_effect.gd"],
+	["ELARA · Láser en cadena", "DIBUJADO", "laser", "chain_laser_weapon.gd + laser_effect.gd"],
+	["ELARA · Cadena carmesí (láser evo.)", "DIBUJADO", "laser_evo", "chain_laser_weapon.gd + laser_effect.gd"],
+	["ELARA · Aura de fuego (hoy dorada)", "DIBUJADO", "aura", "aura_weapon.gd"],
+	["ELARA · Santuario (aura evo.)", "DIBUJADO", "aura_evo", "aura_weapon.gd"],
+	["DOREN · Flecha (atraviesa)", "SPRITE DEL PACK", "doren_flecha", "hero_projectile.gd + sprites/doren/fx/arrow.png"],
+	["DOREN · Disparo niv. 1 / 5 / cargado", "ÍCONO + DIBUJADO", "disparo", "weapon_icons/icon_43.png + shot_projectile.gd"],
+	["DOREN · Flecha de fuego", "ÍCONO + DIBUJADO", "fuego", "shot_projectile.gd (efecto fire)"],
+	["DOREN · Infierno (fuego evo.)", "ÍCONO + DIBUJADO", "fuego_evo", "shot_projectile.gd (fuego con radio)"],
+	["DOREN · Flecha eléctrica (rayo instantáneo)", "DIBUJADO", "electrico", "elemental_shot_weapon.gd + bolt_effect.gd"],
+	["DOREN · Sobrecarga (eléctrica evo.)", "DIBUJADO", "electrico_evo", "elemental_shot_weapon.gd + bolt_effect.gd"],
+	["DOREN · Flecha congelante", "ÍCONO + DIBUJADO", "congelante", "shot_projectile.gd (efecto freeze)"],
+	["DOREN · Cero absoluto (congelante evo.)", "ÍCONO + DIBUJADO", "congelante_evo", "elemental_shot_weapon.gd"],
+	["Huevos (gallina)", "DIBUJADO", "huevos", "egg_projectile.gd"],
+	["Disparo enemigo (imp)", "DIBUJADO", "enemigo", "enemy_projectile.gd"],
+	["Abanico enemigo (beholder)", "DIBUJADO", "abanico", "enemy_projectile.gd"],
+	["Anillo de fuego del jefe", "DIBUJADO", "anillo", "enemy_projectile.gd"],
+	["Bola de fuego + suelo en llamas", "DIBUJADO", "fuego_suelo", "ground_fire_projectile.gd + burning_ground.gd"],
+	["Bomba del barril", "DIBUJADO", "bomba", "pickup.gd (_spawn_blast)"],
+	["Charco de barro (pantano)", "DIBUJADO", "barro", "mud_puddle.gd"],
+	["Números de daño y textos", "TEXTO", "numeros", "damage_number.gd"],
+	["Fuera del juego · Centinela dron", "DIBUJADO", "centinela", "sentinel_weapon.gd + shot_projectile.gd"],
+	["Fuera del juego · Sierras orbitales", "DIBUJADO", "sierras", "saw_weapon.gd"],
+	["Fuera del juego · Aura helada", "DIBUJADO", "aura_lenta", "slow_aura_weapon.gd"],
+	["Fuera del juego · Lobo de SIRA", "SPRITE", "lobo", "wolf_ally.gd + sprites/wolf/"],
+]
 const EFFECTS := [
 	["Meteoro", "DIBUJADO", "meteor", "meteor.gd"],
 	["Aura sagrada", "DIBUJADO", "aura", "aura_weapon.gd"],
