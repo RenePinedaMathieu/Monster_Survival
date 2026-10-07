@@ -1,18 +1,18 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="100" height="80" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="1">
- <tileset firstgid="1" source="../bosque/tiles/Water_detilazation.tsx" />
- <tileset firstgid="2887" source="../bosque/tiles/Water_detilazation2.tsx" />
- <tileset firstgid="5773" source="../bosque/tiles/Objects.tsx" />
- <tileset firstgid="6829" source="tiles/Ground_grass_swamp.tsx" />
- <tileset firstgid="7375" source="tiles/Objects.tsx" />
- <tileset firstgid="8851" source="tiles/Water_coasts.tsx" />
- <tileset firstgid="10567" source="tiles/Water_detilazation2.tsx" />
- <tileset firstgid="13453" source="tiles/Water_detilazation3.tsx" />
- <tileset firstgid="16339" source="tiles/choque.tsx" />
- <tileset firstgid="16341" source="tiles/duckweed.tsx" />
- <tileset firstgid="16869" source="tiles/spots.tsx" />
- <tileset firstgid="17205" source="tiles/sprites_animated.tsx" />
- <tileset firstgid="22449" source="tiles/water_lilis.tsx" />
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="100" height="80" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="1">
+ <tileset firstgid="1" source="../bosque/tiles/Water_detilazation.tsx"/>
+ <tileset firstgid="2887" source="../bosque/tiles/Water_detilazation2.tsx"/>
+ <tileset firstgid="5773" source="../bosque/tiles/Objects.tsx"/>
+ <tileset firstgid="6829" source="tiles/Ground_grass_swamp.tsx"/>
+ <tileset firstgid="7375" source="tiles/Objects.tsx"/>
+ <tileset firstgid="8851" source="tiles/Water_coasts.tsx"/>
+ <tileset firstgid="10567" source="tiles/Water_detilazation2.tsx"/>
+ <tileset firstgid="13453" source="tiles/Water_detilazation3.tsx"/>
+ <tileset firstgid="16339" source="tiles/choque.tsx"/>
+ <tileset firstgid="16341" source="tiles/duckweed.tsx"/>
+ <tileset firstgid="16869" source="tiles/spots.tsx"/>
+ <tileset firstgid="17205" source="tiles/sprites_animated.tsx"/>
+ <tileset firstgid="22449" source="tiles/water_lilis.tsx"/>
  <layer id="1" name="Agua base" width="100" height="80" locked="1">
   <data encoding="base64" compression="zlib">
    eJztwwENAAAMAiDrPIn9G/kgsNFLqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvoH6VqsxA==
@@ -33,18 +33,32 @@
    eJzt170NgCAQgFH2cC+NruDfCrq5mFiCJaB5L7mG8r5cQQgAAAAAAAAAAAAAAAAAAPzV0r0PZY1x52diJj2qWDM7P54mlJXrcZv1KE6PtujRFj3akuvRx/ddj+JyPdxGHVvc+5AYt1GHPx8AAAAAAAAAAAAAAABfcwFlMBTq
   </data>
  </layer>
- <layer id="6" name="Objetos" width="100" height="80" locked="1">
+ <layer id="11" name="Pasto_slow" width="100" height="80" locked="1">
   <data encoding="base64" compression="zlib">
-   eJztm0lzFVUUx88S14JJeDxys1LYQGSBkjCJrBgtpgVqgswrBqFAWIDM4wpkKBQXgIkIAp9AwSWDjJ8gvDUzZsm/K9VVbdPD7b59+57OO7+qf1HVr7vv7TPe202IBEEQBEEQBEEQBEEQBGH4MbGDqLPD9SzKoaVO1Aq1QaOhGjSm7npW/2cxfLEkwR+DtaF/k/w2RRF1Qd0qfTz/fkm/LcA4C6GvCo6TLti+G5oKTYOmQzOgmXV7Y9oiyW/fKqIeqFel3yfJHz7fY5wt0NYU28TZMO54D+zeC62AvoNWQqug1XX9MctEx1ZR7FFEe6F96v3f8tTD0zj/DHQ25bo4G8Yd3wu774P2Qwegg9Ah6HB96Nn9MfPagQu/KaI+qF+9/1taPXyKaxoR1+kQ57e4432wez/0O3QZ+gO6Al1N6SGNivsnCyNgsw9KqhG3Yfc70F3oHvQvdB96wKyn6+Llscl6LGu99wjGZrCOZI1Z79pnsPtz6AX0EnoFvYbeVNQfHmn1J4lgXQ/a0z9uuy58OJZoJDQK+ghqgVqhtrF2x+VKo5at3ofRzc0q1/vwMzYMaoJtwrlpshYIwuk5TepPHopcS5qsBYryJTeiYovTO5jwWsGPBx1feue62rMXGbemOVekP0323Rz37DbzOiq3Bmp6/oyKn6j76a4Vou6V99qiiHqeMvdreRlg1I+5U2R+cVoHucLUBnH5ZaPnR+VJlnG4vnPX7e0mvjLt+bp5l2Ucjv3bFkXXeD/vTNeFwZhy3b+5wqU/c6lfXs11safj0q/9eXi5x6F+eTU3XHez2Kpsu+rEse6cBhzXLy4x6ZNnPrp9uArfYcvyh836ZxLHw/W9YhplvkfOsh6owvuHMmnW+CyaotaknOOTW2/1YveLdqJZ0JfQ7Ha3c2n2PPJidw18sBZaB6136I8sefSxIvoEGgeNV/HncfpulkQwT4/AB0ehY9Bxh/4Ik1Qv5yiiudA8aL6KP6/sb9VZiaqXf8IH16Dr0A1L/gjb1rQ3bVBEG6FN0GZldi9uPIQPHkGPoScJ/pigkP9QJ/QpNEmVMr1ITmDsk9BP0CmNeXDr2x5xtfQtfPAfNJiSG4sU8h9aAi2FlqnCpxhJFfbceTCtpdsU0XboB2gHtFOZzSccs8PV7lnxarlOPT+niH6GfoHOQ78qq9MSUvhLEf0N3YRuQf8ol7Mxg8v3Fx1Mex+3NX+z18G8fSrObuF9u259FbKha1PO77/KxHXdSfNXVF3VfQfm+tk8suR4Q/P/dGahjPeFurnE8T2Kad/O2idd1x2Oe3SBP67Xgy7jlnvO5K3x3J8rDlfz1l1P6P5NUbN/xzMluJ4w3UvZ6Muyv+OLDd9UqZ4W8fw2bMhhzzZcybNOKHPP5tL3cbEcPq7795Q6FNFzbNYcjvt1W5TRqycros+gz5X9sWxThL1M8r2IuF+uiL6GvlHm9+JEml3j9vJ+vrtat+5SRLuhH5Wb8fOSZq9gHR2s0HefC4roInRJJZ/n5WKV1r5F08zPLgiCIAiCIAiCIAiCIAgueQeLNkBb
+   eJzt18tNw0AQBmDXEfoCQQu8WoAKCT0APQAXNhK5xQ/Za+949H3SXnKK5p8dz3YdAAAAAAAA7MPboeuO5bwfWv8TTj5KDp/lfC3MQ651fJf6/ZTzu7COtXI9k+8ytXI9q50vy9TOl3FmUixbziTZj9tyJvkexeJ7BAC0YEePJdqOPqU/MvdQtB19Sn9E66HMpvRHtB6CuTLP+lYerobPELO+vttS89cL525CHmZ9fY89NX/5zySa7DOyL4+T+4B5DM3IDFntLY+hGZnhe7a3PIZk+J5lyiODvjyuy+/P8thcXx7uRhtPpe43F4670cbYmw+YL8MbLJM13mAynm+NN1iGd3YmGd7ZQ9z/WNz/WLLffwD2yf4WS4v9TQ/0W7q/zamtHX49c2prh1+P2o4zn9djPsdiPseitgAAAACQxx/BG78/
   </data>
  </layer>
- <layer id="7" name="Arboles" width="100" height="80">
+ <layer id="6" name="Pasto_3" width="100" height="80" locked="1">
+  <data encoding="base64" compression="zlib">
+   eJztm0uO1DAQhr2ENQtArQHPCWBgCXcABAMHATQ8DgKI11F4LTlGkzXbXlIWihRFcVx2+VFO/59UGinTie16upxuYwAAAAAAAAAAAAAA2B63T405O209izpcPTHm2knrWazzhGxxvmKPw+7/31x2G5+39r8HNM5DkkeZ/eQe2eK+xx6lxixFyG5c1uwx8pzGeUHyMjCeT4cpuuWOWROOrmJJiat39Pn3JB8C9/l0mKJbt/ZxzBJ60EIorv5YYwab9myf3bj25DJs2D5zLpHOLlfKEb+V1/JYXBxL6npKvp/65jSPxPqsu/fvxuzhkNT1aV6f6nO8XjovXLmxfP265/rWGXayfM+NzZ7z/XyNgyAnlGYem5K9wBRN68zVV3DJuZeU7AVy2VIbS76l6QxmvlcY/YFjS/fZVj17Tr+VxlxOe0r6bo09e8m4Xoqt/Y5nzyX/WXpeam/onpW7r4xlaT01+7VU9orqsXZyxpemfVArpDrwxVeJmr8UJzHjaD1z59Z2ia2kNZ8bdzHjaKzfpcid48e4k+4Lpz7Vun5rRUt91pK/XM5t0dNpqdfjPFzsachfLufO826MrmrrlePH3DntG+cvLT45kjIfbh3u4T1sLXuUzH8SP97quWKImufIMfuBHs4fanKs/pmbXHtSzf6prbZqAnGkixJxpOm92Ro9xGmOfFn7XXUsreww162W85KeuWUp/knOSO6Q3LVNpxOFxnwQyqWHm+v3P7YU/yTnJE9JntlsU1ulh547BWkuvbDGvCJ5TfKG5K2VzWfus1vVeywul3Py+UdrzCeSzyRfSL7aotMCAb5ZY76T/CD5SfLLtpyNjJ72E9Lap23Pf+x5MLVO+fQ279u5+RXEwdWp5vOvmrTOOyF7LeVV7hlY67U5YmJ8YH6nM4Ya54XcWNJ4jiKt27F1snXe0dijA/203g+29FvtMZOa47Wvy0ereXP3E9zfFOE9nozpfkLaS5Woy+jv9FLCNj3l0xzrL6FDDT3bVknZJ9Ts2Vra3ufL8+vc31NyyFFzSuYcjf16KVCr48ihL0m891RraxP8zoNHd2O8IxbiCOlrmkcPG3zv42LxmOPxmNcOAAAAAAAAAAAAAEBL/gEq//1X
+  </data>
+ </layer>
+ <layer id="12" name="Objetos" width="100" height="80" locked="1">
+  <data encoding="base64" compression="zlib">
+   eJzt0UdSVQEQRuHegwFQgZ4ZNmAAs45AN2AAs44MGzAARhyhbsAAZl2HOa3DHIaewqlVb3KrmvvqfFVn3tV/hCRJkiRJkqQ26+mP6KU+WkbLaUV/9VXN25ARQzScxYd0MMTvh2kjbaLNtIW2dtkm+zNijMaz+JAOxvj7OB2gg3SIDtORLtvjQkZM0GQWH9LBBH+fpCm6SJfoMl3psj3uZcQszWXxIR3M8vc5uk8P6CE9osddtkdbvODvL+kVvaY39JbeuUeJz/z9C32lb/SdftBP9yixaCBiMS2hpdRDvdQ3UH2ZJEmSJEmSJEmSJGmh2zYYsZ120M7B6mt0lA2O0XE60ZI9VmbEKlpNa7L2lqZdZYNrNE3XW7LHSEaM0i7anbW3NO0JGzylZ/S8JXuczIhTdJrOZO0tTXvPBh/oI31qyR4zGXGDbtKtrL2lab/Y4Df9ackWkiRJkiRJkiRJkqSFY21GrKP1WXyI5u3JiL20L4sP0byzGXGOzmftHfrndkbcobtZfIgkSZIkSZIk/cdfeUNGVg==
+  </data>
+ </layer>
+ <layer id="7" name="Arboles" width="100" height="80" locked="1">
   <data encoding="base64" compression="zlib">
    eJzt20dSFFEcgPE27AwzmJYDC9MeEVH0BKYdIBhPYNoBgokTgLozgPEEpp0BjCcw7QxgPIGfS931dFf33+b7VX27KZp+r2rqzXvdSSJJkiRJkiSpKLVGktSppVH2f6I/2pmHTdThfITQwzz0Up/zEcIg8zBEw86HJEm5am9lDUodtJk6aUvr/Ll+ND3cey/10T7qp4ECx6Ps60czyL0P0TCdohEaLXA8yr5+NJe59yt0la7RJE0VOB5lXz+aR9z7Y3pCT2maZlKOx05+3+2i3bSH9qb4vZfH9avkI/f+iT7TF5qluZTjcZTxP0bH6QSdTDEfeVy/Spa0JclSWkbLqUb1tnR/Y5zxn6ALdJEupZiPPK6vv91l/O/RfXpAD92fKtUbxv8tvaP39MH5KBff9wtoIS2ixQG+/7OsMf53axn/dbSeNtDGAPORZY2h/GVZYyh/rjFicY0RTMA1xnwWcY0hScrGM9pYPKONxTPaWDyjjcUz2lg8o43FM1pJUgSdDX7fUxdtpW3UTdtph+cehetnzAdoPx2gg3SIDtMR56NwI4z5KJ2mM3SWztF5GqvofBSxB9js++mTfH6KrtMNukm36Dbdqeh8FLEH2Oz76dN8foae0XN6QS/pFb2u6HwUsQfY7Pvps3x+jr7SN/pOP+gn/arofBSxB9js++k1/o86tdAKWkmraDWtqeg+jHuA+cr6PKt7gPnK+jyre4D58nnWWHyeNRafZw3G51lD8XlWSZIkSZIkSZIk/es3YdDNhw==
   </data>
  </layer>
-<layer id="9" name="choque" width="100" height="80" opacity="0.6"><data encoding="base64" compression="zlib">
-   eJztwTEBAAAAwqD1T+1hDaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbn0AAAE=
-  </data></layer>
- <imagelayer id="10" name="vista choque" opacity="0.7" locked="1"><image source="vista/choque.png" width="1600" height="1280" /></imagelayer>
+ <layer id="9" name="choque" width="100" height="80" locked="1" opacity="0.6">
+  <data encoding="base64" compression="zlib">
+   eJzt2kEKgCAURVF31v7HbSgaSFANmsh/2jnQOOVSWtgaAAAAAACsbd+qR0B3trhfK5plXm89Zhn7irTIokUWDQCARNX7xer7A1DHux8AGMEeA4C/c24ji3NNWfTIktaj+v4jfZmbHllGt0hoPJOkZ4OLDgAAAE++W4HOvywAqGUdBgBrIQAAAACQ6wD3e14x
+  </data>
+ </layer>
+ <imagelayer id="10" name="vista choque" locked="1" opacity="0.7">
+  <image source="vista/choque.png" width="1600" height="1280"/>
+ </imagelayer>
 </map>

@@ -345,7 +345,18 @@ func _terrain_mult() -> float:
 		m *= 0.6
 	if in_sandstorm:
 		m *= 0.82
+	if _tiled_map == null and not _tiled_checked:
+		_tiled_checked = true
+		_tiled_map = get_tree().get_first_node_in_group("tiled_map")
+	# Zona lenta del mapa de Tiled (Pasto_slow del Pantano): a la mitad.
+	if _tiled_map != null and _tiled_map.is_slow_world(global_position + Vector2(0, 10)):
+		m *= TILED_SLOW_MULT
 	return m
+
+## Mapa de Tiled de la partida (para su zona lenta); null en los viejos.
+const TILED_SLOW_MULT := 0.5
+var _tiled_map: Node = null
+var _tiled_checked := false
 ## "Relanzar" del árbol: cuántas veces se pueden re-sortear las cartas
 ## del level-up en esta partida (lo gasta level_up_menu.gd).
 var rerolls_left: int = 0

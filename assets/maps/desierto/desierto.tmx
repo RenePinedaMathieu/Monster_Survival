@@ -1,12 +1,12 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="100" height="80" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="1">
- <tileset firstgid="1" source="tiles/Ground_grass.tsx" />
- <tileset firstgid="847" source="tiles/Water_coasts.tsx" />
- <tileset firstgid="2317" source="tiles/Water_detilazation.tsx" />
- <tileset firstgid="5203" source="tiles/Water_detilazation2.tsx" />
- <tileset firstgid="8089" source="tiles/Objects.tsx" />
- <tileset firstgid="11261" source="tiles/spots.tsx" />
- <tileset firstgid="11681" source="tiles/choque.tsx" />
+ <tileset firstgid="1" source="tiles/Ground_grass.tsx"/>
+ <tileset firstgid="847" source="tiles/Water_coasts.tsx"/>
+ <tileset firstgid="2317" source="tiles/Water_detilazation.tsx"/>
+ <tileset firstgid="5203" source="tiles/Water_detilazation2.tsx"/>
+ <tileset firstgid="8089" source="tiles/Objects.tsx"/>
+ <tileset firstgid="11261" source="tiles/spots.tsx"/>
+ <tileset firstgid="11681" source="tiles/choque.tsx"/>
  <layer id="1" name="Agua base" width="100" height="80" locked="1">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMA6DBA65/mz2Igr2kqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn8PuwMX
@@ -32,8 +32,12 @@
    eJzt2TlO5EAUxvF3BeAA/WICIIIZlhyIWGYYYiBibTgDO5yBYc1nrgFnABI4A5DxkdGWQKbl6qoy/5/0Bbal0rPKsupVmQEAAAAAAADIzW3D7E65b8SuBG+eNA/PygvzkYQuN+tWejxyIQDwjQ262ZDyQ/nprc/6dN2vDBTuI5wpN5tWZpRZb302rusJZbJwH+Esu9mKsqqseeuzBV0vKkuF+whn2812lF1lz+PWArMTN/urnCpnHrUUoONSWSOlUkdsqayRUqkjtlTWSKnUgfD4F6aFf2Fa+Bfm51/D7H/Nz69yesdr1XmTSa3tyukdH1Tn4we1HnlHSwnms3cEAKBT2lmv0ZuH0856jd48nHbWa/TmAID3ht1sRBlVxjxuLTD75Wa/lTnlj8etJVdV9gLrGmNDaSqbFYxXJ2X7tCp7gX2NcaAcen32Xz/y1e+4bJ9WZS9wrjEulEvlqsR4OZ3FFH31O85hXz2ns5iiOva0OXwzAOKZ61VvoMz3xq4Eb5qah01li/lIwqHm4Ug5Zj6AJHA+mxbOZ9NSx14WAL6rqtc8IffOc96XL6vqNU/IvfOc9+XLqnrNE3LvnH15AAAAAAAAAADiegUuBmqV
   </data>
  </layer>
-<layer id="8" name="choque" width="100" height="80" opacity="0.6"><data encoding="base64" compression="zlib">
-   eJztwTEBAAAAwqD1T+1hDaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbn0AAAE=
-  </data></layer>
- <imagelayer id="9" name="vista choque" opacity="0.7" locked="1"><image source="vista/choque.png" width="1600" height="1280" /></imagelayer>
+ <layer id="8" name="choque" width="100" height="80" opacity="0.6">
+  <data encoding="base64" compression="zlib">
+   eJzt2TEKgDAQRUEv5KG9qaViJQjxwc5A+t38TZFk2wAAAAAA+OLYr8U79qvFDPfIAgAAAACAyWp/F6VaVrrnUOq/Vs8qE3sumzqHZTIBAAAAmMVbUEP1L2EqeQAAALzj3vQv99cWGbQ8z4d8OmTSIxMAAAAAAABY6wTZVinZ
+  </data>
+ </layer>
+ <imagelayer id="9" name="vista choque" locked="1" opacity="0.7">
+  <image source="vista/choque.png" width="1600" height="1280"/>
+ </imagelayer>
 </map>

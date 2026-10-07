@@ -47,6 +47,8 @@ El agua choca sola; la orilla de tierra se camina.
 ## Capas: piso y objetos
 
 - **Piso:** todas las capas de abajo (agua, suelo, manchas, pasto, enredaderas…). El héroe camina encima. Las capas de agua se llaman `water…` o `Agua…`.
+- **Piso por nombre:** las capas con `hongo`, `pasto`, `grass` o `flor` en el nombre se dibujan siempre debajo de los personajes y no chocan, aunque estén arriba de las de objetos. Ahí van los hongos, matas y flores que se pisan.
+- **Zona lenta:** las capas con `slow` o `lento` en el nombre (como `Pasto_slow`) frenan a la mitad a todo lo que camina: héroe y monstruos terrestres. Los voladores no se frenan.
 - **Objetos:** desde la primera capa llamada `objects`, `objects1`, `Objects4`, `Objetos` o `Arboles` hacia arriba. Cada objeto tiene altura: el héroe pasa por detrás de la copa de un árbol y por delante del tronco.
 - **Un objeto por grupo:** el juego toma como un solo objeto las baldosas que se tocan en una misma capa. Si dos árboles se tocan, ponlos en capas de objetos distintas, como hace el ejemplo.
 

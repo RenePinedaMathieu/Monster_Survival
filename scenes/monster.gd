@@ -483,6 +483,7 @@ func set_kind(kind_id: String) -> void:
 	# Voladores (fantasmas, beholders, imps): pasan sobre árboles y agua
 	# (capa 4 de los tiles); todos chocan con los bordes del mapa (8).
 	collision_mask = 8 if data.get("flying", false) else 12
+	_flying = data.get("flying", false)
 
 	_set_animation("idle")
 
@@ -1063,9 +1064,21 @@ var _poison_t := 0.0
 var _poison_dps := 0.0
 var _poison_tick := 0.0
 
-## Multiplicador de velocidad de este momento (oleada x frenado).
+## Multiplicador de velocidad de este momento (oleada x frenado x
+## zona lenta del mapa de Tiled, que no frena a los voladores).
 func _move_mult() -> float:
-	return speed_mult * (_slow_factor if _slow_t > 0.0 else 1.0)
+	var m: float = speed_mult * (_slow_factor if _slow_t > 0.0 else 1.0)
+	if not _flying:
+		if not _tiled_checked:
+			_tiled_checked = true
+			_tiled_map = get_tree().get_first_node_in_group("tiled_map")
+		if _tiled_map != null and _tiled_map.is_slow_world(global_position):
+			m *= 0.5
+	return m
+
+var _flying := false
+var _tiled_map: Node = null
+var _tiled_checked := false
 
 ## Lo frena (factor 0.5 = mitad de velocidad). A los jefes, la mitad.
 func apply_slow(factor: float, duration: float) -> void:

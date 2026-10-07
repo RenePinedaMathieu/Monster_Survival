@@ -8,6 +8,10 @@ extends SceneTree
 ##   - Capas planas (todas las de antes de la primera "objects",
 ##     "objectsN", "Objetos" o "Arboles"):
 ##     TileMapLayer debajo de todo, en el orden de Tiled.
+##   - Capas planas por nombre, estén donde estén: "hongo", "pasto",
+##     "grass", "flor", "slow", "lento" (los personajes pasan por encima
+##     y no chocan). Las "slow"/"lento" además son zona lenta: lo que
+##     camina va a la mitad (los voladores no).
 ##   - Capas de objetos (desde esa y todas las de más arriba): un
 ##     TileMapLayer ordenado por altura cada una. Cada grupo de baldosas
 ##     que se tocan es un objeto; todas sus baldosas se ordenan por la
@@ -224,6 +228,8 @@ func _build() -> Node2D:
 	solid.resize(gw * gh)
 	var free := PackedByteArray()
 	free.resize(gw * gh)
+	var slow := PackedByteArray()
+	slow.resize(gw * gh)
 
 	_water(obj_start, solid, gw)
 	_void(obj_start, solid, gw)
@@ -232,7 +238,7 @@ func _build() -> Node2D:
 	var origins := {}   # "sid:x:y:flags" -> {origen: veces}
 	for li in range(obj_start, _layers.size()):
 		var layer: Dictionary = _layers[li]
-		if not layer["visible"] or layer["name"] == CHOQUE_LAYER:
+		if not layer["visible"] or layer["name"] == CHOQUE_LAYER or _is_flat_name(layer["name"]):
 			continue
 		var mode := _solid_mode(String(layer["name"]))
 		for comp in _components(layer["data"]):
@@ -247,10 +253,15 @@ func _build() -> Node2D:
 		if layer["name"] == CHOQUE_LAYER:
 			_choque(layer["data"], solid, free, gw)
 			continue
+		if _is_slow_name(layer["name"]):
+			var data_s: PackedInt32Array = layer["data"]
+			for i in range(data_s.size()):
+				if data_s[i] != 0:
+					_mark_tile(slow, gw, i % _w, i / _w)
 		var tml := TileMapLayer.new()
 		tml.name = layer["name"]
 		tml.tile_set = tile_set
-		if li >= obj_start:
+		if li >= obj_start and not _is_flat_name(layer["name"]):
 			tml.y_sort_enabled = true
 			objects.add_child(tml)
 		else:
@@ -291,6 +302,7 @@ func _build() -> Node2D:
 	root.cell = CELL
 	root.grid_size = Vector2i(gw, gh)
 	root.solid = solid
+	root.slow = slow
 	_own(root, root)
 	return root
 
@@ -374,6 +386,19 @@ func _components(data: PackedInt32Array) -> Array:
 
 ## Un objeto: anota el origen de orden de sus baldosas y marca sólida
 ## la base de sus dibujos grandes (_solid_blobs).
+## Capa plana por nombre (hongos, pasto, flores, zona lenta): se dibuja
+## bajo los personajes aunque esté arriba de las capas de objetos.
+func _is_flat_name(name: String) -> bool:
+	var n := name.to_lower()
+	for k in ["hongo", "pasto", "grass", "flor", "slow", "lento"]:
+		if n.contains(k):
+			return true
+	return false
+
+func _is_slow_name(name: String) -> bool:
+	var n := name.to_lower()
+	return n.contains("slow") or n.contains("lento")
+
 ## Qué choca de una capa de objetos, por su nombre: "siempre" (árboles),
 ## "nunca" (decoración) o "auto" (los grandes; capas de los packs).
 func _solid_mode(name: String) -> String:
