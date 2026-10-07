@@ -1,6 +1,6 @@
 extends Node2D
 
-## Arma "Aura sagrada": un círculo alrededor del player que cada tanto
+## Arma "Aura de fuego" (de ELARA): un círculo alrededor del player que cada tanto
 ## quema a todos los monstruos adentro. Vive como hijo del player (lo
 ## sigue sola). Evolución "Santuario" (aura + vida máxima): más grande,
 ## más blanca, y cada pulso que toca enemigos cura al player.

@@ -7,8 +7,11 @@ extends RefCounted
 ##   hud.gd / pause_menu.gd  íconos y títulos
 ##
 ## Reglas (estilo Vampire Survivors):
-##   - Hasta MAX_WEAPONS armas y MAX_PASSIVES pasivas por run. Con las
-##     casillas llenas sólo salen mejoras de lo que ya tenés.
+##   - Cada héroe tiene sus 4 armas (CLASS_WEAPONS: 2 desde el principio
+##     y 2 que se compran en la tienda); el resto de las subidas son
+##     pasivas. MAX_WEAPONS sólo limita a un héroe sin clase. Hasta
+##     MAX_PASSIVES pasivas por run; con las casillas llenas sólo salen
+##     mejoras de lo que ya tenés.
 ##   - Armas y pasivas suben hasta MAX_LEVEL.
 ##   - EVOLUCIÓN: arma al nivel máximo + su pasiva compañera → al abrir
 ##     un cofre (lo sueltan élites y jefes) el arma evoluciona.
@@ -49,13 +52,13 @@ const CARDS: Array = [
 	# ── Meteoros ──
 	{"id": "meteors",      "title": "LLUVIA DE METEOROS", "desc": "Meteoritos caen solos sobre los enemigos", "icon": ICON + "skill_22.png"},
 	# ── Armas nuevas (se desbloquean en la tienda) ──
-	{"id": "aura",         "title": "AURA SAGRADA",       "desc": "Quema a los enemigos que se te acercan", "icon": ICON + "skill_23.png"},
+	{"id": "aura",         "title": "AURA DE FUEGO",      "desc": "Quema a los enemigos que se te acercan", "icon": ICON + "skill_23.png"},
 	{"id": "hacha",        "title": "HACHA GIRATORIA",    "desc": "Lanza hachas que van y vuelven atravesando todo", "icon": ICON + "skill_25.png"},
 	{"id": "rayo",         "title": "RAYO EN CADENA",     "desc": "Un rayo que salta entre enemigos cercanos", "icon": ICON + "skill_70.png"},
 	{"id": "laser_cadena", "title": "LASER EN CADENA",    "desc": "Un laser rebota hacia dos enemigos cercanos", "icon": ICON + "skill_40.png"},
-	{"id": "disparo_fuego", "title": "DISPARO DE FUEGO",  "desc": "Disparo que quema 3% de vida por segundo durante 3 s", "icon": ICON + "skill_84.png"},
-	{"id": "disparo_electrico", "title": "DISPARO ELECTRICO", "desc": "Paraliza al objetivo y puede aturdir enemigos cercanos", "icon": ICON + "skill_71.png"},
-	{"id": "disparo_congelante", "title": "DISPARO CONGELANTE", "desc": "Congela al enemigo golpeado", "icon": ICON + "skill_64.png"},
+	{"id": "disparo_fuego", "title": "FLECHA DE FUEGO",   "desc": "Una flecha que quema 3% de vida por segundo durante 3 s", "icon": ICON + "skill_84.png"},
+	{"id": "disparo_electrico", "title": "FLECHA ELÉCTRICA", "desc": "Paraliza al objetivo y puede aturdir enemigos cercanos", "icon": ICON + "skill_71.png"},
+	{"id": "disparo_congelante", "title": "FLECHA CONGELANTE", "desc": "Congela al enemigo golpeado", "icon": ICON + "skill_64.png"},
 	{"id": "centinela",   "title": "CENTINELA DRON",      "desc": "Un dron te acompaña y dispara al enemigo más cercano", "icon": ICON + "skill_91.png"},
 	{"id": "sierras",     "title": "SIERRAS ORBITALES",   "desc": "Una sierra gira a tu alrededor y corta al contacto", "icon": ICON + "skill_39.png"},
 	{"id": "aura_lenta",  "title": "AURA HELADA",         "desc": "Frena a los enemigos cercanos", "icon": ICON + "skill_69.png"},
@@ -92,13 +95,13 @@ const WEAPONS: Dictionary = {
 	"espadas":  {"name": "Espadas voladoras", "unlock": "flying_swords", "level": "flying_swords_power",
 		"extras": ["flying_swords_count"], "shop": "flying_swords"},
 	"meteoros": {"name": "Lluvia de meteoros", "unlock": "meteors", "level": "meteors", "extras": [], "shop": "meteors"},
-	"aura":     {"name": "Aura sagrada", "unlock": "aura", "level": "aura", "extras": [], "shop": "aura"},
+	"aura":     {"name": "Aura de fuego", "unlock": "aura", "level": "aura", "extras": [], "shop": ""},
 	"hacha":    {"name": "Hacha giratoria", "unlock": "hacha", "level": "hacha", "extras": [], "shop": "hacha"},
 	"rayo":     {"name": "Rayo en cadena", "unlock": "rayo", "level": "rayo", "extras": [], "shop": "rayo"},
 	"laser_cadena": {"name": "Laser en cadena", "unlock": "laser_cadena", "level": "laser_cadena", "extras": [], "shop": ""},
-	"disparo_fuego": {"name": "Disparo de fuego", "unlock": "disparo_fuego", "level": "disparo_fuego", "extras": [], "shop": ""},
-	"disparo_electrico": {"name": "Disparo electrico", "unlock": "disparo_electrico", "level": "disparo_electrico", "extras": [], "shop": ""},
-	"disparo_congelante": {"name": "Disparo congelante", "unlock": "disparo_congelante", "level": "disparo_congelante", "extras": [], "shop": ""},
+	"disparo_fuego": {"name": "Flecha de fuego", "unlock": "disparo_fuego", "level": "disparo_fuego", "extras": [], "shop": "disparo_fuego"},
+	"disparo_electrico": {"name": "Flecha eléctrica", "unlock": "disparo_electrico", "level": "disparo_electrico", "extras": [], "shop": "disparo_electrico"},
+	"disparo_congelante": {"name": "Flecha congelante", "unlock": "disparo_congelante", "level": "disparo_congelante", "extras": [], "shop": ""},
 	"centinela": {"name": "Centinela dron", "unlock": "centinela", "level": "centinela", "extras": [], "shop": ""},
 	"sierras": {"name": "Sierras orbitales", "unlock": "sierras", "level": "sierras", "extras": [], "shop": ""},
 	"aura_lenta": {"name": "Aura helada", "unlock": "aura_lenta", "level": "aura_lenta", "extras": [], "shop": ""},
@@ -159,13 +162,15 @@ static func weapon_of_card(card_id: String) -> String:
 	return ""
 
 ## ¿Esta carta puede salir ahora para este player?
-## Armas de cada clase (decisión del 06-10): cada héroe sólo ve las
-## suyas, sin compartir; las pasivas son de todos. Un héroe sin clase
-## (los que están fuera del juego) ve todas.
+## Armas de cada clase (decisión del 07-10): 4 por héroe, sin compartir,
+## todas con evolución; las pasivas son de todos. Las de la tienda: las
+## 2 primeras de GAROTH y ELARA y las 2 flechas del medio de DOREN.
+## Fuera de las listas (su código queda): sierras, centinela y aura
+## helada (no tenían evolución). Un héroe sin clase ve todas.
 const CLASS_WEAPONS: Dictionary = {
-	"swordman": ["espadas", "hacha", "sierras", "escudo_fuerza", "aura", "pulso"],
-	"elara": ["rayo", "laser_cadena", "meteoros", "aura_lenta", "disparo_fuego", "disparo_electrico"],
-	"doren": ["disparo", "disparo_congelante", "centinela"],
+	"swordman": ["espadas", "hacha", "pulso", "escudo_fuerza"],
+	"elara": ["meteoros", "rayo", "laser_cadena", "aura"],
+	"doren": ["disparo", "disparo_fuego", "disparo_electrico", "disparo_congelante"],
 }
 
 static func class_pool() -> Array:

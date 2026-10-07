@@ -190,13 +190,17 @@ const SHOP_POWERS: Dictionary = {
 		"name": "Espadas voladoras", "cost": 700,
 		"desc": "Desbloquea la carta: 5 espadas te escoltan y atacan solas",
 	},
-	"aura": {
-		"name": "Aura sagrada", "cost": 1000,
-		"desc": "Desbloquea la carta: un aura que quema a los enemigos cercanos",
+	"disparo_fuego": {
+		"name": "Flecha de fuego", "cost": 900,
+		"desc": "Desbloquea la carta: flechas que queman a los enemigos",
 	},
 	"hacha": {
 		"name": "Hacha giratoria", "cost": 1600,
 		"desc": "Desbloquea la carta: hachas que van y vuelven atravesando todo",
+	},
+	"disparo_electrico": {
+		"name": "Flecha eléctrica", "cost": 1800,
+		"desc": "Desbloquea la carta: flechas que paralizan y aturden alrededor",
 	},
 	"rayo": {
 		"name": "Rayo en cadena", "cost": 2500,
@@ -682,6 +686,10 @@ func _load() -> void:
 		best_wave = cfg.get_value("progress", "best_wave", 0)
 		best_time = cfg.get_value("progress", "best_time", 0.0)
 		unlocked_powers = cfg.get_value("progress", "unlocked_powers", [])
+		# El aura (de ELARA) dejó de venderse el 07-10: se devuelve lo pagado.
+		if "aura" in unlocked_powers:
+			unlocked_powers.erase("aura")
+			total_currency += 1000
 		companion_levels = cfg.get_value("progress", "companion_levels", {})
 		equipped_companions = cfg.get_value("progress", "equipped_companions", [])
 		# Partidas de antes de las líneas: el pollo comprado queda como

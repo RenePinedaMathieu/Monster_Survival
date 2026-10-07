@@ -33,7 +33,8 @@ const TAB_HINTS: Dictionary = {
 const POWER_ICONS: Dictionary = {
 	"meteors": "res://assets/ui/skill_icons/skill_22.png",
 	"flying_swords": "res://assets/ui/skill_icons/skill_5.png",
-	"aura": "res://assets/ui/skill_icons/skill_23.png",
+	"disparo_fuego": "res://assets/ui/skill_icons/skill_84.png",
+	"disparo_electrico": "res://assets/ui/skill_icons/skill_71.png",
 	"hacha": "res://assets/ui/skill_icons/skill_25.png",
 	"rayo": "res://assets/ui/skill_icons/skill_70.png",
 }

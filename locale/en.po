@@ -63,8 +63,11 @@ msgid "Desbloquea la carta: 5 espadas te escoltan y atacan solas"
 msgstr "Unlocks the card: 5 swords escort you and strike on their own"
 
 #: autoload/game_state.gd:180
-msgid "Desbloquea la carta: un aura que quema a los enemigos cercanos"
-msgstr "Unlocks the card: an aura that burns nearby enemies"
+msgid "Desbloquea la carta: flechas que queman a los enemigos"
+msgstr "Unlocks the card: arrows that burn enemies"
+
+msgid "Desbloquea la carta: flechas que paralizan y aturden alrededor"
+msgstr "Unlocks the card: arrows that paralyze and stun around"
 
 #: autoload/game_state.gd:184
 msgid "Desbloquea la carta: hachas que van y vuelven atravesando todo"
@@ -1651,12 +1654,12 @@ msgid "ANTERIOR"
 msgstr "PREVIOUS"
 
 #: scenes/upgrades.gd:100 scenes/weapons.gd:32
-msgid "Disparo electrico"
-msgstr "Electric Shot"
+msgid "Flecha eléctrica"
+msgstr "Electric Arrow"
 
 #: scenes/upgrades.gd:101 scenes/weapons.gd:33
-msgid "Disparo congelante"
-msgstr "Freezing Shot"
+msgid "Flecha congelante"
+msgstr "Freezing Arrow"
 
 #: scenes/upgrades.gd:102 scenes/weapons.gd:34
 msgid "Centinela dron"
@@ -1955,8 +1958,8 @@ msgid "Meteoritos caen solos sobre los enemigos"
 msgstr "Meteors rain down on enemies on their own"
 
 #: scenes/upgrades.gd:52
-msgid "AURA SAGRADA"
-msgstr "HOLY AURA"
+msgid "AURA DE FUEGO"
+msgstr "FIRE AURA"
 
 #: scenes/upgrades.gd:52
 msgid "Quema a los enemigos que se te acercan"
@@ -1987,16 +1990,16 @@ msgid "Un laser rebota hacia dos enemigos cercanos"
 msgstr "A laser that bounces to two nearby enemies"
 
 #: scenes/upgrades.gd:56
-msgid "DISPARO DE FUEGO"
-msgstr "FIRE SHOT"
+msgid "FLECHA DE FUEGO"
+msgstr "FIRE ARROW"
 
 #: scenes/upgrades.gd:56
-msgid "Disparo que quema 3% de vida por segundo durante 3 s"
-msgstr "A shot that burns 3% health per second for 3 s"
+msgid "Una flecha que quema 3% de vida por segundo durante 3 s"
+msgstr "An arrow that burns 3% health per second for 3 s"
 
 #: scenes/upgrades.gd:57
-msgid "DISPARO ELECTRICO"
-msgstr "ELECTRIC SHOT"
+msgid "FLECHA ELÉCTRICA"
+msgstr "ELECTRIC ARROW"
 
 #: scenes/upgrades.gd:57
 msgid "Paraliza al objetivo y puede aturdir enemigos cercanos"
@@ -2007,8 +2010,8 @@ msgid "Congela al enemigo golpeado"
 msgstr "Freezes the enemy it hits"
 
 #: scenes/upgrades.gd:58
-msgid "DISPARO CONGELANTE"
-msgstr "FREEZING SHOT"
+msgid "FLECHA CONGELANTE"
+msgstr "FREEZING ARROW"
 
 #: scenes/upgrades.gd:59
 msgid "CENTINELA DRON"
@@ -2103,8 +2106,8 @@ msgid "Lluvia de meteoros"
 msgstr "Meteor Shower"
 
 #: scenes/upgrades.gd:95 scenes/weapons.gd:26 autoload/game_state.gd:179
-msgid "Aura sagrada"
-msgstr "Holy Aura"
+msgid "Aura de fuego"
+msgstr "Fire Aura"
 
 #: scenes/upgrades.gd:96 scenes/weapons.gd:27 autoload/game_state.gd:183
 msgid "Hacha giratoria"
@@ -2119,8 +2122,8 @@ msgid "Laser en cadena"
 msgstr "Chain Laser"
 
 #: scenes/upgrades.gd:99 scenes/weapons.gd:30
-msgid "Disparo de fuego"
-msgstr "Fire Shot"
+msgid "Flecha de fuego"
+msgstr "Fire Arrow"
 
 #: scenes/weapons.gd:12
 msgid "Ataque básico"
