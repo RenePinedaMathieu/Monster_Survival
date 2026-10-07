@@ -405,6 +405,32 @@ func set_selected_color(hero_id: String, idx: int) -> void:
 		selected_colors[hero_id] = idx
 		_save()
 
+## QA (Opciones del pueblo, sólo con las herramientas de desarrollo):
+## todos los héroes y colores, los mapas, las dificultades, los poderes
+## de la tienda y las pasivas de los desafíos, para probar sin jugar
+## todo. No da logros con premio (sólo marca los que abren dificultades).
+func qa_unlock_all() -> void:
+	for id in ["swordman", "elara", "doren"]:
+		if not (id in unlocked_characters):
+			unlocked_characters.append(id)
+		for i in range(1, COLOR_MAPS.size()):
+			unlock_color(id, i)
+	for id in MAPS:
+		if not (id in unlocked_maps):
+			unlocked_maps.append(id)
+	for id in DIFFICULTIES:
+		var need: String = DIFFICULTIES[id]["unlock"]
+		if need != "" and not (need in achievements_unlocked):
+			achievements_unlocked.append(need)
+	for id in SHOP_POWERS:
+		if not (id in unlocked_powers):
+			unlocked_powers.append(id)
+	for t in TRIALS:
+		for card_id in t["reward"].get("cards", []):
+			if not (card_id in unlocked_cards):
+				unlocked_cards.append(card_id)
+	_save()
+
 ## true si el color era nuevo.
 func unlock_color(hero_id: String, idx: int) -> bool:
 	if is_color_unlocked(hero_id, idx):

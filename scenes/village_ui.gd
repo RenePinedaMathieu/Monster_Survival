@@ -457,6 +457,15 @@ func show_options() -> void:
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_child(maps)
 		box.add_child(row)
+		# Probar todo sin ganarlo: héroes, colores, mapas, tienda...
+		var all := _button(tr("DESBLOQUEAR TODO (QA)"), 15, func():
+			GameState.qa_unlock_all()
+			_village._go("res://scenes/village.tscn"))
+		all.custom_minimum_size.x = 310.0
+		var row2 := HBoxContainer.new()
+		row2.alignment = BoxContainer.ALIGNMENT_CENTER
+		row2.add_child(all)
+		box.add_child(row2)
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 10)
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
