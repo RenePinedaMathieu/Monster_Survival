@@ -369,7 +369,7 @@ static func _slice(path: String, frame: Vector2, max_frames: int = 64) -> Array:
 const ATTACK_TEXT := {
 	"melee": "Tajo alrededor · daño %d · alcance %d",
 	"fireball": "Bola de fuego que explota en área · daño %d · alcance %d",
-	"arrow": "Flecha que atraviesa · daño %d · alcance %d",
+	"arrow": "Flecha que rebota · daño %d · alcance %d",
 }
 
 func _build_heroes() -> void:

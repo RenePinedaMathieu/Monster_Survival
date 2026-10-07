@@ -1686,8 +1686,8 @@ msgid "Lluvia de flechas"
 msgstr "Arrow Rain"
 
 #: scenes/upgrades.gd:113
-msgid "Las flechas atraviesan 3 enemigos y cada ráfaga suma 2 más"
-msgstr "Arrows pierce 3 enemies and every volley adds 2 more"
+msgid "Las flechas rebotan a 3 enemigos más y cada ráfaga suma 2 más"
+msgstr "Arrows ricochet to 3 more enemies and every volley adds 2 more"
 
 #: scenes/upgrades.gd:114 scenes/weapons.gd:42
 msgid "Tormenta de espadas"

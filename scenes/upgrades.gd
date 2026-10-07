@@ -113,7 +113,7 @@ const WEAPONS: Dictionary = {
 ## cofre). "pollo" es el acompañante: cuenta como al máximo si está.
 const EVOLUTIONS: Dictionary = {
 	"lluvia_flechas": {"weapon": "disparo", "passive": "atk_speed", "name": "Lluvia de flechas",
-		"desc": "Las flechas atraviesan 3 enemigos y cada ráfaga suma 2 más", "icon": ICON + "skill_43.png"},
+		"desc": "Las flechas rebotan a 3 enemigos más y cada ráfaga suma 2 más", "icon": ICON + "skill_43.png"},
 	"tormenta_espadas": {"weapon": "espadas", "passive": "magnet", "name": "Tormenta de espadas",
 		"desc": "Las espadas giran a tu alrededor cortando todo lo que tocan", "icon": ICON + "skill_26.png"},
 	"apocalipsis": {"weapon": "meteoros", "passive": "level_damage", "name": "Apocalipsis",

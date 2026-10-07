@@ -299,7 +299,7 @@ var _pulse_weapon = null
 var weapon_levels: Dictionary = {}
 var passive_levels: Dictionary = {}
 var evolutions: Array[String] = []
-## Evolución "lluvia de flechas": cuántos enemigos atraviesa cada flecha.
+## Evolución "lluvia de flechas": a cuántos enemigos más pega cada flecha.
 var _arrow_pierce: int = 0
 var _meteors_evolved: bool = false
 
@@ -444,7 +444,7 @@ const SWORDMAN_TIER_DAMAGE := 0.15
 ##   "tier_every": niveles por forma (la última llega cerca del nivel 21-25)
 ##   "tier_damage": daño extra por forma (la última pega x2,2)
 ##   "attack": "melee" (tajo alrededor), "fireball" (bola que explota)
-##             o "arrow" (flecha que atraviesa)
+##             o "arrow" (flecha que rebota de un enemigo a otro)
 ##   "attack_frames": cuadros pedidos del ataque (se usan los que trae
 ##             cada hoja); "hit_frame": cuadro en que pega o suelta
 ##             (revisado en las hojas: la llama sale en el 4, la flecha en el 5)
@@ -475,7 +475,8 @@ const HERO_CLASSES := {
 ## Bola de fuego de ELARA: daño a todos en el radio de la explosión.
 const ELARA_FIRE_DAMAGE := 6.0
 const ELARA_FIRE_RADIUS := 30.0
-## Flecha de DOREN: atraviesa a 1 + forma enemigos. Antes 4,5: era el
+## Flecha de DOREN: pega a 2 + forma enemigos (3 a 5), rebotando al más
+## cercano (hero_projectile.gd). Antes 4,5 de daño: era el
 ## que menos pegaba a un solo blanco y tardaba el doble en limpiar.
 const DOREN_ARROW_DAMAGE := 7.0
 ## Carta "+1 proyectil" en DOREN: más flechas por tiro, casi juntas
@@ -1138,7 +1139,7 @@ func _launch_hero_projectile(kind: String, dir: Vector2, dmg: float) -> Area2D:
 		p.speed = 240.0
 		p.max_dist = float(_hero_class["range"]) + 30.0
 	else:
-		p.pierce = 1 + _swordman_tier
+		p.pierce = 2 + _swordman_tier
 		p.speed = 520.0
 		p.max_dist = float(_hero_class["range"]) + 120.0
 	get_tree().current_scene.add_child(p)

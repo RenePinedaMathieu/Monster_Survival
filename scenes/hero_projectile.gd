@@ -1,7 +1,7 @@
 extends Area2D
 
 ## Ataque de ELARA (bola de fuego que explota en área) y de DOREN (flecha
-## que atraviesa), con el arte de sus packs de Craftpix
+## que rebota de un enemigo a otro), con el arte de sus packs de Craftpix
 ## (tools/import_class_pack.py). Lo lanza player.gd en el cuadro del
 ## ataque en que la llama o la flecha sale del sprite.
 
@@ -15,11 +15,16 @@ const FIRE_FPS := 12.0
 const EXPLOSION_FPS := 20.0
 ## Filas de las hojas del pack, igual que las del personaje.
 const ROWS := {"front": 0, "side_left": 1, "side_right": 2, "back": 3}
+## Flecha: después de pegar salta al enemigo más cercano que todavía no
+## tocó, a esta distancia como mucho (si no hay ninguno sigue derecho).
+const RICOCHET_RANGE := 140.0
+## Daño que conserva en cada rebote (1,0 = el mismo).
+const RICOCHET_FALLOFF := 1.0
 
 var kind: String = "arrow"      # "fireball" o "arrow"
 var damage: float = 1.0
 var radius: float = 30.0        # explosión de la bola de fuego
-var pierce: int = 1             # flecha: a cuántos atraviesa
+var pierce: int = 1             # flecha: a cuántos pega (rebotando)
 var max_dist: float = 260.0
 var speed: float = 260.0
 var dir: Vector2 = Vector2.RIGHT
@@ -35,6 +40,8 @@ var _t: float = 0.0
 var _travel: float = 0.0
 var _hit: Array = []
 var _exploding: bool = false
+## Flecha que rebotó: el enemigo al que va (lo sigue aunque se mueva).
+var _bounce: Node2D = null
 
 func setup(kind_: String, dir_: Vector2, damage_: float, tier_: int) -> void:
 	kind = kind_
@@ -88,6 +95,12 @@ func _physics_process(delta: float) -> void:
 			_sprite.texture = _frames[i]
 			return
 		_sprite.texture = _frames[i % _frames.size()]
+	if _bounce != null:
+		if is_instance_valid(_bounce) and not _bounce._dead:
+			dir = (_bounce.global_position - global_position).normalized()
+			_sprite.rotation = dir.angle()
+		else:
+			_bounce = null
 	var step: float = speed * delta
 	position += dir * step
 	_travel += step
@@ -110,6 +123,27 @@ func _on_body_entered(body: Node) -> void:
 	pierce -= 1
 	if pierce <= 0:
 		queue_free()
+		return
+	_ricochet(body)
+
+## Rebote: hacia el enemigo más cercano a `from` que no haya tocado.
+func _ricochet(from: Node2D) -> void:
+	var best: Node2D = null
+	var best_d2 := RICOCHET_RANGE * RICOCHET_RANGE
+	for m in get_tree().get_nodes_in_group("monster"):
+		if not is_instance_valid(m) or m in _hit or m._dead:
+			continue
+		var d2: float = from.global_position.distance_squared_to(m.global_position)
+		if d2 < best_d2:
+			best_d2 = d2
+			best = m
+	_bounce = best
+	if best != null:
+		damage *= RICOCHET_FALLOFF
+		dir = (best.global_position - global_position).normalized()
+		_sprite.rotation = dir.angle()
+		_travel = 0.0
+		max_dist = RICOCHET_RANGE + 40.0
 
 ## La bola revienta: daño a todo lo que esté en el radio y la animación
 ## de la explosión del pack (fila según hacia dónde iba). `struck`: el

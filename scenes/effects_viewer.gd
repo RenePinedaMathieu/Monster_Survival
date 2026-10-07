@@ -36,7 +36,7 @@ const EFFECTS := [
 	["ELARA · Cadena carmesí (láser evo.)", "DIBUJADO", "laser_evo", "chain_laser_weapon.gd + laser_effect.gd"],
 	["ELARA · Aura de fuego (hoy dorada)", "DIBUJADO", "aura", "aura_weapon.gd"],
 	["ELARA · Santuario (aura evo.)", "DIBUJADO", "aura_evo", "aura_weapon.gd"],
-	["DOREN · Flecha (atraviesa)", "SPRITE DEL PACK", "doren_flecha", "hero_projectile.gd + sprites/doren/fx/arrow.png"],
+	["DOREN · Flecha (rebota)", "SPRITE DEL PACK", "doren_flecha", "hero_projectile.gd + sprites/doren/fx/arrow.png"],
 	["DOREN · Disparo niv. 1 / 5 / cargado", "ÍCONO + DIBUJADO", "disparo", "weapon_icons/icon_43.png + shot_projectile.gd"],
 	["DOREN · Flecha de fuego", "ÍCONO + DIBUJADO", "fuego", "shot_projectile.gd (efecto fire)"],
 	["DOREN · Infierno (fuego evo.)", "ÍCONO + DIBUJADO", "fuego_evo", "shot_projectile.gd (fuego con radio)"],

@@ -73,8 +73,8 @@ const CHARACTERS: Array[Dictionary] = [
 		"name": "DOREN",
 		"idle_frames": 12,
 		"accent": Color("8fcf5a"),
-		"role": "A DISTANCIA · EVOLUTIVO · ATRAVIESA",
-		"blurb": "Arquero: sus flechas llegan lejos y atraviesan a varios enemigos en línea. Evoluciona en 3 formas y su Voltereta lo saca de cualquier encierro.",
+		"role": "A DISTANCIA · EVOLUTIVO · REBOTA",
+		"blurb": "Arquero: sus flechas llegan lejos y rebotan de un enemigo a otro. Evoluciona en 3 formas y su Voltereta lo saca de cualquier encierro.",
 		"stats": {"Daño": 2, "Velocidad": 4, "Alcance": 5, "Dificultad": 4},
 		"colors": [
 			{"color": "Azabache", "portrait": "res://assets/main_characters/doren_portrait.png", "portrait_pending": true, "idle_sheet": "res://assets/main_characters/doren_idle_strip.png"},
