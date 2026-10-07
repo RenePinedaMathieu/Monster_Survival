@@ -9,7 +9,7 @@
  <tileset firstgid="11681" source="tiles/choque.tsx" />
  <layer id="1" name="Agua base" width="100" height="80" locked="1">
   <data encoding="base64" compression="zlib">
-   eJztwTEBAAAAwqD1T+1hDaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbn0AAAE=
+   eJztwwEJAAAMA6DBA65/mz2Igr2kqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn8PuwMX
   </data>
  </layer>
  <layer id="4" name="Agua efectos" width="100" height="80" locked="1">
