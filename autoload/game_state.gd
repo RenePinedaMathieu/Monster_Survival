@@ -36,10 +36,11 @@ var shop_open_tab: int = 0
 var village_spawn: Vector2 = Vector2.INF
 ## La portada con el logo sale una vez por sesión, al abrir el juego.
 var title_shown: bool = false
-## QA: las partidas usan los mapas nuevos pintados en Tiled ("tiled" en
-## MAPS) en vez de los de siempre. Se prende en Opciones del pueblo
-## mientras se pintan. Transitorio.
-var qa_tiled_maps: bool = false
+## Las partidas usan los mapas pintados en Tiled ("tiled" en MAPS); en
+## Opciones del pueblo se puede volver a los de antes para comparar.
+## Transitorio (vuelve a sí al abrir el juego). El mapa "pradera" se
+## llama Bosque desde el 07-10 (el id queda por las partidas guardadas).
+var qa_tiled_maps: bool = true
 
 ## true después de ver el tutorial — village.gd lo muestra solo la
 ## primera vez que se entra al pueblo (se repasa desde Opciones).
@@ -116,7 +117,7 @@ const SKILL_TREE: Dictionary = {
 ## y 30 (desafío); "hazard" el peligro propio (ver painted_world.gd).
 const MAPS: Dictionary = {
 	"pradera": {
-		"name": "Pradera", "desc": "Donde empieza todo: ratas, imps y lizardmen.",
+		"name": "Bosque", "desc": "Donde empieza todo: ratas, imps y lizardmen.",
 		"mult": 1.0, "scene": "res://scenes/Grass1.tscn", "tileset": "res://assets/tiles/overworld_tileset_grass.png",
 		"tiled": "res://scenes/maps/bosque.scn",
 		"tint": Color(1, 1, 1), "hazard": "", "bosses": ["demon1", "demon2", "demon3"],
@@ -370,7 +371,7 @@ const CHARACTER_NAMES: Dictionary = {
 	"toren": "TOREN", "bran": "BRAN", "vael": "VAEL",
 	"elara": "ELARA", "doren": "DOREN",
 }
-const MAP_NAMES: Dictionary = {"pradera": "Pradera", "pantano": "Pantano", "desierto": "Desierto"}
+const MAP_NAMES: Dictionary = {"pradera": "Bosque", "pantano": "Pantano", "desierto": "Desierto"}
 
 func is_character_unlocked(id: String) -> bool:
 	return id in unlocked_characters
@@ -381,7 +382,7 @@ func is_character_unlocked(id: String) -> bool:
 ## Desierto y el Pantano con ese héroe (cualquier dificultad; el reto
 ## diario y los desafíos no cuentan).
 const COLOR_MAPS: Array = ["", "pradera", "desierto", "pantano"]
-const MAP_NAMES_WITH_ARTICLE: Dictionary = {"pradera": "la Pradera", "desierto": "el Desierto", "pantano": "el Pantano"}
+const MAP_NAMES_WITH_ARTICLE: Dictionary = {"pradera": "el Bosque", "desierto": "el Desierto", "pantano": "el Pantano"}
 var hero_colors: Dictionary = {}       # héroe -> índices de colores ganados
 var selected_colors: Dictionary = {}   # héroe -> color elegido
 ## Color ganado en la partida que terminó (para los resultados), o {}.

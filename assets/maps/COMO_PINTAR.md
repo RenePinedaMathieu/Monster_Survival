@@ -53,12 +53,18 @@ El agua choca sola; la orilla de tierra se camina.
 ## Qué choca
 
 Solo, sin pintar nada:
+- **El vacío:** donde ninguna capa de piso tiene nada (afuera de la isla).
 - **El agua**, también la de las orillas pintadas con baldosas de costa.
-- **La base de los dibujos grandes:** troncos, rocas, ruinas. Los chicos (hongos, juncos, matas, flores) se atraviesan, aunque estén pegados entre sí.
+- **Según la capa del objeto:**
+  - `Arboles`: choca la base de todo lo que pongas ahí (troncos, cactus, palmeras, rocas).
+  - `Objetos`: no choca nada (hongos, pasto, flores, huesos chicos).
+  - Las capas `objects…` de los packs: choca la base de lo grande.
 
-Con la capa **`choque`** (arriba de todo, medio transparente):
-- **Cuadro rojo:** no se pasa. Úsalo para acantilados, paredes de mesetas o lo que se escape.
+**Para cambiar algo:** muévelo a la capa `Arboles` u `Objetos`, o usa la capa **`choque`** (arriba de todo, medio transparente):
+- **Cuadro rojo:** no se pasa. Úsalo para acantilados, rocas en `Objetos`, lo que se escape.
 - **Cuadro verde:** sí se pasa, aunque algo choque ahí. El verde gana a todo.
+
+**Para ver qué choca:** la capa **`vista choque`** (la última, bloqueada) pinta de rojo exactamente lo que no se camina. Se actualiza cada vez que se importa el mapa; si Tiled no la refresca, cierra y vuelve a abrir el mapa.
 
 ## Archivos y carpetas
 

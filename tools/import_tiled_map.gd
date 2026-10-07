@@ -13,9 +13,15 @@ extends SceneTree
 ##     que se tocan es un objeto; todas sus baldosas se ordenan por la
 ##     base del objeto (y_sort_origin), así el héroe pasa por detrás de la
 ##     copa y por delante del tronco.
-##   - Choque (celdas de 8 px): el agua (por color, también la de las
-##     orillas), la base opaca de los objetos grandes (troncos, rocas)
-##     y lo pintado en "choque" (rojo: choca; verde: no choca, gana a todo).
+##   - Choque (celdas de 8 px):
+##       el vacío (donde ninguna capa de piso tiene nada),
+##       el agua (por color, también la de las orillas),
+##       la base de los objetos según su capa: "Arboles" (o "trees")
+##       choca siempre; "Objetos" (o "decor", "detalles") nunca; las
+##       "objects..." de los packs, sólo los grandes (troncos, rocas),
+##       y lo pintado en "choque" (rojo: choca; verde: no choca, gana a todo).
+##     Escribe además assets/maps/<id>/vista/choque.png (rojo donde
+##     choca), que el .tmx muestra como capa de imagen "vista choque".
 ## Las capas ocultas en Tiled no se importan. Lee capas en CSV o base64
 ## (como las guarda Tiled). Ver assets/maps/COMO_PINTAR.md.
 
@@ -220,6 +226,7 @@ func _build() -> Node2D:
 	free.resize(gw * gh)
 
 	_water(obj_start, solid, gw)
+	_void(obj_start, solid, gw)
 
 	# Orden por altura: base de cada objeto -> y_sort_origin de sus baldosas.
 	var origins := {}   # "sid:x:y:flags" -> {origen: veces}
@@ -227,8 +234,9 @@ func _build() -> Node2D:
 		var layer: Dictionary = _layers[li]
 		if not layer["visible"] or layer["name"] == CHOQUE_LAYER:
 			continue
+		var mode := _solid_mode(String(layer["name"]))
 		for comp in _components(layer["data"]):
-			_object(layer["data"], comp, origins, solid, gw)
+			_object(layer["data"], comp, origins, solid, gw, mode)
 
 	# Capas de Tiled -> TileMapLayer.
 	var alts := {}
@@ -278,12 +286,29 @@ func _build() -> Node2D:
 		shape.position = r.get_center()
 		body.add_child(shape)
 
+	_write_preview(solid, gw, gh)
 	root.map_size = Vector2(_w * TILE, _h * TILE)
 	root.cell = CELL
 	root.grid_size = Vector2i(gw, gh)
 	root.solid = solid
 	_own(root, root)
 	return root
+
+## assets/maps/<id>/vista/choque.png: rojo donde choca, del tamaño del
+## mapa. La carpeta lleva .gdignore (Godot no la importa ni la exporta);
+## el .tmx la muestra como capa de imagen "vista choque".
+func _write_preview(solid: PackedByteArray, gw: int, gh: int) -> void:
+	var dir := ProjectSettings.globalize_path(_dir + "/vista")
+	DirAccess.make_dir_recursive_absolute(dir)
+	if not FileAccess.file_exists(dir + "/.gdignore"):
+		FileAccess.open(dir + "/.gdignore", FileAccess.WRITE).close()
+	var img := Image.create(_w * TILE, _h * TILE, false, Image.FORMAT_RGBA8)
+	var red := Color(1.0, 0.1, 0.1, 0.45)
+	for y in range(gh):
+		for x in range(gw):
+			if solid[y * gw + x]:
+				img.fill_rect(Rect2i(x * CELL, y * CELL, CELL, CELL), red)
+	img.save_png(dir + "/choque.png")
 
 func _own(node: Node, owner_node: Node) -> void:
 	for c in node.get_children():
@@ -349,7 +374,30 @@ func _components(data: PackedInt32Array) -> Array:
 
 ## Un objeto: anota el origen de orden de sus baldosas y marca sólida
 ## la base de sus dibujos grandes (_solid_blobs).
-func _object(data: PackedInt32Array, comp: PackedInt32Array, origins: Dictionary, solid: PackedByteArray, gw: int) -> void:
+## Qué choca de una capa de objetos, por su nombre: "siempre" (árboles),
+## "nunca" (decoración) o "auto" (los grandes; capas de los packs).
+func _solid_mode(name: String) -> String:
+	var n := name.to_lower()
+	for k in ["arbol", "árbol", "tree", "solid"]:
+		if n.contains(k):
+			return "siempre"
+	for k in ["objeto", "decor", "detalle", "detail"]:
+		if n.contains(k):
+			return "nunca"
+	return "auto"
+
+## Donde ninguna capa de piso tiene nada (afuera de la isla) no se camina.
+func _void(obj_start: int, solid: PackedByteArray, gw: int) -> void:
+	for i in range(_w * _h):
+		var empty := true
+		for li in range(obj_start):
+			if _layers[li]["visible"] and _layers[li]["data"][i] != 0:
+				empty = false
+				break
+		if empty:
+			_mark_tile(solid, gw, i % _w, i / _w)
+
+func _object(data: PackedInt32Array, comp: PackedInt32Array, origins: Dictionary, solid: PackedByteArray, gw: int, mode: String = "auto") -> void:
 	var x0 := _w
 	var y0 := _h
 	var x1 := 0
@@ -374,13 +422,14 @@ func _object(data: PackedInt32Array, comp: PackedInt32Array, origins: Dictionary
 			origins[key] = {}
 		origins[key][origin] = int(origins[key].get(origin, 0)) + 1
 		img.blit_rect(_tile_image(gid), Rect2i(0, 0, TILE, TILE), Vector2i((c % _w - x0) * TILE, (c / _w - y0) * TILE))
-	_solid_blobs(img, x0, y0, solid, gw)
+	if mode != "nunca":
+		_solid_blobs(img, x0, y0, solid, gw, mode == "siempre")
 
 ## Cada dibujo por separado (grupo de píxeles opacos que se tocan): un
 ## hongo pegado a un junco en la misma capa no suma un objeto alto. Choca
 ## la base de los dibujos altos, pesados y de base ancha (troncos, rocas,
 ## ruinas); la sombra (semitransparente) no cuenta.
-func _solid_blobs(img: Image, x0: int, y0: int, solid: PackedByteArray, gw: int) -> void:
+func _solid_blobs(img: Image, x0: int, y0: int, solid: PackedByteArray, gw: int, always: bool = false) -> void:
 	var w := img.get_width()
 	var h := img.get_height()
 	var data := img.get_data()
@@ -411,7 +460,11 @@ func _solid_blobs(img: Image, x0: int, y0: int, solid: PackedByteArray, gw: int)
 				if data[n * 4 + 3] >= min_a:
 					seen[n] = 1
 					stack.append(n)
-		if low - top + 1 < MIN_SOLID_HEIGHT or pixels.size() < MIN_SOLID_PIXELS:
+		# "siempre": todo dibujo que no sea una mancha suelta (hojas, briznas).
+		if always:
+			if pixels.size() < 40:
+				continue
+		elif low - top + 1 < MIN_SOLID_HEIGHT or pixels.size() < MIN_SOLID_PIXELS:
 			continue
 		# Base: la franja de abajo del dibujo.
 		var band := clampi((low - top + 1) / 4, 4, 12)
@@ -427,7 +480,7 @@ func _solid_blobs(img: Image, x0: int, y0: int, solid: PackedByteArray, gw: int)
 			bx1 = maxi(bx1, px)
 			var cell := Vector2i((x0 * TILE + px) / CELL, (y0 * TILE + py) / CELL)
 			counts[cell] = int(counts.get(cell, 0)) + 1
-		if bx1 - bx0 + 1 < MIN_BASE_WIDTH:
+		if bx1 - bx0 + 1 < (4 if always else MIN_BASE_WIDTH):
 			continue
 		for cell in counts:
 			if counts[cell] >= CELL * 2:

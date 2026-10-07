@@ -11,8 +11,8 @@ msgid "Donde empieza todo: ratas, imps y lizardmen."
 msgstr "Where it all begins: rats, imps and lizardmen."
 
 #: autoload/game_state.gd:107 autoload/game_state.gd:353
-msgid "Pradera"
-msgstr "Meadow"
+msgid "Bosque"
+msgstr "Forest"
 
 #: autoload/game_state.gd:117
 msgid "Lodo que te frena, slimes que se parten y fantasmas."
