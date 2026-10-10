@@ -5,6 +5,7 @@ extends SceneTree
 ## experiencia más cercana y elige cartas al azar. Anota el nivel al
 ## terminar cada oleada.
 ##   godot --headless --fixed-fps 60 --path . --script res://tools/dps_bench/run_bot.gd -- hero=swordman map=pradera seed=1 out=x.jsonl
+## Con seek=0 se queda quieto: sólo junta lo que le llega con el imán.
 ## Igual que dps_bench.gd escribe el guardado: tools/dps_bench.bat lo
 ## respalda antes.
 
@@ -16,6 +17,7 @@ var hero := "swordman"
 var map := "pradera"
 var out_path := ""
 var seed_v := 1
+var seek := true
 var _started := false
 var _wave := 0
 var _t := 0.0
@@ -32,6 +34,7 @@ func _initialize() -> void:
 			"map": map = kv[1]
 			"out": out_path = kv[1]
 			"seed": seed_v = int(kv[1])
+			"seek": seek = kv[1] != "0"
 
 func _process(delta: float) -> bool:
 	if not _started:
@@ -59,7 +62,8 @@ func _process(delta: float) -> bool:
 		elif path.ends_with("chest_popup.gd") and n.has_method("_close"):
 			n._close()
 	player.hp = player.max_hp
-	_steer(player, delta)
+	if seek:
+		_steer(player, delta)
 	if main._current_wave != _wave:
 		if _wave > 0:
 			_note(main, player, _wave)
