@@ -64,7 +64,7 @@ const CARDS: Array = [
 	{"id": "aura_lenta",  "title": "AURA HELADA",         "desc": "Frena a los enemigos cercanos", "icon": ICON + "skill_69.png"},
 	{"id": "escudo_fuerza", "title": "ESCUDO DE FUERZA",  "desc": "Se recarga cada pocos segundos y bloquea un disparo", "icon": ICON + "skill_1.png"},
 	{"id": "pulso",        "title": "PULSO",              "desc": "Una onda expansiva golpea enemigos alrededor", "icon": ICON + "skill_74.png"},
-	# ── Escalado cuando la build ya tiene sus 8 armas ──
+	# ── Escalado: con todas las armas, en lugar de su pasiva (OVERFLOW_OF) ──
 	{"id": "overflow_attack",  "title": "+15% ATAQUE",    "desc": "Toda tu build pega más fuerte", "icon": ICON + "skill_96.png"},
 	{"id": "overflow_defense", "title": "+20% DEFENSA",   "desc": "Aumenta tu barra de defensa", "icon": ICON + "skill_76.png"},
 	{"id": "overflow_hp",      "title": "+20% VIDA",      "desc": "Aumenta tu vida máxima y cura un poco", "icon": ICON + "skill_83.png"},
@@ -80,6 +80,14 @@ const PASSIVES: Dictionary = {
 	"level_damage": 1,
 	"toughness": MAX_LEVEL, "area": MAX_LEVEL, "duration": MAX_LEVEL,
 	"precision": MAX_LEVEL, "haste": MAX_LEVEL, "bloodthirst": MAX_LEVEL,
+}
+
+## Cartas de escalado y la pasiva que repiten: salen sólo cuando esa
+## pasiva ya no se puede tomar (al máximo, sin casillas o sin ganar).
+## Antes salían junto a ella: "+25% DAÑO" y "+15% ATAQUE" en el mismo
+## nivel (con 4 armas por héroe las pasivas siguen abiertas).
+const OVERFLOW_OF: Dictionary = {
+	"overflow_attack": "damage", "overflow_defense": "toughness", "overflow_hp": "max_hp",
 }
 
 ## Cartas que no salen hasta ganarlas en un desafío (GameState.TRIALS).
@@ -198,8 +206,8 @@ static func weapons_complete(player) -> bool:
 static func is_eligible(player, id: String) -> bool:
 	if id == "coins" or id == "heal":
 		return false
-	if id in ["overflow_attack", "overflow_defense", "overflow_hp"]:
-		return weapons_complete(player)
+	if OVERFLOW_OF.has(id):
+		return weapons_complete(player) and not is_eligible(player, OVERFLOW_OF[id])
 	if id in LOCKED_CARDS and not GameState.is_card_unlocked(id):
 		return false
 	if PASSIVES.has(id):

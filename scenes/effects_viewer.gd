@@ -25,8 +25,8 @@ const EFFECTS := [
 	["GAROTH · Hacha giratoria", "ÍCONO", "hacha", "weapon_icons/icon_86.png"],
 	["GAROTH · Pulso", "DIBUJADO", "pulso", "pulse_weapon.gd"],
 	["GAROTH · Terremoto (pulso evo.)", "DIBUJADO", "pulso_evo", "pulse_weapon.gd"],
-	["GAROTH · Escudo de fuerza (bloquea)", "DIBUJADO", "escudo", "force_shield_weapon.gd"],
-	["GAROTH · Bastión (escudo evo., 3 cargas)", "DIBUJADO", "escudo_evo", "force_shield_weapon.gd"],
+	["GAROTH · Escudo de fuerza (bloquea)", "SPRITE DEL PACK", "escudo", "force_shield_weapon.gd + buff_fx.gd (immunity)"],
+	["GAROTH · Bastión (escudo evo., 3 cargas)", "SPRITE DEL PACK", "escudo_evo", "force_shield_weapon.gd + buff_fx.gd (immunity)"],
 	["ELARA · Bola de fuego (formas 1-3)", "SPRITE DEL PACK", "elara_fuego", "hero_projectile.gd + sprites/elara/fx/fire_*_1.png"],
 	["ELARA · Bola de fuego (formas 4-6)", "SPRITE DEL PACK", "elara_fuego4", "hero_projectile.gd + sprites/elara/fx/fire_*_4.png"],
 	["ELARA · Meteoro", "DIBUJADO", "meteor", "meteor.gd"],
@@ -50,6 +50,8 @@ const EFFECTS := [
 	["Anillo de fuego del jefe", "DIBUJADO", "anillo", "enemy_projectile.gd"],
 	["Bola de fuego + suelo en llamas", "DIBUJADO", "fuego_suelo", "ground_fire_projectile.gd + burning_ground.gd"],
 	["Bomba del barril", "DIBUJADO", "bomba", "pickup.gd (_spawn_blast)"],
+	["Vida del barril", "SPRITE DEL PACK", "vida", "buff_fx.gd + sprites/fx/buffs/life_recovery.png"],
+	["Inmunidad al revivir", "SPRITE DEL PACK", "inmunidad", "buff_fx.gd + sprites/fx/buffs/immunity.png"],
 	["Charco de barro (pantano)", "DIBUJADO", "barro", "mud_puddle.gd"],
 	["Números de daño y textos", "TEXTO", "numeros", "damage_number.gd"],
 	["Fuera del juego · Centinela dron", "DIBUJADO", "centinela", "sentinel_weapon.gd + shot_projectile.gd"],
@@ -306,6 +308,10 @@ func _play_effect(id: String) -> void:
 				pk.global_position = p.global_position
 				pk._spawn_blast()
 				pk.queue_free()
+		"vida":
+			_repeat_cb = func(): _dummy.play_buff("life")
+		"inmunidad":
+			_repeat_cb = func(): _dummy.play_buff("immunity", 10.0)
 		"barro":
 			var mud := Area2D.new()
 			mud.set_script(preload("res://scenes/mud_puddle.gd"))
@@ -402,6 +408,14 @@ class DummyPlayer extends CharacterBody2D:
 		create_tween().tween_property(self, "modulate", Color.WHITE, 0.4)
 	func shake(_s: float) -> void:
 		pass
+	## Efectos de buff_fx.gd a los pies, como player.play_buff.
+	func play_buff(kind: String, fps: float = 14.0, hold: int = -1) -> Node:
+		var fx := Sprite2D.new()
+		fx.set_script(preload("res://scenes/buff_fx.gd"))
+		fx.show_behind_parent = true
+		add_child(fx)
+		fx.setup(kind, fps, hold)
+		return fx
 	func apply_burn(_frac: float, _dur: float) -> void:
 		_flash_t = 0.2
 	## Escudo de fuerza colgado del muñeco: bloquea como en el juego.

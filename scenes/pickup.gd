@@ -81,6 +81,8 @@ func _apply(player: Node) -> void:
 			var amount: float = player.max_hp * heal_frac
 			player.heal(amount)
 			player.flash(player.FLASH_GREEN)
+			if player.has_method("play_buff"):
+				player.play_buff("life")
 			text = text % int(round(amount))
 			Audio.play_sfx("level_up", global_position)
 		"magnet":

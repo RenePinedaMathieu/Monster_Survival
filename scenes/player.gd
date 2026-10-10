@@ -77,6 +77,7 @@ const PULSE_SCRIPT := preload("res://scenes/pulse_weapon.gd")
 const SENTINEL_SCRIPT := preload("res://scenes/sentinel_weapon.gd")
 const SAW_SCRIPT := preload("res://scenes/saw_weapon.gd")
 const SLOW_AURA_SCRIPT := preload("res://scenes/slow_aura_weapon.gd")
+const BUFF_FX_SCRIPT := preload("res://scenes/buff_fx.gd")
 
 const BASE_SCALE := 0.5
 ## 220 → 175 → 125. A 175 se cruzaba la pantalla (335 unidades de alto
@@ -112,8 +113,13 @@ const AUTO_FIRE_SPREAD := 0.13        # radianes entre proyectiles extra
 const RANGED_BONUS_MELEE_MULT := 0.6
 
 # XP y level
-const XP_TO_NEXT_BASE := 4
-const XP_TO_NEXT_MULT := 1.35         # cada nivel cuesta 35% más
+## Experiencia para subir: 10 el primero y 4 más cada nivel (10, 14,
+## 18...). Antes desde 4 y x1,35 por nivel: nivel 7 en la oleada 2 y
+## ~17 al final (la última forma de GAROTH es la del 25). Así, con un
+## monstruo = 1: ~3 en la oleada 1, ~5 en la 2, ~15 en la 10, ~25 en
+## la 20 (tools/dps_bench/run_bot.gd).
+const XP_TO_NEXT_BASE := 10
+const XP_TO_NEXT_STEP := 4
 const XP_MAGNET_RADIUS := 90.0
 
 # Regen
@@ -1208,7 +1214,7 @@ func gain_xp(amount: int) -> void:
 
 func _level_up() -> void:
 	level += 1
-	xp_to_next = int(round(xp_to_next * XP_TO_NEXT_MULT))
+	xp_to_next = XP_TO_NEXT_BASE + XP_TO_NEXT_STEP * (level - 1)
 	if _damage_scales_with_level:
 		damage_mult *= 1.10
 	# Si sos swordman, chequeamos si toca subir de tier de sprite
@@ -1455,12 +1461,27 @@ func _revive() -> void:
 	emit_signal("hp_changed", hp, max_hp)
 	_invuln_t = 2.5
 	_shield_fx_t = 0.0001
+	_play_immunity(_invuln_t)
 	for m in get_tree().get_nodes_in_group("monster"):
 		if is_instance_valid(m) and global_position.distance_to(m.global_position) < SHIELD_RADIUS * 1.5:
 			if m.has_method("knockback"):
 				m.knockback((m.global_position - global_position).normalized(), 520.0)
 	shake(8.0)
 	Audio.play_sfx("level_up", global_position)
+
+## Efecto del pack Magic Buff a los pies (buff_fx.gd): "life" o
+## "immunity". Con `hold` queda en ese cuadro hasta que lo saquen.
+func play_buff(kind: String, fps: float = 14.0, hold: int = -1) -> Node:
+	var fx := Sprite2D.new()
+	fx.set_script(BUFF_FX_SCRIPT)
+	fx.show_behind_parent = true   # el aro va en el piso, detrás del héroe
+	add_child(fx)
+	fx.setup(kind, fps, hold)
+	return fx
+
+## Inmune `secs` segundos (revivir, escudo): el efecto dura lo mismo.
+func _play_immunity(secs: float) -> void:
+	play_buff("immunity", maxf(8.0, 16.0 / secs))
 
 const FLASH_GOLD := Color(2.2, 1.7, 0.35)
 const FLASH_GREEN := Color(0.55, 2.2, 0.6)
@@ -1560,6 +1581,7 @@ func use_active_skill() -> void:
 		"shield":
 			_invuln_t = maxf(_invuln_t, 2.0)
 			_shield_fx_t = 0.0001
+			_play_immunity(2.0)
 			for m in get_tree().get_nodes_in_group("monster"):
 				if is_instance_valid(m) and global_position.distance_to(m.global_position) <= SHIELD_RADIUS:
 					var away: Vector2 = (m.global_position - global_position).normalized()
@@ -1673,13 +1695,10 @@ func _spawn_afterimage() -> void:
 
 ## Burbuja del escudo divino (GAROTH) mientras dura.
 func _draw() -> void:
-	if _shield_fx_t > 0.0:
-		var a: float = clampf(1.0 - _shield_fx_t / 2.0, 0.0, 1.0)
+	# La onda del empujón; la inmunidad es el efecto de buff_fx.gd.
+	if _shield_fx_t > 0.0 and _shield_fx_t < 0.3:
 		var ring: float = minf(1.0, _shield_fx_t / 0.25) * SHIELD_RADIUS
-		if _shield_fx_t < 0.3:
-			draw_arc(Vector2.ZERO, ring, 0.0, TAU, 40, Color(1.0, 0.95, 0.6, 1.0 - _shield_fx_t / 0.3), 3.0, false)
-		draw_circle(Vector2(0, -8), 26.0, Color(0.6, 0.85, 1.0, 0.18 * a + 0.05))
-		draw_arc(Vector2(0, -8), 26.0, 0.0, TAU, 32, Color(0.75, 0.92, 1.0, 0.6 * a + 0.2), 2.0, false)
+		draw_arc(Vector2.ZERO, ring, 0.0, TAU, 40, Color(1.0, 0.95, 0.6, 1.0 - _shield_fx_t / 0.3), 3.0, false)
 	if _whirl_t > 0.0:
 		var r: float = WHIRL_RADIUS * area_mult
 		var spin: float = _whirl_t * 18.0

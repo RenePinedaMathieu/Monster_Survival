@@ -87,8 +87,18 @@ def main():
         p(f"{name:8}" + " | ".join(f"{st} {statistics.mean(v):.0f}" for st, v in by.items()))
         top = sorted(((statistics.mean(v), k) for k, v in src.items()), reverse=True)
         p(f"{'':8}final: " + ", ".join(f"{k} {v:.0f}" for v, k in top))
+    p("")
 
-    text = "\n".join(out) + "\n"
+    p("NIVEL AL TERMINAR CADA OLEADA · partida real del bot (run_bot.gd)")
+    waves = [1, 2, 3, 5, 8, 10, 12, 15, 18, 20]
+    p(f"{'oleada':8}" + "".join(f"{w:5}" for w in waves))
+    for h, name in HEROES:
+        by = {}
+        for r in load(f"{d}/{h}_run_*.jsonl"):
+            by.setdefault(r["wave"], []).append(r["level"])
+        p(f"{name:8}" + "".join(f"{round(statistics.mean(by[w])) if w in by else '-':>5}" for w in waves))
+
+    text ="\n".join(out) + "\n"
     with open(os.path.join(d, "informe.txt"), "w", encoding="utf-8") as fh:
         fh.write(text)
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
